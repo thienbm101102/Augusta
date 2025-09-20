@@ -1,0 +1,20 @@
+{
+  "name": "blackjack-bot",
+  "version": "1.0.0",
+  "main": "index.js",
+  "type": "commonjs",
+  "scripts": {
+    "deploy": "node deploy-commands.js",
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "canvas": "^3.2.0",
+    "date-fns": "^4.1.0",
+    "discord.js": "^14.15.3",
+    "dotenv": "^17.2.1",
+    "fs-extra": "^11.2.0",
+    "node-cron": "^4.2.1",
+    "uuid": "^11.1.0",
+    "ytdl-core": "^4.11.5"
+  }
+}

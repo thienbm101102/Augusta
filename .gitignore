@@ -1,0 +1,5 @@
+# Bỏ qua file .env (nơi chứa token)
+.env
+
+# Bỏ qua thư mục cài đặt của Node.js
+node_modules/
