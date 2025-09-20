@@ -1,0 +1,14 @@
+{
+  "banners": {
+    "banner1.png": 5000,
+    "banner2.png": 7000,
+    "banner3.png": 8000,
+    "banner4.png": 10000
+  },
+  "badges": {
+    "vannguoime.png": 5000,
+    "uyviencakhia.png": 6000,
+    "tinhyeubenvung.png": 7000,
+    "daivuongsamac.png": 8000
+  }
+}

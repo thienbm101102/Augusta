@@ -1,0 +1,1059 @@
+{
+  "users": {
+    "757207480785829928": {
+      "balance": 91677950,
+      "lastDaily": 1757165062230,
+      "lastLoanDate": null,
+      "debt": 0,
+      "banner": "banner1.png",
+      "badge": "daigia.png",
+      "ownedBanners": [
+        "banner1.png"
+      ],
+      "ownedBadges": [
+        "vannguoime.png",
+        "daigia.png"
+      ],
+      "city": {
+        "buildings": [
+          {
+            "type": "congvien",
+            "level": 0
+          },
+          {
+            "type": "nhamay",
+            "level": 0
+          },
+          {
+            "type": "truonghoc",
+            "level": 0
+          },
+          {
+            "type": "toathap",
+            "level": 0
+          }
+        ],
+        "lastIncomeClaim": 1757136318315
+      },
+      "monsters": [
+        {
+          "id": "85568310-6b55-4aa2-b032-620ce68feac1",
+          "type": "rong_con",
+          "name": "Rồng Con",
+          "level": 2,
+          "exp": 150,
+          "hp": -60,
+          "maxHp": 120,
+          "equippedEquipment": [
+            "7bbb38f6-a7ca-4270-a805-7a0bf421bd40",
+            "5a4efe4b-5d26-4199-bedf-a8ea093b9458",
+            "6a885a5e-9f62-4186-97c3-d80fe9a809f4"
+          ],
+          "attack": 27,
+          "defense": 27
+        },
+        {
+          "id": "37f737a5-40a6-4a23-888d-22b53b4f6232",
+          "type": "tinh_linh_nuoc",
+          "name": "Tinh Linh Nước",
+          "level": 1,
+          "exp": 5,
+          "hp": 180,
+          "maxHp": 180,
+          "equippedEquipment": [
+            null,
+            null,
+            null
+          ]
+        },
+        {
+          "id": "f3bb603d-a7b2-4670-b620-91f7516514ed",
+          "type": "sieu_nhan_gao",
+          "name": "Siêu Nhân Gạo",
+          "level": 1,
+          "exp": 0,
+          "hp": 100,
+          "maxHp": 100,
+          "equippedEquipment": [
+            "02f05f95-46c3-47d0-8e3c-a0495be34596",
+            "26f2c4f3-e4e0-4f3d-b7e0-a85dd1a2750f",
+            "d4d59438-db79-4d51-b012-3c2e8533b44e"
+          ]
+        }
+      ],
+      "ownedEquipment": [
+        {
+          "id": "7bbb38f6-a7ca-4270-a805-7a0bf421bd40",
+          "type": "cung_than_cong"
+        },
+        {
+          "id": "5a4efe4b-5d26-4199-bedf-a8ea093b9458",
+          "type": "khien_rong"
+        },
+        {
+          "id": "6a885a5e-9f62-4186-97c3-d80fe9a809f4",
+          "type": "vong_co_mana"
+        },
+        {
+          "id": "02f05f95-46c3-47d0-8e3c-a0495be34596",
+          "type": "riu_bang"
+        },
+        {
+          "id": "26f2c4f3-e4e0-4f3d-b7e0-a85dd1a2750f",
+          "type": "ao_giap_sat"
+        },
+        {
+          "id": "d4d59438-db79-4d51-b012-3c2e8533b44e",
+          "type": "non_hiep_si"
+        }
+      ],
+      "cards": [
+        {
+          "type": "Khế_Ước_Bàn_Nham",
+          "rarity": "Hiếm",
+          "data": {
+            "name": "Khế Ước Bàn Nham",
+            "rarity": "Hiếm",
+            "description": "Không có",
+            "stats": {
+              "attack": 10,
+              "hp": 20
+            },
+            "imageUrl": "https://media.discordapp.net/attachments/1351633975046570106/1414325367879110797/latest_16.jpg?ex=68bf28a4&is=68bdd724&hm=afe1d007f426f51c3e82cca9bf715d89913231f23a0bdc155990a7cf53714b05&=&format=webp&width=405&height=694"
+          },
+          "count": 3
+        },
+        {
+          "type": "Pizza_Nấm_Rơm",
+          "rarity": "Thường",
+          "data": {
+            "name": "Pizza Nấm Rơm",
+            "rarity": "Thường",
+            "description": "Không có",
+            "stats": {
+              "attack": 6,
+              "hp": 9
+            },
+            "imageUrl": "https://media.discordapp.net/attachments/1351633975046570106/1414324223064805466/latest_5.jpg?ex=68bf2793&is=68bdd613&hm=3df269b25d8ceb716261da5e461ef0aba0ce97256dbed0f069ae872ce0608373&=&format=webp&width=405&height=694"
+          },
+          "count": 5
+        },
+        {
+          "type": "Bánh_Quy_Saurus",
+          "rarity": "Thường",
+          "data": {
+            "name": "Bánh Quy Saurus",
+            "rarity": "Thường",
+            "description": "Không có",
+            "stats": {
+              "attack": 6,
+              "hp": 9
+            },
+            "imageUrl": "https://media.discordapp.net/attachments/1351633975046570106/1414324288558989443/latest_14.jpg?ex=68bf27a3&is=68bdd623&hm=33b4b523dc94e66237f90dff72315cb8d4559339e8782432d1f84e9e3b786d8d&=&format=webp&width=405&height=694"
+          },
+          "count": 2
+        },
+        {
+          "type": "Ngai_Thánh_Thần_Và_Thế_Tục",
+          "rarity": "Hiếm",
+          "data": {
+            "name": "Ngai Thánh Thần Và Thế Tục",
+            "rarity": "Hiếm",
+            "description": "Không có",
+            "stats": {
+              "attack": 12,
+              "hp": 15
+            },
+            "imageUrl": "https://media.discordapp.net/attachments/1351633975046570106/1414325368235495539/latest_15.jpg?ex=68bf28a4&is=68bdd724&hm=b91b06858b5f9fa3c3a1fc3fc8d40a5aa7d63800c5faacd31fd712aaabe93bf7&=&format=webp&width=405&height=694"
+          },
+          "count": 10
+        },
+        {
+          "type": "Sashimi",
+          "rarity": "Thường",
+          "data": {
+            "name": "Sashimi",
+            "rarity": "Thường",
+            "description": "Không có",
+            "stats": {
+              "attack": 6,
+              "hp": 9
+            },
+            "imageUrl": "https://media.discordapp.net/attachments/1351633975046570106/1414324221235958010/latest_8.jpg?ex=68bf2793&is=68bdd613&hm=dbff2bfbaa08083012357886da8cb1dc9a3c6ed89df9376874d2a77f6adc7841&=&format=webp&width=405&height=694"
+          },
+          "count": 3
+        },
+        {
+          "type": "Gà_Nấu_Hoa_Ngọt",
+          "rarity": "Thường",
+          "data": {
+            "name": "Gà Nấu Hoa Ngọt",
+            "rarity": "Thường",
+            "description": "Không có",
+            "stats": {
+              "attack": 6,
+              "hp": 9
+            },
+            "imageUrl": "https://media.discordapp.net/attachments/1351633975046570106/1414324223845072977/latest_3.jpg?ex=68bf2793&is=68bdd613&hm=f3ee8990df0ce4fe05539ec54f1117abdb63301aee0c3e67b42238aeeac2fe34&=&format=webp&width=405&height=694"
+          },
+          "count": 2
+        },
+        {
+          "type": "Cơm_Cháy_Tuyệt_Vân",
+          "rarity": "Thường",
+          "data": {
+            "name": "Cơm Cháy Tuyệt Vân",
+            "rarity": "Thường",
+            "description": "Không có",
+            "stats": {
+              "attack": 5,
+              "hp": 10
+            },
+            "imageUrl": "https://media.discordapp.net/attachments/1351633975046570106/1414324224935464970/latest.jpg?ex=68bf2794&is=68bdd614&hm=2b1d423660d4813a2c3f74d0f6ee91613ce595b33a81149773835300c91da913&=&format=webp&width=405&height=694"
+          },
+          "count": 4
+        },
+        {
+          "type": "Trứng_Chiên",
+          "rarity": "Thường",
+          "data": {
+            "name": "Trứng Chiên",
+            "rarity": "Thường",
+            "description": "Không có",
+            "stats": {
+              "attack": 6,
+              "hp": 9
+            },
+            "imageUrl": "https://media.discordapp.net/attachments/1351633975046570106/1414324221726818355/latest_7.jpg?ex=68bf2793&is=68bdd613&hm=0661a9fd5fc3d78f4e84615c2578716cb23b0bf69fac95312cb365dab9e687a8&=&format=webp&width=405&height=694"
+          },
+          "count": 3
+        },
+        {
+          "type": "Gà_Nướng_Tandoori",
+          "rarity": "Thường",
+          "data": {
+            "name": "Gà Nướng Tandoori",
+            "rarity": "Thường",
+            "description": "Không có",
+            "stats": {
+              "attack": 6,
+              "hp": 9
+            },
+            "imageUrl": "https://media.discordapp.net/attachments/1351633975046570106/1414324220850208878/latest_9.jpg?ex=68bf2793&is=68bdd613&hm=608516fcc080c1b3c864b7052628b1db4630dde9df19384783745c41d7415078&=&format=webp&width=405&height=694"
+          },
+          "count": 5
+        },
+        {
+          "type": "Cua_Phủ_Bơ",
+          "rarity": "Thường",
+          "data": {
+            "name": "Cua Phủ Bơ",
+            "rarity": "Thường",
+            "description": "Không có",
+            "stats": {
+              "attack": 6,
+              "hp": 9
+            },
+            "imageUrl": "https://media.discordapp.net/attachments/1351633975046570106/1414324290710409306/latest_10.jpg?ex=68bf27a3&is=68bdd623&hm=6ebaa9d0308b459d1145bf1322801979ee2b88c6d0467e34b2ad9a65d6503f78&=&format=webp&width=405&height=694"
+          },
+          "count": 1
+        },
+        {
+          "type": "Kamisato_Ayaka",
+          "rarity": "Sử Thi",
+          "data": {
+            "name": "Kamisato Ayaka",
+            "rarity": "Sử Thi",
+            "description": "Như sương ngưng đọng, như hạc trong đình.",
+            "stats": {
+              "attack": 22,
+              "hp": 28
+            },
+            "imageUrl": "https://media.discordapp.net/attachments/1351633975046570106/1414326558889480302/Kamisato_Ayaka_Dynamic_Skin.gif?ex=68bf29c0&is=68bdd840&hm=2d650e9d91c3f653e8d65b0b107aa5174e5d93042a7dd2e5f47101c95fc4a794&=&width=413&height=695"
+          },
+          "count": 2
+        },
+        {
+          "type": "Thịt_Rừng_Cuộn_Bạc_Hà",
+          "rarity": "Thường",
+          "data": {
+            "name": "Thịt Rừng Cuộn Bạc Hà",
+            "rarity": "Thường",
+            "description": "Không có",
+            "stats": {
+              "attack": 6,
+              "hp": 9
+            },
+            "imageUrl": "https://media.discordapp.net/attachments/1351633975046570106/1414324222637117541/latest_6.jpg?ex=68bf2793&is=68bdd613&hm=9bcd019495e07e520d74fbab0e90aa595f23b0f57984d932b5f5ce07d70cd2bd&=&format=webp&width=405&height=694"
+          },
+          "count": 1
+        },
+        {
+          "type": "Nhung_Tùng_Ủ_Thịt_Cuộn",
+          "rarity": "Thường",
+          "data": {
+            "name": "Nhung Tùng Ủ Thịt Cuộn",
+            "rarity": "Thường",
+            "description": "Không có",
+            "stats": {
+              "attack": 6,
+              "hp": 9
+            },
+            "imageUrl": "https://media.discordapp.net/attachments/1351633975046570106/1414324289536262336/latest_12.jpg?ex=68bf27a3&is=68bdd623&hm=aea2b489e3de38f35f30d664f83a488fe8fca892b607c29749d8b0133c6d5c89&=&format=webp&width=405&height=694"
+          },
+          "count": 2
+        },
+        {
+          "type": "Vũ_Điệu_Vui_Vẻ",
+          "rarity": "Hiếm",
+          "data": {
+            "name": "Vũ Điệu Vui Vẻ",
+            "rarity": "Hiếm",
+            "description": "Không có",
+            "stats": {
+              "attack": 15,
+              "hp": 12
+            },
+            "imageUrl": "https://media.discordapp.net/attachments/1351633975046570106/1414325367191376023/latest_18.jpg?ex=68bf28a4&is=68bdd724&hm=a0302beb4a5c5a7aef89b735340dc74f61793d7bd708a51c052f62a177068929&=&format=webp&width=405&height=694"
+          },
+          "count": 4
+        },
+        {
+          "type": "Gà_Xông_Khói",
+          "rarity": "Thường",
+          "data": {
+            "name": "Gà Xông Khói",
+            "rarity": "Thường",
+            "description": "Không có",
+            "stats": {
+              "attack": 6,
+              "hp": 9
+            },
+            "imageUrl": "https://media.discordapp.net/attachments/1351633975046570106/1414324224184680520/latest_2.jpg?ex=68bf2793&is=68bdd613&hm=64638bab092e320955bae890d341935ca157c552040c886e9a4d43d4152d7a60&=&format=webp&width=405&height=694"
+          },
+          "count": 2
+        },
+        {
+          "type": "Bánh_Khoai_Tây",
+          "rarity": "Thường",
+          "data": {
+            "name": "Bánh Khoai Tây",
+            "rarity": "Thường",
+            "description": "Không có",
+            "stats": {
+              "attack": 6,
+              "hp": 9
+            },
+            "imageUrl": "https://media.discordapp.net/attachments/1351633975046570106/1414324223358402702/latest_4.jpg?ex=68bf2793&is=68bdd613&hm=b81de250efbb3b61557cc920a9f93f4a933cfcde2162115afed1761038aeeb1a&=&format=webp&width=405&height=694"
+          },
+          "count": 1
+        },
+        {
+          "type": "Lăng_Kính_Hút_Năng_Lượng",
+          "rarity": "Hiếm",
+          "data": {
+            "name": "Lăng Kính Hút Năng Lượng",
+            "rarity": "Hiếm",
+            "description": "Không có",
+            "stats": {
+              "attack": 15,
+              "hp": 12
+            },
+            "imageUrl": "https://media.discordapp.net/attachments/1351633975046570106/1414325366822273125/latest_19.jpg?ex=68bf28a4&is=68bdd724&hm=e415b113aa9f42f731257e26d1f87dd1eed25c7929ebdd7e1ffda03041e9d486&=&format=webp&width=405&height=694"
+          },
+          "count": 4
+        },
+        {
+          "type": "Sân_Vườn_Cổ_Xưa",
+          "rarity": "Hiếm",
+          "data": {
+            "name": "Sân Vườn Cổ Xưa",
+            "rarity": "Hiếm",
+            "description": "Không có",
+            "stats": {
+              "attack": 15,
+              "hp": 12
+            },
+            "imageUrl": "https://media.discordapp.net/attachments/1351633975046570106/1414325367539499038/latest_17.jpg?ex=68bf28a4&is=68bdd724&hm=656ac89d14deab2cf57687a886be64273876319c54aad7ba4dd89a739803b59d&=&format=webp&width=405&height=694"
+          },
+          "count": 5
+        },
+        {
+          "type": "Macaron_Cầu_Vồng",
+          "rarity": "Thường",
+          "data": {
+            "name": "Macaron Cầu Vồng",
+            "rarity": "Thường",
+            "description": "Không có",
+            "stats": {
+              "attack": 6,
+              "hp": 9
+            },
+            "imageUrl": "https://media.discordapp.net/attachments/1351633975046570106/1414324288982351872/latest_13.jpg?ex=68bf27a3&is=68bdd623&hm=7b661be1e013eb153a0152ff0e828e89ea8800dd2ee4c64efb96aba927b83d99&=&format=webp&width=405&height=694"
+          },
+          "count": 1
+        },
+        {
+          "type": "Khoai_Tây_Chiên_Cá",
+          "rarity": "Thường",
+          "data": {
+            "name": "Khoai Tây Chiên Cá",
+            "rarity": "Thường",
+            "description": "Không có",
+            "stats": {
+              "attack": 6,
+              "hp": 9
+            },
+            "imageUrl": "https://media.discordapp.net/attachments/1351633975046570106/1414324289926336522/latest_11.jpg?ex=68bf27a3&is=68bdd623&hm=1fa1a76fcb3272a1502bd29871807c14afe196b34f14108b3129146fd458884d&=&format=webp&width=405&height=694"
+          },
+          "count": 2
+        },
+        {
+          "type": "Thôn_Tinh_Kình_Ngư",
+          "rarity": "Huyền Thoại",
+          "data": {
+            "name": "Thôn Tinh Kình Ngư",
+            "rarity": "Huyền Thoại",
+            "description": "Trong những câu chuyện kỳ ảo nhất hay những lời dối trá điên cuồng nhất, ở những ngôi sao sâu thẳm trong vũ trụ có lẽ cũng đầy ắp sự sống như Teyvat, mà vũ trụ thì cũng giống như đại dương. Có thể vũ trụ vẫn luôn cố gắng xâm nhập vào Teyvat, có lẽ một thế lực cao hơn đã tạo ra biên giới để bảo vệ thế giới này.",
+            "stats": {
+              "attack": 40,
+              "hp": 40
+            },
+            "imageUrl": "https://media.discordapp.net/attachments/1351633975046570106/1414327332922982430/All-Devouring_Narwhal_Dynamic_Skin.gif?ex=68bf2a79&is=68bdd8f9&hm=148662a2e2e14e5d009ea95cb05614a6cfb64ca37b7f03e345f51de387790140&=&width=381&height=643"
+          },
+          "count": 1
+        },
+        {
+          "type": "Navia",
+          "rarity": "Sử Thi",
+          "data": {
+            "name": "Navia",
+            "rarity": "Sử Thi",
+            "description": "Hoa Hồng Vàng Tung Bay.",
+            "stats": {
+              "attack": 22,
+              "hp": 28
+            },
+            "imageUrl": "https://media.discordapp.net/attachments/1351633975046570106/1414326557195112498/Navia_Dynamic_Skin.gif?ex=68bf29c0&is=68bdd840&hm=27c4f363a6bdf044771354b96f6c59a3a6c7f78e9075bb6652740b917ca3d35a&=&width=383&height=644"
+          },
+          "count": 4
+        },
+        {
+          "type": "Eremite_Diệp_Luân_Vũ_Giả",
+          "rarity": "Sử Thi",
+          "data": {
+            "name": "Eremite Diệp Luân Vũ Giả",
+            "rarity": "Sử Thi",
+            "description": "Con dân của cát có truyền thống âm nhạc và vũ đạo, ban đầu là để tế thần, về sau là dùng vũ đạo và kỹ thuật chiến đấu để lấy lòng vua.",
+            "stats": {
+              "attack": 22,
+              "hp": 28
+            },
+            "imageUrl": "https://media.discordapp.net/attachments/1351633975046570106/1414326557714940025/Eremite_Floral_Ring-Dancer_Dynamic_Skin.gif?ex=68bf29c0&is=68bdd840&hm=e5ecb4fc8b1ac7c686b5d62a3d074f3a528cec51de2ee6d7df53544c4aacc442&=&width=380&height=644"
+          },
+          "count": 1
+        },
+        {
+          "type": "Kaedehara_Kazuha",
+          "rarity": "Sử Thi",
+          "data": {
+            "name": "Kaedehara Kazuha",
+            "rarity": "Sử Thi",
+            "description": "Vui thú thưởng hoa nghe chim hót, đường dài gió lộng trăng sáng soi.",
+            "stats": {
+              "attack": 22,
+              "hp": 28
+            },
+            "imageUrl": "https://media.discordapp.net/attachments/1351633975046570106/1414326558398877886/Kaedehara_Kazuha_Dynamic_Skin.gif?ex=68bf29c0&is=68bdd840&hm=2ec36f5bda2cc86a5b2a479096a6f61f86ddf9afb0d25e1e2055390df2f4429c&=&width=413&height=695"
+          },
+          "count": 1
+        }
+      ],
+      "birthday": {
+        "month": 11,
+        "day": 10
+      }
+    },
+    "697080058099007489": {
+      "balance": 9878000,
+      "lastDaily": 1757183012014,
+      "lastLoanDate": null,
+      "debt": 0,
+      "banner": "banner4.png",
+      "badge": "daigia.png",
+      "ownedBanners": [
+        "banner.png",
+        "banner4.png"
+      ],
+      "ownedBadges": [
+        "daigia.png"
+      ],
+      "city": {
+        "buildings": [],
+        "lastIncomeClaim": 1757182985301
+      },
+      "monsters": [],
+      "ownedEquipment": []
+    },
+    "1399007991629480097": {
+      "balance": 41490000,
+      "lastDaily": 1757151604212,
+      "lastLoanDate": null,
+      "debt": 0,
+      "banner": "banner3.png",
+      "badge": "daigia.png",
+      "ownedBanners": [
+        "banner3.png"
+      ],
+      "ownedBadges": [
+        "newbie.png"
+      ],
+      "city": {
+        "buildings": [
+          {
+            "type": "toathap",
+            "level": 1
+          },
+          {
+            "type": "toathap",
+            "level": 1
+          },
+          {
+            "type": "congvien",
+            "level": 0
+          },
+          {
+            "type": "truonghoc",
+            "level": 0
+          },
+          {
+            "type": "benhvien",
+            "level": 0
+          },
+          {
+            "type": "sokhaiat",
+            "level": 1
+          },
+          {
+            "type": "nhaho",
+            "level": 2
+          },
+          {
+            "type": "toathap",
+            "level": 1
+          },
+          {
+            "type": "sanvanthethao",
+            "level": 0
+          },
+          {
+            "type": "toathap",
+            "level": 1
+          },
+          {
+            "type": "nhamay",
+            "level": 1
+          },
+          {
+            "type": "toathap",
+            "level": 1
+          },
+          {
+            "type": "toathap",
+            "level": 1
+          },
+          {
+            "type": "toathap",
+            "level": 1
+          },
+          {
+            "type": "toathap",
+            "level": 1
+          },
+          {
+            "type": "toathap",
+            "level": 1
+          },
+          {
+            "type": "toathap",
+            "level": 1
+          },
+          {
+            "type": "toathap",
+            "level": 1
+          },
+          {
+            "type": "toathap",
+            "level": 1
+          },
+          {
+            "type": "toathap",
+            "level": 1
+          },
+          {
+            "type": "toathap",
+            "level": 1
+          },
+          {
+            "type": "toathap",
+            "level": 1
+          },
+          {
+            "type": "toathap",
+            "level": 1
+          },
+          {
+            "type": "toathap",
+            "level": 1
+          },
+          {
+            "type": "toathap",
+            "level": 1
+          }
+        ],
+        "lastIncomeClaim": 1757493871168
+      },
+      "monsters": [
+        {
+          "id": "c4c29638-88aa-4b6b-b14a-da3614ca5e35",
+          "type": "rong_con",
+          "name": "Rồng Con",
+          "level": 1,
+          "exp": 20,
+          "hp": 120,
+          "maxHp": 120,
+          "equippedEquipment": "a8ec2eb7-9ff3-40e7-af43-14b478aef521"
+        },
+        {
+          "id": "ccf4c134-e00e-4e81-8da1-76373b61cca5",
+          "type": "chim_lua",
+          "name": "Chim Lửa",
+          "level": 1,
+          "exp": 0,
+          "hp": 90,
+          "maxHp": 90,
+          "equippedEquipment": "e3db4bc0-379e-408a-a8da-63ffdcce4fa5"
+        },
+        {
+          "id": "cae48cb6-9fe5-4f5a-9eb6-b4604e959eaa",
+          "type": "sieu_nhan_gao",
+          "name": "Siêu Nhân Gạo",
+          "level": 1,
+          "exp": 0,
+          "hp": 100,
+          "maxHp": 100,
+          "equippedEquipment": "58a89c78-a11b-4620-88cb-c16417a0cbc2"
+        }
+      ],
+      "ownedEquipment": [
+        {
+          "id": "58a89c78-a11b-4620-88cb-c16417a0cbc2",
+          "type": "cung_than_cong"
+        },
+        {
+          "id": "a8ec2eb7-9ff3-40e7-af43-14b478aef521",
+          "type": "vong_co_mana"
+        },
+        {
+          "id": "e3db4bc0-379e-408a-a8da-63ffdcce4fa5",
+          "type": "cung_than_cong"
+        },
+        {
+          "id": "1c367d7e-7db2-447e-aa64-1b0d2a150ae7",
+          "type": "kiem_lua"
+        },
+        {
+          "id": "65144af5-ef60-4bcf-a50b-46b17892542c",
+          "type": "ao_giap_da"
+        },
+        {
+          "id": "80bf9429-313a-4ae0-91fd-68f7c866db62",
+          "type": "ao_giap_sat"
+        },
+        {
+          "id": "de7d709f-0d56-4365-b1ef-73824ac9904c",
+          "type": "khien_rong"
+        },
+        {
+          "id": "eb11e126-3057-4575-9545-e98fef5d00a5",
+          "type": "nhan_suc_song"
+        },
+        {
+          "id": "134f74a8-1ef4-4e04-af8e-e47d59a8d103",
+          "type": "non_hiep_si"
+        }
+      ],
+      "cards": []
+    },
+    "1379037917015572560": {
+      "balance": 10000000,
+      "lastDaily": 0,
+      "lastLoanDate": null,
+      "debt": 0,
+      "banner": "banner.png",
+      "badge": "lehoinguyentieu.png",
+      "ownedBanners": [
+        "banner.png"
+      ],
+      "ownedBadges": [
+        "lehoinguyentieu.png"
+      ],
+      "city": {
+        "buildings": [],
+        "lastIncomeClaim": 1757185067053
+      },
+      "monsters": [],
+      "ownedEquipment": []
+    },
+    "757196146622857288": {
+      "balance": 49823000,
+      "lastDaily": 1757073320693,
+      "lastLoanDate": null,
+      "debt": 0,
+      "banner": "banner5.png",
+      "badge": "daigia.png",
+      "ownedBanners": [
+        "banner5.png"
+      ],
+      "ownedBadges": [
+        "newbie.png"
+      ],
+      "city": {
+        "buildings": [
+          {
+            "type": "nhaho",
+            "level": 2
+          },
+          {
+            "type": "congvien",
+            "level": 1
+          },
+          {
+            "type": "sanvanthethao",
+            "level": 0
+          },
+          {
+            "type": "sokhaiat",
+            "level": 1
+          },
+          {
+            "type": "benhvien",
+            "level": 1
+          },
+          {
+            "type": "toathap",
+            "level": 1
+          },
+          {
+            "type": "nhamay",
+            "level": 0
+          },
+          {
+            "type": "nhamay",
+            "level": 1
+          },
+          {
+            "type": "benhvien",
+            "level": 1
+          },
+          {
+            "type": "toathap",
+            "level": 1
+          },
+          {
+            "type": "toathap",
+            "level": 1
+          },
+          {
+            "type": "toathap",
+            "level": 1
+          },
+          {
+            "type": "toathap",
+            "level": 1
+          },
+          {
+            "type": "toathap",
+            "level": 1
+          },
+          {
+            "type": "toathap",
+            "level": 1
+          },
+          {
+            "type": "toathap",
+            "level": 1
+          },
+          {
+            "type": "toathap",
+            "level": 1
+          },
+          {
+            "type": "toathap",
+            "level": 1
+          },
+          {
+            "type": "toathap",
+            "level": 1
+          },
+          {
+            "type": "toathap",
+            "level": 1
+          },
+          {
+            "type": "toathap",
+            "level": 1
+          },
+          {
+            "type": "toathap",
+            "level": 1
+          },
+          {
+            "type": "toathap",
+            "level": 1
+          },
+          {
+            "type": "toathap",
+            "level": 1
+          },
+          {
+            "type": "toathap",
+            "level": 1
+          }
+        ],
+        "lastIncomeClaim": 1757616973428
+      },
+      "monsters": [
+        {
+          "id": "f2ecd1c3-c238-4515-9c5d-1233d4cdd7c9",
+          "type": "goblin",
+          "name": "Goblin",
+          "level": 1,
+          "exp": 0,
+          "hp": 70,
+          "maxHp": 70
+        },
+        {
+          "id": "cc3aa91b-261d-4ad6-8153-091bf0992ee7",
+          "type": "rong_con",
+          "name": "Rồng Con",
+          "level": 1,
+          "exp": 20,
+          "hp": 120,
+          "maxHp": 120
+        },
+        {
+          "id": "53c681f6-1ef4-4dad-93a1-747cbb195b9f",
+          "type": "sieu_nhan_gao",
+          "name": "Siêu Nhân Gạo",
+          "level": 1,
+          "exp": 15,
+          "hp": 100,
+          "maxHp": 100
+        }
+      ],
+      "ownedEquipment": [
+        {
+          "id": "313c49a1-5df3-4c96-844d-2d2c9122864a",
+          "type": "ao_giap_sat"
+        },
+        {
+          "id": "595919f1-8213-4bf1-8b2e-f9d2c4d6060e",
+          "type": "vong_co_mana"
+        },
+        {
+          "id": "70f7496d-e580-478b-ba18-18522d1bc71c",
+          "type": "cung_than_cong"
+        }
+      ],
+      "cards": []
+    },
+    "1273442781163159657": {
+      "balance": 3247500,
+      "lastDaily": 0,
+      "lastLoanDate": 1757232125948,
+      "debt": 0,
+      "banner": "banner.png",
+      "badge": "lehoinguyentieu.png",
+      "ownedBanners": [
+        "banner.png"
+      ],
+      "ownedBadges": [
+        "lehoinguyentieu.png"
+      ],
+      "city": {
+        "buildings": [],
+        "lastIncomeClaim": 1757187412870
+      },
+      "monsters": [],
+      "ownedEquipment": [],
+      "cards": [],
+      "adventure": {
+        "currentLocation": null,
+        "inventory": []
+      }
+    },
+    "1133051868835225610": {
+      "balance": 100000,
+      "lastDaily": 0,
+      "lastLoanDate": null,
+      "debt": 0,
+      "banner": "banner.png",
+      "badge": "lehoinguyentieu.png",
+      "ownedBanners": [
+        "banner.png"
+      ],
+      "ownedBadges": [
+        "lehoinguyentieu.png"
+      ],
+      "city": {
+        "buildings": [],
+        "lastIncomeClaim": 1757187526915
+      },
+      "monsters": [],
+      "ownedEquipment": []
+    },
+    "1055160343216783400": {
+      "balance": 500000,
+      "lastDaily": 0,
+      "lastLoanDate": null,
+      "debt": 0,
+      "banner": "banner.png",
+      "badge": "lehoinguyentieu.png",
+      "ownedBanners": [
+        "banner.png"
+      ],
+      "ownedBadges": [
+        "lehoinguyentieu.png"
+      ],
+      "city": {
+        "buildings": [
+          {
+            "type": "sanvanthethao",
+            "level": 0
+          }
+        ],
+        "lastIncomeClaim": 1757187924901
+      },
+      "monsters": [],
+      "ownedEquipment": [],
+      "cards": []
+    },
+    "1197112286326825014": {
+      "balance": 0,
+      "lastDaily": 1757600815216,
+      "lastLoanDate": null,
+      "debt": 0,
+      "banner": "banner.png",
+      "badge": "lehoinguyentieu.png",
+      "ownedBanners": [
+        "banner.png"
+      ],
+      "ownedBadges": [
+        "lehoinguyentieu.png"
+      ],
+      "city": {
+        "buildings": [],
+        "lastIncomeClaim": 1757525927649
+      },
+      "monsters": [],
+      "ownedEquipment": [],
+      "cards": []
+    },
+    "1156618301456269462": {
+      "balance": 100000,
+      "lastDaily": 0,
+      "lastLoanDate": null,
+      "debt": 0,
+      "banner": "banner.png",
+      "badge": "thulinh.png",
+      "ownedBanners": [
+        "banner.png"
+      ],
+      "ownedBadges": [
+        "lehoinguyentieu.png"
+      ],
+      "city": {
+        "buildings": [],
+        "lastIncomeClaim": 1757675797664
+      },
+      "monsters": [],
+      "ownedEquipment": [],
+      "cards": []
+    },
+    "461439087325347860": {
+      "balance": 100000,
+      "lastDaily": 0,
+      "lastLoanDate": null,
+      "debt": 0,
+      "banner": "banner.png",
+      "badge": "thulinh.png",
+      "ownedBanners": [
+        "banner.png"
+      ],
+      "ownedBadges": [
+        "lehoinguyentieu.png"
+      ],
+      "city": {
+        "buildings": [],
+        "lastIncomeClaim": 1757678804502
+      },
+      "monsters": [],
+      "ownedEquipment": [],
+      "cards": []
+    },
+    "1404793124991139850": {
+      "balance": 100000,
+      "lastDaily": 0,
+      "lastLoanDate": null,
+      "debt": 0,
+      "banner": "banner.png",
+      "badge": "thulinh.png",
+      "ownedBanners": [
+        "banner.png"
+      ],
+      "ownedBadges": [
+        "lehoinguyentieu.png"
+      ],
+      "city": {
+        "buildings": [],
+        "lastIncomeClaim": 1757747118213
+      },
+      "monsters": [],
+      "ownedEquipment": [],
+      "cards": []
+    }
+  },
+  "lixi": {},
+  "games": {
+    "1351633975046570106": {
+      "status": "waiting_for_players",
+      "players": {},
+      "bet": 1000,
+      "deck": [],
+      "dealerHand": [],
+      "messageId": "1418513737920413797",
+      "currentPlayerId": null
+    }
+  },
+  "marketplace": [
+    {
+      "id": "4ffcea16-6a73-4eb9-b374-e4327f39d8d8",
+      "cardType": "Thôn_Tinh_Kình_Ngư",
+      "rarity": "Huyền Thoại",
+      "sellerId": "757207480785829928",
+      "price": 1000000,
+      "amount": 1
+    },
+    {
+      "id": "b100b84b-c0b5-499b-b496-c034e0afbb76",
+      "cardType": "Navia",
+      "rarity": "Sử Thi",
+      "sellerId": "757207480785829928",
+      "price": 100000,
+      "amount": 1
+    }
+  ],
+  "marketData": {},
+  "lastMarketUpdate": 0
+}
