@@ -8,9 +8,13 @@ const cron = require('node-cron');
 const express = require("express");
 const app = express();
 
-app.get("/", (req, res) => res.send("Bot is running!"));
+app.get("/", (req, res) => {
+  res.send("OK"); // chỉ trả về chữ OK thay vì nhiều nội dung
+  console.log("✅ Ping received from cron-job.org");
+});
+
 app.listen(process.env.PORT || 3000, () => {
-  console.log("🌐 Web service online (Render healthcheck)");
+  console.log(`🌐 Web server is running on port ${process.env.PORT || 3000}`);
 });
 
 const client = new Client({
