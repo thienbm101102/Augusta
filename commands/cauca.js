@@ -58,7 +58,7 @@ module.exports = {
         
         const initialEmbed = new EmbedBuilder()
             .setColor('#0099ff')
-            .setTitle('<:fishing:1412513704989429760> Đang Câu Cá ...')
+            .setTitle('<a:Verified:1406631971509243974> Đang Câu Cá ...')
             .setDescription('**Bạn đang kiên nhẫn chờ đợi, có thứ gì đó đang cắn câu!**\n\n')
             .setFooter({ text: `Người câu: ${interaction.member.displayName}` });
 
@@ -88,7 +88,7 @@ module.exports = {
 
         const finalEmbed = new EmbedBuilder()
             .setColor(finalColor)
-            .setTitle('**<:fishing:1412513704989429760> Kết Quả Câu Cá**')
+            .setTitle('**<a:Verified:1406631971509243974> Kết Quả Câu Cá**')
             .setDescription(resultMessage)
             .addFields(
                 { name: 'Vật phẩm nhận:', value: `${loot.emoji} ${loot.name}`, inline: true },
@@ -98,4 +98,5 @@ module.exports = {
 
         await interaction.editReply({ embeds: [finalEmbed] });
     },
+
 };
