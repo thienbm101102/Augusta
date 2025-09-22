@@ -1,5 +1,5 @@
-const { SlashCommandBuilder, EmbedBuilder, InteractionFlags } = require('discord.js');
-const { addBalance, getBalance, getUser, saveDB } = require('../db');
+const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+const { addBalance, getBalance, getUser } = require('../db');
 
 // --- Cấu hình trò chơi ---
 const BUILDINGS = {
@@ -167,13 +167,13 @@ module.exports = {
 
     async execute(interaction) {
         const userId = interaction.user.id;
-        const user = getUser(userId);
+        const user = await getUser(userId);
         const subcommand = interaction.options.getSubcommand();
-        const userBalance = getBalance(userId);
+        const userBalance = await getBalance(userId);
 
         if (!user.city) {
             user.city = { buildings: [], lastIncomeClaim: Date.now() };
-            saveDB();
+            await user.save();
         }
 
         // Đảm bảo cấu trúc dữ liệu luôn chính xác
@@ -190,7 +190,7 @@ module.exports = {
                 return b;
             })
             .filter(b => b && BUILDINGS[b.type]);
-        saveDB();
+        await user.save();
 
         switch (subcommand) {
             case 'xay': {
@@ -209,16 +209,16 @@ module.exports = {
                     return interaction.reply({ content: `<a:AbbyShocked:1393909368138895411> Bạn không đủ tiền để xây **${buildingData.name}**! Chi phí: **${level1.cost.toLocaleString()}**<a:diamondgem:1402590496647413811>`, ephemeral: true });
                 }
 
-                addBalance(userId, -level1.cost);
+                await addBalance(userId, -level1.cost);
                 user.city.buildings.push({ type: buildingKey, level: 0 });
-                saveDB();
+                await user.save();
 
                 const embed = new EmbedBuilder()
                     .setTitle(`<a:Verified:1406631971509243974> Thành Phố Của ${interaction.member.displayName}`)
                     .setDescription(`**${interaction.member.displayName}** đã xây **${buildingData.name}**!`)
                     .addFields(
                         { name: 'Chi phí', value: `\`${level1.cost.toLocaleString()}\`<a:diamondgem:1402590496647413811>`, inline: true },
-                        { name: 'Số dư mới', value: `\`${getBalance(userId).toLocaleString()}\`<a:diamondgem:1402590496647413811>`, inline: true },
+                        { name: 'Số dư mới', value: `\`${(await getBalance(userId)).toLocaleString()}\`<a:diamondgem:1402590496647413811>`, inline: true },
                     )
                     .setColor('#2ecc71');
 
@@ -246,9 +246,9 @@ module.exports = {
                     return interaction.reply({ content: `<a:AbbyShocked:1393909368138895411> Bạn không đủ tiền để nâng cấp! Chi phí: **${upgradeCost.toLocaleString()}**<a:diamondgem:1402590496647413811>`, ephemeral: true });
                 }
 
-                addBalance(userId, -upgradeCost);
+                await addBalance(userId, -upgradeCost);
                 buildingToUpgrade.level = nextLevel;
-                saveDB();
+                await user.save();
 
                 const updatedGrid = generateCityGrid(user.city);
                 const embed = new EmbedBuilder()
@@ -256,7 +256,7 @@ module.exports = {
                     .setDescription(`Công trình **${buildingData.name}** đã được nâng cấp lên cấp độ **${nextLevel + 1}**!`)
                     .addFields(
                         { name: 'Chi phí', value: `\`${upgradeCost.toLocaleString()}\`<a:diamondgem:1402590496647413811>`, inline: true },
-                        { name: 'Số dư mới', value: `\`${getBalance(userId).toLocaleString()}\`<a:diamondgem:1402590496647413811>`, inline: true },
+                        { name: 'Số dư mới', value: `\`${(await getBalance(userId)).toLocaleString()}\`<a:diamondgem:1402590496647413811>`, inline: true },
                     )
                     .setColor('#9b59b6');
 
@@ -274,7 +274,7 @@ module.exports = {
 
                 const timeUntilNextClaim = INCOME_INTERVAL - (Date.now() - (user.city.lastIncomeClaim || Date.now()));
                 const minutesLeft = Math.ceil(timeUntilNextClaim / 1000 / 60);
-                const estimatedWealth = (finalIncome * (24 * 7)) + getBalance(userId);
+                const estimatedWealth = (finalIncome * (24 * 7)) + (await getBalance(userId));
 
                 const embed = new EmbedBuilder()
                     .setTitle(`<a:Verified:1406631971509243974> ${interaction.member.displayName}'s City`)
@@ -316,13 +316,13 @@ module.exports = {
                 
                 if (totalClaim === 0) {
                     user.city.lastIncomeClaim = now;
-                    saveDB();
+                    await user.save();
                     return interaction.reply({ content: 'Thành phố của bạn chưa có công trình nào để thu hoạch.', ephemeral: true });
                 }
 
-                addBalance(userId, totalClaim);
+                await addBalance(userId, totalClaim);
                 user.city.lastIncomeClaim = now;
-                saveDB();
+                await user.save();
 
                 const { happiness } = calculateStats(user.city);
 
@@ -330,7 +330,7 @@ module.exports = {
                     .setTitle(`<a:Verified:1406631971509243974> Thu Hoạch Thành Công!`)
                     .setDescription(`Bạn đã thu hoạch thành công **${totalClaim.toLocaleString()}**<a:diamondgem:1402590496647413811> từ thành phố của mình!`)
                     .addFields(
-                        { name: 'Số dư mới', value: `\`${getBalance(userId).toLocaleString()}\`<a:diamondgem:1402590496647413811>`, inline: true },
+                        { name: 'Số dư mới', value: `\`${(await getBalance(userId)).toLocaleString()}\`<a:diamondgem:1402590496647413811>`, inline: true },
                         { name: 'Số lượt thu hoạch', value: `${intervalsPassed} lượt`, inline: true },
                         { name: 'Hiệu quả thu nhập', value: `+${happiness}% Hạnh phúc`, inline: true }
                     )
