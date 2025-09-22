@@ -6,19 +6,19 @@ const db = require("../db"); // Import module db mới để dùng MongoDB
 
 // --- cấu hình đường dẫn tài nguyên ---
 const FONT_FILE = "Roboto-Bold.ttf"; // đổi tên nếu bạn dùng font khác
-const FONT_FAMILY = "RobotoBold"; // tên alias sẽ dùng trong ctx.font
+const FONT_FAMILY = "RobotoBold"; // alias sẽ dùng trong ctx.font
 
-// --- đăng ký font (an toàn, có fallback) ---
+// --- đăng ký font (có fallback) ---
 try {
   const fontPath = path.join(__dirname, "../assets/fonts", FONT_FILE);
   if (fs.existsSync(fontPath)) {
     Canvas.registerFont(fontPath, { family: FONT_FAMILY });
     console.log(`✅ Loaded font: ${fontPath}`);
   } else {
-    console.log(`⚠️ Font not found: ${fontPath} -> fallback to Sans`);
+    console.log(`⚠️ Font not found: ${fontPath} -> dùng fallback Sans`);
   }
 } catch (e) {
-  console.log("⚠️ Cannot register font -> fallback to Sans:", e.message);
+  console.log("⚠️ Cannot register font:", e.message);
 }
 
 // Hàm roundRect
@@ -47,34 +47,31 @@ module.exports = {
         .setRequired(false)
     ),
   async execute(interaction) {
-    // Luôn deferReply trước mọi logic mất thời gian
-    await interaction.deferReply(); 
+    await interaction.deferReply();
 
-    const targetUser = interaction.options.getMember("user") || interaction.member;
+    const targetUser =
+      interaction.options.getMember("user") || interaction.member;
 
-    // Lấy thông tin người dùng từ MongoDB
-    // db.getUser() là hàm bạn đã tạo để lấy dữ liệu từ MongoDB
+    // Lấy dữ liệu từ MongoDB
     const userData = await db.getUser(targetUser.id);
     const userBalance = userData?.balance ?? 0;
 
-    // Tạo canvas
+    // Canvas
     const canvas = Canvas.createCanvas(700, 250);
     const ctx = canvas.getContext("2d");
 
-    const bannerFile = userData.banner || "banner.png"; // default nếu chưa chọn
+    const bannerFile = userData.banner || "banner.png";
     const bannerPath = path.join(__dirname, "../assets/banners", bannerFile);
 
-    // Vẽ banner nền
     if (fs.existsSync(bannerPath)) {
       const banner = await Canvas.loadImage(bannerPath);
       ctx.drawImage(banner, 0, 0, canvas.width, canvas.height);
     } else {
-      // fallback nền tối nếu không tìm thấy banner
       ctx.fillStyle = "#1e1e2f";
       ctx.fillRect(0, 0, canvas.width, canvas.height);
     }
 
-    // Vẽ khung hồ sơ bo góc
+    // Khung hồ sơ
     ctx.fillStyle = "rgba(0,0,0,0.6)";
     ctx.roundRect(20, 20, 660, 210, 25);
     ctx.fill();
@@ -87,14 +84,11 @@ module.exports = {
     else if (userBalance >= 200000) frameFile = "platinum.png";
     else if (userBalance >= 100000) frameFile = "gold.png";
     else if (userBalance >= 50000) frameFile = "silver.png";
-    // dưới 50000 thì mặc định bronze
-
-    // ===== Khai báo tọa độ và bán kính avatar =====
-    const ax = 140; // X của tâm avatar
-    const ay = 125; // Y của tâm avatar
-    const avatarR = 60; // bán kính avatar
 
     // Avatar
+    const ax = 140,
+      ay = 125,
+      avatarR = 60;
     const avatar = await Canvas.loadImage(
       targetUser.displayAvatarURL({ extension: "png", size: 256 })
     );
@@ -106,71 +100,67 @@ module.exports = {
     ctx.drawImage(avatar, ax - avatarR, ay - avatarR, avatarR * 2, avatarR * 2);
     ctx.restore();
 
-    // Khung PNG
-    const framePadding = 110; // tăng padding khung to hơn
+    // Vẽ khung PNG
+    const framePadding = 110;
     const framePath = path.join(__dirname, "../assets/frames", frameFile);
     if (fs.existsSync(framePath)) {
       const frame = await Canvas.loadImage(framePath);
-      const frameOffsetY = 100; // số pixel muốn đẩy khung lên
+      const frameOffsetY = 100;
       ctx.drawImage(
         frame,
         ax - avatarR - framePadding,
-        ay - avatarR - framePadding - frameOffsetY, // trừ offsetY
+        ay - avatarR - framePadding - frameOffsetY,
         avatarR * 2 + framePadding * 2,
         (avatarR * 2 + framePadding * 2) * (frame.height / frame.width)
       );
     }
 
     // Tên người dùng
-    ctx.font = `32px ${FONT_FAMILY}, Sans`;
-    ctx.fillStyle = "#ffffff";
-    const nameText = targetUser.displayName; // Khai báo biến ở đây để có thể sử dụng ở các phần sau
-    const maxWidth = 260; // Chiều rộng tối đa cho phép của tên
     let fontSize = 32;
+    const maxWidth = 260;
+    ctx.font = `${fontSize}px '${FONT_FAMILY}', sans-serif`;
+    const nameText = targetUser.displayName;
 
-    // Giảm cỡ chữ nếu tên quá dài
     while (ctx.measureText(nameText).width > maxWidth && fontSize > 20) {
       fontSize--;
-      ctx.font = `${fontSize}px ${FONT_FAMILY}, Sans`;
+      ctx.font = `${fontSize}px '${FONT_FAMILY}', sans-serif`;
     }
 
+    ctx.fillStyle = "#ffffff";
     ctx.fillText(nameText, 280, 70);
 
-    // Vẽ huy hiệu
-    const badgeFile = userData.badge; // Lấy tên file huy hiệu từ database
+    // Huy hiệu
+    const badgeFile = userData.badge;
     if (badgeFile) {
-      // Kiểm tra xem người dùng có huy hiệu không
       const badgePath = path.join(__dirname, "../assets/badges", badgeFile);
       if (fs.existsSync(badgePath)) {
         const badge = await Canvas.loadImage(badgePath);
-        // Tên của người dùng
         const nameMetrics = ctx.measureText(nameText);
-        // Tính toán vị trí X và Y của huy hiệu, đặt nó bên cạnh tên
-        const badgeX = 280 + nameMetrics.width + 2; // 10 là khoảng cách giữa tên và huy hiệu
-        const badgeY = 75 - badge.height + 5; // Căn chỉnh theo chiều cao của chữ và ảnh
+        const badgeX = 280 + nameMetrics.width + 2;
+        const badgeY = 75 - badge.height + 5;
         ctx.drawImage(badge, badgeX, badgeY, badge.width, badge.height);
       }
     }
 
-    // Text phụ: nhãn
-    ctx.font = `20px ${FONT_FAMILY}, Sans`;
+    // Text phụ
+    ctx.font = `20px '${FONT_FAMILY}', sans-serif`;
     ctx.fillStyle = "#cccccc";
     ctx.fillText("Số dư của bạn:", 280, 110);
 
-    // Gradient text cho balance
+    // Balance
     const gradient = ctx.createLinearGradient(200, 0, 600, 0);
-    gradient.addColorStop(0, "#FFD700"); // vàng
-    gradient.addColorStop(1, "#FFA500"); // cam
+    gradient.addColorStop(0, "#FFD700");
+    gradient.addColorStop(1, "#FFA500");
     ctx.fillStyle = gradient;
     ctx.lineWidth = 4;
     ctx.strokeStyle = "rgba(0,0,0,0.6)";
     ctx.shadowColor = "rgba(0,0,0,0.7)";
     ctx.shadowBlur = 8;
-    ctx.font = `30px ${FONT_FAMILY}, Sans`;
+    ctx.font = `30px '${FONT_FAMILY}', sans-serif`;
     ctx.fillText(`${userBalance.toLocaleString()}`, 280, 145);
-    ctx.shadowBlur = 0; // reset
+    ctx.shadowBlur = 0;
 
-    // Load và vẽ icon
+    // Icon
     const coinIcon = await Canvas.loadImage(
       path.join(__dirname, "../assets/icons/diamond.png")
     );
@@ -182,7 +172,7 @@ module.exports = {
       25
     );
 
-    // === Progress bar (ví dụ level dựa trên balance) ===
+    // Progress bar
     const level = Math.floor(userBalance / 100000);
     const progress = (userBalance % 100000) / 100000;
 
@@ -197,21 +187,19 @@ module.exports = {
     ctx.roundRect(280, 165, 300 * progress, 25, 12);
     ctx.fill();
 
-    ctx.font = `16px ${FONT_FAMILY}, Sans`;
+    ctx.font = `16px '${FONT_FAMILY}', sans-serif`;
     ctx.fillStyle = "#fff";
     ctx.fillText(`Cấp ${level}`, 590, 185);
 
-    // Thêm credit của bot
-    ctx.font = `14px ${FONT_FAMILY}, Sans`;
-    ctx.fillStyle = "#888888"; // Màu chữ xám
+    // Credit
+    ctx.font = `14px '${FONT_FAMILY}', sans-serif`;
+    ctx.fillStyle = "#888888";
     ctx.fillText("©Copyright ©2025「✦ Áp Lực Chơi Game ✦」", 280, 215);
 
-    // Xuất ảnh
     const attachment = new AttachmentBuilder(canvas.toBuffer("image/png"), {
       name: "taisan.png",
     });
 
-    // Sử dụng editReply sau khi đã defer
     await interaction.editReply({ files: [attachment] });
   },
 };
