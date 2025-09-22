@@ -35,7 +35,7 @@ for (const file of commandFiles) {
   }
 }
 
-client.once('ready', () => {
+client.once('ready', async () => {
   console.log(`✅ Logged in as ${client.user.tag}`);
   const list = client.guilds.cache.map(g => `${g.name} — ${g.id}`);
   console.log('Bot đang ở các server:\n' + list.join('\n'));
