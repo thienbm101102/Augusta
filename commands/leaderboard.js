@@ -27,7 +27,7 @@ module.exports = {
   // Dùng mention <@id> → Discord sẽ hiện tên + avatar khi hover
   const mention = `<@${user.id}>`;
 
-  return `${rankIcon} ${mention} — **${user.balance.toLocaleString()}** <a:diamondgem:1402590496647413811>`;
+  return `${rankIcon} <@${user.id}> — **${user.balance.toLocaleString()}** <a:diamondgem:1402590496647413811>`;
 });
 
       const embed = new EmbedBuilder()
@@ -45,4 +45,5 @@ module.exports = {
     }
   },
 };
+
 
