@@ -19,24 +19,25 @@ module.exports = {
       }
 
       const medals = ['🥇', '🥈', '🥉'];
+      
+const lines = await Promise.all(
+    sorted.slice(0, 10).map(async (user, index) => {
+        const rankIcon = medals[index] || `**${index + 1}.**`;
+        
+        // Sử dụng user.userId thay vì user.id
+        let displayName = `<@${user.userId}>`; 
 
-      const lines = await Promise.all(
-        sorted.slice(0, 10).map(async (user, index) => {
-          const rankIcon = medals[index] || `**${index + 1}.**`;
-
-          let displayName = `<@${user.userId}>`; // fallback
-
-          try {
+        try {
             const fetched = await interaction.client.users.fetch(user.userId, { force: true });
             // Ưu tiên globalName (biệt danh toàn Discord), fallback username
             displayName = fetched.globalName || fetched.username;
-          } catch (e) {
+        } catch (e) {
             console.warn(`[bangxephang] Không fetch được user ${user.userId}:`, e.message);
-          }
+        }
 
-          return `${rankIcon} ${displayName} — **${user.balance.toLocaleString()}** 💎`;
-        })
-      );
+        return `${rankIcon} ${displayName} — **${user.balance.toLocaleString()}** 💎`;
+    })
+);
 
       const embed = new EmbedBuilder()
         .setTitle('🌿 Bảng Xếp Hạng Tài Sản 🌿')
