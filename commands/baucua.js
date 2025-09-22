@@ -131,7 +131,7 @@ module.exports = {
             game.bettingTimeLeft--;
             if (game.bettingTimeLeft >= 0) {
                 const updatedEmbed = createGameEmbed(game, game.bettingTimeLeft);
-                await interaction.editReply({ embeds: [updatedEmbed] });
+                await interaction.editReply({ embeds: [updatedEmbed] }).catch(() => {});
             } else {
                 clearInterval(countdownInterval);
                 this.endBettingPhase(interaction, game);
@@ -140,102 +140,103 @@ module.exports = {
     },
 
     async endBettingPhase(interaction, game) {
-    // Đổi trạng thái và vô hiệu hóa nút
-    game.state = 'rolling';
-    const disabledButtons = getBettingButtons(0).map(row => {
-        row.components.forEach(button => button.setDisabled(true));
-        return row;
-    });
+        // Đổi trạng thái và vô hiệu hóa nút
+        game.state = 'rolling';
+        const disabledButtons = getBettingButtons(0).map(row => {
+            row.components.forEach(button => button.setDisabled(true));
+            return row;
+        });
 
-    // Vô hiệu hóa các nút của tin nhắn gốc
-    await interaction.editReply({ components: disabledButtons });
+        // Vô hiệu hóa các nút của tin nhắn gốc
+        await interaction.editReply({ components: disabledButtons });
 
-    // Tung xúc xắc
-    const diceResults = [
-        Object.keys(animals)[Math.floor(Math.random() * 6)],
-        Object.keys(animals)[Math.floor(Math.random() * 6)],
-        Object.keys(animals)[Math.floor(Math.random() * 6)]
-    ];
+        // Tung xúc xắc
+        const diceResults = [
+            Object.keys(animals)[Math.floor(Math.random() * 6)],
+            Object.keys(animals)[Math.floor(Math.random() * 6)],
+            Object.keys(animals)[Math.floor(Math.random() * 6)]
+        ];
 
-    // Tạo chuỗi emoji để gửi trong tin nhắn riêng
-    const dice1 = `<${animals[diceResults[0]].animated ? 'a' : ''}:${animals[diceResults[0]].name}:${animals[diceResults[0]].id}>`;
-    const dice2 = `<${animals[diceResults[1]].animated ? 'a' : ''}:${animals[diceResults[1]].name}:${animals[diceResults[1]].id}>`;
-    const dice3 = `<${animals[diceResults[2]].animated ? 'a' : ''}:${animals[diceResults[2]].name}:${animals[diceResults[2]].id}>`;
+        // Tạo chuỗi emoji để gửi trong tin nhắn riêng
+        const dice1 = `<${animals[diceResults[0]].animated ? 'a' : ''}:${animals[diceResults[0]].name}:${animals[diceResults[0]].id}>`;
+        const dice2 = `<${animals[diceResults[1]].animated ? 'a' : ''}:${animals[diceResults[1]].name}:${animals[diceResults[1]].id}>`;
+        const dice3 = `<${animals[diceResults[2]].animated ? 'a' : ''}:${animals[diceResults[2]].name}:${animals[diceResults[2]].id}>`;
 
-    let winners = new Map();
-    let losers = new Map();
-    
-    // Xử lý tiền cược và tính toán thắng/thua
-    for (const [userId, userBets] of game.bets.entries()) {
-    let totalWinnings = 0;
-    let totalLosses = 0;
-
-    for (const [animal, amount] of userBets.entries()) {
-        const matches = diceResults.filter(result => result === animal).length;
-        if (matches > 0) {
-            // Logic tính tiền thắng: amount * số lần xuất hiện
-            const winnings = amount * matches;
-            totalWinnings += winnings;
-        } else {
-            // Logic tính tiền thua: amount * 1
-            totalLosses += amount;
-        }
-    }
+        let winners = new Map();
+        let losers = new Map();
         
-        const netResult = totalWinnings - totalLosses;
-        if (netResult > 0) {
-            winners.set(userId, netResult);
-        } else {
-            losers.set(userId, netResult);
+        // Xử lý tiền cược và tính toán thắng/thua
+        for (const [userId, userBets] of game.bets.entries()) {
+            let totalWinnings = 0;
+            let totalLosses = 0;
+
+            for (const [animal, amount] of userBets.entries()) {
+                const matches = diceResults.filter(result => result === animal).length;
+                if (matches > 0) {
+                    // Logic tính tiền thắng: amount * số lần xuất hiện
+                    const winnings = amount * matches;
+                    totalWinnings += winnings;
+                } else {
+                    // Logic tính tiền thua: amount * 1
+                    totalLosses += amount;
+                }
+            }
+            
+            const netResult = totalWinnings - totalLosses;
+            if (netResult > 0) {
+                winners.set(userId, netResult);
+            } else {
+                losers.set(userId, netResult);
+            }
+            // Sửa lỗi: Thêm await trước addBalance
+            await addBalance(userId, netResult);
         }
-        addBalance(userId, netResult);
-    }
-    
-    let winnerString = `**Thắng:**\n`;
-    if (winners.size > 0) {
-        const winnerPhrases = [
-            'quá đỉnh!',
-            'thật may mắn!',
-            'kiếm tiền siêu nhanh!',
-            'may mắn quá trời!',
-            'trúng đậm rồi!'
-        ];
-        winnerString += [...winners.entries()].map(([userId, amount]) => `<@${userId}>: Nhận **${amount.toLocaleString()}**<a:diamondgem:1402590496647413811> ${winnerPhrases[Math.floor(Math.random() * winnerPhrases.length)]}`).join('\n');
-    } else {
-        winnerString += 'Không có ai';
-    }
+        
+        let winnerString = `**Thắng:**\n`;
+        if (winners.size > 0) {
+            const winnerPhrases = [
+                'quá đỉnh!',
+                'thật may mắn!',
+                'kiếm tiền siêu nhanh!',
+                'may mắn quá trời!',
+                'trúng đậm rồi!'
+            ];
+            winnerString += [...winners.entries()].map(([userId, amount]) => `<@${userId}>: Nhận **${amount.toLocaleString()}**<a:diamondgem:1402590496647413811> ${winnerPhrases[Math.floor(Math.random() * winnerPhrases.length)]}`).join('\n');
+        } else {
+            winnerString += 'Không có ai';
+        }
 
-    let loserString = `\n\n**Thua:**\n`;
-    if (losers.size > 0) {
-        const loserPhrases = [
-            'chia buồn cùng bạn',
-            'lần sau nhất định phải thắng',
-            'thật tiếc quá',
-            'mất tiền rồi, huhu',
-            'cần buff thêm động lực để gỡ lại'
-        ];
-        loserString += [...losers.entries()].map(([userId, amount]) => `<@${userId}>: **${amount.toLocaleString()}**<a:diamondgem:1402590496647413811> ${loserPhrases[Math.floor(Math.random() * loserPhrases.length)]}`).join('\n');
-    } else {
-        loserString += 'Không có ai';
-    }
+        let loserString = `\n\n**Thua:**\n`;
+        if (losers.size > 0) {
+            const loserPhrases = [
+                'chia buồn cùng bạn',
+                'lần sau nhất định phải thắng',
+                'thật tiếc quá',
+                'mất tiền rồi, huhu',
+                'cần buff thêm động lực để gỡ lại'
+            ];
+            loserString += [...losers.entries()].map(([userId, amount]) => `<@${userId}>: **${Math.abs(amount).toLocaleString()}**<a:diamondgem:1402590496647413811> ${loserPhrases[Math.floor(Math.random() * loserPhrases.length)]}`).join('\n');
+        } else {
+            loserString += 'Không có ai';
+        }
 
-    // Gửi tin nhắn mới để hiển thị kết quả
-    const resultMessage = await interaction.followUp({ content: 'Đang lắc xúc xắc...' });
+        // Gửi tin nhắn mới để hiển thị kết quả
+        const resultMessage = await interaction.followUp({ content: 'Đang lắc xúc xắc...' });
 
-    // Cập nhật tin nhắn để hiển thị từng emoji
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    await resultMessage.edit({ content: `${dice1}` });
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    await resultMessage.edit({ content: `${dice1} ${dice2}` });
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    await resultMessage.edit({ content: `${dice1} ${dice2} ${dice3}` });
-    await new Promise(resolve => setTimeout(resolve, 1000));
+        // Cập nhật tin nhắn để hiển thị từng emoji
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        await resultMessage.edit({ content: `${dice1}` });
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        await resultMessage.edit({ content: `${dice1} ${dice2}` });
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        await resultMessage.edit({ content: `${dice1} ${dice2} ${dice3}` });
+        await new Promise(resolve => setTimeout(resolve, 1000));
 
-    // Gửi tin nhắn thứ hai chứa danh sách người thắng và thua
-    await interaction.followUp({ content: winnerString + loserString });
-    
-    activeGames.delete(interaction.channelId);
-},
+        // Gửi tin nhắn thứ hai chứa danh sách người thắng và thua
+        await interaction.followUp({ content: winnerString + loserString });
+        
+        activeGames.delete(interaction.channelId);
+    },
 
     async handleButton(interaction) {
         await interaction.deferUpdate();
@@ -247,7 +248,8 @@ module.exports = {
             return interaction.followUp({ content: 'Đã hết thời gian đặt cược hoặc không có ván đấu nào đang diễn ra.', ephemeral: true });
         }
 
-        const userBalance = getBalance(userId);
+        // Sửa lỗi: Thêm await trước getBalance
+        const userBalance = await getBalance(userId);
 
         if (action === 'amount') {
             const amount = parseInt(value);
