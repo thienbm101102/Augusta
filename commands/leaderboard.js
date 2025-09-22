@@ -34,7 +34,7 @@ module.exports = {
       );
 
       const embed = new EmbedBuilder()
-        .setTitle('**<a:leaf_left:1408895436374413342> Bảng Xếp Hạng <a:leaf_right:1408895434771392602>**')
+        .setTitle('**Bảng Xếp Hạng Tài Sản**')
         .setDescription(leaderboardDescription.join('\n'))
         .setTimestamp()
         .setColor('#e74c3c');
@@ -47,4 +47,5 @@ module.exports = {
     }
   },
 };
+
 
