@@ -24,14 +24,14 @@ module.exports = {
         sorted.slice(0, 10).map(async (user, index) => {
           const rankIcon = medals[index] || `**${index + 1}.**`;
 
-          let displayName = `<@${user.id}>`; // fallback
+          let displayName = `<@${user.userId}>`; // fallback
 
           try {
-            const fetched = await interaction.client.users.fetch(user.id, { force: true });
+            const fetched = await interaction.client.users.fetch(user.userId, { force: true });
             // Ưu tiên globalName (biệt danh toàn Discord), fallback username
             displayName = fetched.globalName || fetched.username;
           } catch (e) {
-            console.warn(`[bangxephang] Không fetch được user ${user.id}:`, e.message);
+            console.warn(`[bangxephang] Không fetch được user ${user.userId}:`, e.message);
           }
 
           return `${rankIcon} ${displayName} — **${user.balance.toLocaleString()}** 💎`;
@@ -46,10 +46,10 @@ module.exports = {
         .setTimestamp();
 
       await interaction.editReply({ embeds: [embed] });
-    } catch (err) {
-      console.error('[bangxephang] Error:', err);
+    } catch (error) {
+      console.error(error);
       await interaction.editReply({
-        content: '❌ Lỗi khi hiển thị bảng xếp hạng!',
+        content: '❌ Đã xảy ra lỗi khi tạo bảng xếp hạng.',
         ephemeral: true
       });
     }
