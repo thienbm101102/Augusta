@@ -3,11 +3,14 @@
 const { Client, Collection, GatewayIntentBits } = require('discord.js');
 const fs = require('fs');
 const path = require('path');
-const { loadDB } = require('./db');
 const cron = require('node-cron');
 const express = require("express");
-const app = express();
+const mongoose = require('mongoose');
 
+// Thay thế các hàm cũ từ db.js bằng các hàm mới bất đồng bộ
+const db = require('./db');
+
+const app = express();
 app.get("/", (req, res) => {
   res.send("OK"); // chỉ trả về chữ OK thay vì nhiều nội dung
   console.log("✅ Ping received from cron-job.org");
@@ -42,10 +45,19 @@ client.once('ready', () => {
         ],
         status: 'online'
     });
-  loadDB();
   
-  const { getDB } = require('./db');
-
+  // Kết nối đến MongoDB
+  try {
+      await mongoose.connect(process.env.MONGODB_URI, {
+          useNewUrlParser: true,
+          useUnifiedTopology: true,
+      });
+      console.log("🚀 MongoDB đã kết nối thành công!");
+  } catch (err) {
+      console.error("❌ Lỗi khi kết nối tới MongoDB:", err);
+      // Thoát nếu không thể kết nối
+      process.exit(1);
+  }
     // Lập lịch kiểm tra sinh nhật vào lúc 9 giờ sáng mỗi ngày (theo múi giờ của máy chủ)
     cron.schedule('0 9 * * *', async () => {
         const db = getDB();
