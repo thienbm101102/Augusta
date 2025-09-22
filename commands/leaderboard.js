@@ -36,10 +36,11 @@ module.exports = {
       );
 
       const embed = new EmbedBuilder()
-        .setTitle('**<a:leaf_left:1408895436374413342> Bảng Xếp Hạng Tiền Mặt <a:leaf_right:1408895434771392602>**')
-        .setDescription(leaderboardDescription.join('\n'))
-        .setTimestamp()
-        .setColor('#e74c3c');
+        .setTitle('**<a:leaf_left:1408895436374413312> Bảng Xếp Hạng Tài Sản <a:leaf_right:1408895433555578880>**')
+        .setDescription(desc)
+        .setColor('#FFD700')
+        .setThumbnail(interaction.client.user.displayAvatarURL())
+        .setTimestamp();
       
       await interaction.editReply({ embeds: [embed] });
 
@@ -49,3 +50,4 @@ module.exports = {
     }
   },
 };
+
