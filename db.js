@@ -17,7 +17,7 @@ async function connectDB() {
 // Schema User
 const userSchema = new mongoose.Schema({
     userId: { type: String, required: true, unique: true },
-    balance: { type: Number, default: 0 },
+    balance: { type: Number, default: 100000 },
     debt: { type: Number, default: 0 },
     lastDaily: { type: Date, default: null },
     lastLoanDate: { type: Date, default: null },
