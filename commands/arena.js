@@ -1,5 +1,5 @@
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
-const { addBalance, getBalance, getUser, saveDB } = require('../db');
+const { addBalance, getBalance, getUser } = require('../db');
 const MONSTERS = require('../monsters');
 const { v4: uuidv4 } = require('uuid');
 
@@ -305,7 +305,7 @@ module.exports = {
 
         try {
             const userId = interaction.user.id;
-            const user = getUser(userId);
+            const user = await getUser(userId);
             if (!user) {
                 return interaction.editReply({ content: 'Không tìm thấy dữ liệu người dùng. Vui lòng thử lại sau.', ephemeral: true });
             }
@@ -361,7 +361,9 @@ module.exports = {
                         
                         embeds.push(embed);
                     });
-
+                    
+                    await user.save();
+                    
                     const ownedEquipmentList = user.ownedEquipment.map((item, index) => {
                         const equipmentInfo = EQUIPMENT[item.type];
                         return `\`${index + 1}.\` ${equipmentInfo.emoji} **${equipmentInfo.name}** (ID: \`${item.id}\`)`;
@@ -385,12 +387,12 @@ module.exports = {
                         return interaction.editReply({ content: 'Loại quái vật không hợp lệ hoặc không có giá.', ephemeral: true });
                     }
 
-                    const userBalance = getBalance(userId);
+                    const userBalance = await getBalance(userId);
                     if (userBalance < monsterData.cost) {
                         return interaction.editReply({ content: `<a:AbbyShocked:1393909368138895411> Bạn không đủ tiền để mua **${monsterData.name}**!`, ephemeral: true });
                     }
 
-                    addBalance(userId, -monsterData.cost);
+                    await addBalance(userId, -monsterData.cost);
                     const newMonster = {
                         id: uuidv4(),
                         type: monsterType,
@@ -405,7 +407,7 @@ module.exports = {
                         user.monsters = [];
                     }
                     user.monsters.push(newMonster);
-                    saveDB();
+                    await user.save();
 
                     const embed = new EmbedBuilder()
                         .setTitle(`<a:Verified:1406631971509243974> Mua Quái Vật Thành Công`)
@@ -426,25 +428,25 @@ module.exports = {
                         return interaction.editReply({ content: 'Loại trang bị không hợp lệ.', ephemeral: true });
                     }
 
-                    const userBalance = getBalance(userId);
+                    const userBalance = await getBalance(userId);
                     if (userBalance < equipmentData.cost) {
                         return interaction.editReply({ content: `<a:AbbyShocked:1393909368138895411> Bạn không đủ tiền để mua **${equipmentData.name}**! Chi phí: **${equipmentData.cost.toLocaleString()}**<a:diamondgem:1402590496647413811>`, ephemeral: true });
                     }
 
-                    addBalance(userId, -equipmentData.cost);
+                    await addBalance(userId, -equipmentData.cost);
                     const newEquipment = {
                         id: uuidv4(),
                         type: equipmentType,
                     };
                     user.ownedEquipment.push(newEquipment);
-                    saveDB();
+                    await user.save();
 
                     const embed = new EmbedBuilder()
                         .setTitle(`<a:Verified:1406631971509243974> Mua Trang Bị Thành Công`)
                         .setDescription(`Bạn đã mua một **${equipmentData.name}** ${equipmentData.emoji}`)
                         .addFields(
                             { name: 'Chi phí', value: `\`${equipmentData.cost.toLocaleString()}\`<a:diamondgem:1402590496647413811>`, inline: true },
-                            { name: 'Số dư mới', value: `\`${getBalance(userId).toLocaleString()}\`<a:diamondgem:1402590496647413811>`, inline: true },
+                            { name: 'Số dư mới', value: `\`${(await getBalance(userId)).toLocaleString()}\`<a:diamondgem:1402590496647413811>`, inline: true },
                         )
                         .setColor('#2ecc71');
                     return interaction.editReply({ embeds: [embed] });
@@ -472,7 +474,7 @@ module.exports = {
                             return interaction.editReply({ content: `Khe trang bị ${slotIndex + 1} của quái vật **${MONSTERS[monster.type].name}** đã trống.`, ephemeral: true });
                         }
                         monster.equippedEquipment[slotIndex] = null;
-                        saveDB();
+                        await user.save();
                         return interaction.editReply({ content: `Đã gỡ trang bị khỏi khe ${slotIndex + 1} của **${MONSTERS[monster.type].name}** thành công.`, ephemeral: true });
                     }
                     
@@ -493,7 +495,7 @@ module.exports = {
 
                     // Gán ID của trang bị mới vào quái vật
                     monster.equippedEquipment[slotIndex] = equipment.id;
-                    saveDB();
+                    await user.save();
                     
                     const equipmentData = EQUIPMENT[equipment.type];
                     const monsterData = MONSTERS[monster.type];
@@ -513,7 +515,7 @@ module.exports = {
                         return interaction.editReply({ content: 'Bạn không thể đấu với chính mình!', ephemeral: true });
                     }
 
-                    const opponent = getUser(opponentUser.id);
+                    const opponent = await getUser(opponentUser.id);
                     if (!opponent || !opponent.monsters || opponent.monsters.length === 0) {
                         return interaction.editReply({ content: `${opponentUser.username} không có quái vật nào để đấu.`, ephemeral: true });
                     }
@@ -552,11 +554,11 @@ module.exports = {
                     let expGained = 0;
 
                     if (battleResult && battleResult.winner.id === yourMonsterCopy.id) {
-                        addBalance(userId, 500);
+                        await addBalance(userId, 500);
                         expGained = 15;
                         resultMessage = `<a:AbbyHappy:1393909327848538122> **<@${userId}>** đã chiến thắng! Bạn nhận được **500**<a:diamondgem:1402590496647413811>!`;
                     } else if (battleResult && battleResult.winner.id === opponentMonsterCopy.id) {
-                        addBalance(userId, -250);
+                        await addBalance(userId, -250);
                         expGained = 5;
                         resultMessage = `<a:AbbyCry:1393909295665643540> **<@${opponentUser.id}>** đã chiến thắng! Bạn bị mất **250**<a:diamondgem:1402590496647413811>!`;
                     } else {
@@ -571,7 +573,7 @@ module.exports = {
                         yourMonster.exp -= requiredExp;
                         resultMessage += `\n**${yourMonsterData.name}** đã đạt **Cấp ${yourMonster.level}**!`;
                     }
-                    saveDB();
+                    await user.save();
 
                     let battleLog = battleResult ? battleResult.log : 'Hòa.';
                     // Giới hạn log để không bị quá dài
@@ -616,7 +618,7 @@ module.exports = {
                     monster.name = evolvedMonsterData.name;
                     monster.level = 1;
                     monster.exp = 0;
-                    saveDB();
+                    await user.save();
 
                     const embed = new EmbedBuilder()
                         .setTitle(`<a:Verified:1406631971509243974> Tiến Hóa Thành Công!`)
