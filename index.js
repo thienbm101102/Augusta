@@ -6,30 +6,20 @@ const path = require('path');
 const mongoose = require('mongoose');
 const cron = require('node-cron');
 const express = require("express");
-const db = require('./db'); // Import module db mới để dùng MongoDB
-
-// 🌐 Web server cho Render (healthcheck)
 const app = express();
+const db = require('./db');
+
+// Khởi tạo web server cho Render Healthcheck
 app.get("/", (req, res) => res.send("Bot is running!"));
 app.listen(process.env.PORT || 10000, () => {
   console.log("🌐 Web server is running on port 10000");
 });
 
-// 🚀 Tạo bot client
 const client = new Client({
-  intents: [
-    GatewayIntentBits.Guilds,
-    GatewayIntentBits.GuildMessages,
-    GatewayIntentBits.MessageContent,
-    GatewayIntentBits.GuildMembers,
-    GatewayIntentBits.GuildModeration,
-    GatewayIntentBits.GuildPresences
-  ]
+  intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent, GatewayIntentBits.GuildMembers, GatewayIntentBits.GuildModeration, GatewayIntentBits.GuildPresences]
 });
 
 client.commands = new Collection();
-
-// 📂 Load lệnh trong thư mục commands
 const commandsPath = path.join(__dirname, 'commands');
 const commandFiles = fs.readdirSync(commandsPath).filter(file => file.endsWith('.js'));
 
@@ -40,60 +30,30 @@ for (const file of commandFiles) {
   }
 }
 
-// 🚀 Khởi động bot + kết nối MongoDB
+// Hàm khởi động bot
 async function startBot() {
-  try {
-    console.log("🚀 Đang kết nối tới MongoDB...");
-    await mongoose.connect(process.env.MONGODB_URI, {
-      useNewUrlParser: true,
-      useUnifiedTopology: true
-    });
-    console.log("✅ Đã kết nối thành công tới MongoDB.");
+    try {
+        console.log("🚀 Đang kết nối tới MongoDB...");
+        await mongoose.connect(process.env.MONGODB_URI);
+        console.log("✅ Đã kết nối thành công tới MongoDB.");
 
-    await client.login(process.env.TOKEN);
-  } catch (error) {
-    console.error("❌ Lỗi khi khởi động bot:", error);
-  }
+        // Khởi động bot sau khi kết nối thành công
+        await client.login(process.env.TOKEN);
+    } catch (err) {
+        console.error("❌ Failed to connect to MongoDB:", err);
+    }
 }
 
-client.once('ready', () => {
+startBot();
+
+client.on('ready', async () => {
   console.log(`✅ Logged in as ${client.user.tag}`);
-  console.log('Bot đang ở các server:\n' + client.guilds.cache.map(g => `${g.name} — ${g.id}`).join('\n'));
-
-  client.user.setPresence({
-    activities: [{ name: "Augusta bot", type: 2 }],
-    status: "online"
-  });
-
-  // 🎂 Lập lịch check sinh nhật mỗi 9h sáng
-  cron.schedule('0 9 * * *', async () => {
-    const now = new Date();
-    const currentMonth = now.getMonth() + 1;
-    const currentDay = now.getDate();
-
-    const birthdayChannelId = '1416016624728805416'; // 📌 thay bằng kênh bạn muốn
-    const birthdayChannel = await client.channels.fetch(birthdayChannelId).catch(() => null);
-    if (!birthdayChannel) return console.log('⚠️ Kênh sinh nhật không tồn tại.');
-
-    const birthdayUsers = await db.User.find({
-      'birthday.month': currentMonth,
-      'birthday.day': currentDay
-    });
-
-    if (birthdayUsers.length > 0) {
-      let message;
-      if (birthdayUsers.length === 1) {
-        message = `<a:AbbyCheer:1393908739165392927> Chúc mừng sinh nhật **<@${birthdayUsers[0].userId}>** 🎉🎂`;
-      } else {
-        const mentions = birthdayUsers.map(u => `<@${u.userId}>`).join(', ');
-        message = `<a:AbbyCheer:1393908739165392927> Chúc mừng sinh nhật **${mentions}** 🎉🎂`;
-      }
-      await birthdayChannel.send(message);
-    }
+  console.log('Bot đang ở các server:');
+  client.guilds.cache.forEach(guild => {
+    console.log(`${guild.name} — ${guild.id}`);
   });
 });
 
-// 📌 Xử lý slash command & button
 client.on('interactionCreate', async interaction => {
   try {
     if (interaction.isChatInputCommand()) {
@@ -110,15 +70,22 @@ client.on('interactionCreate', async interaction => {
     }
   } catch (error) {
     console.error(error);
-    // Xử lý lỗi một cách an toàn
-    // Nếu tương tác đã được phản hồi hoặc hoãn, sử dụng followUp
     if (interaction.replied || interaction.deferred) {
       await interaction.followUp({ content: '❌ Có lỗi xảy ra khi thực thi tương tác này!', ephemeral: true });
     } else {
-      // Nếu chưa, sử dụng reply
       await interaction.reply({ content: '❌ Có lỗi xảy ra khi thực thi tương tác này!', ephemeral: true });
     }
   }
+});
+
+client.on('messageCreate', async message => {
+    // 📌 Xử lý logic đoán số
+    if (client.commands.has('doanso')) {
+        const doansoCommand = client.commands.get('doanso');
+        if (typeof doansoCommand.handleMessage === 'function') {
+            await doansoCommand.handleMessage(message);
+        }
+    }
 });
 
 // 📌 Xử lý message thường (VD: điểm kinh nghiệm, đoán số)
