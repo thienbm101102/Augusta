@@ -1,27 +1,20 @@
-// File: index.js
-
 const { Client, Collection, GatewayIntentBits } = require('discord.js');
 const fs = require('fs');
 const path = require('path');
+const mongoose = require('mongoose');
 const cron = require('node-cron');
 const express = require("express");
-const mongoose = require('mongoose');
-
-// Thay thế các hàm cũ từ db.js bằng các hàm mới bất đồng bộ
-const db = require('./db');
-
 const app = express();
-app.get("/", (req, res) => {
-  res.send("OK"); // chỉ trả về chữ OK thay vì nhiều nội dung
-  console.log("✅ Ping received from cron-job.org");
-});
+const db = require('./db'); // Đảm bảo bạn đã import module db mới
 
+// Khởi tạo web server cho Render Healthcheck
+app.get("/", (req, res) => res.send("Bot is running!"));
 app.listen(process.env.PORT || 3000, () => {
-  console.log(`🌐 Web server is running on port ${process.env.PORT || 3000}`);
+  console.log("🌐 Web server is running on port 10000"); // Đổi port 3000 thành 10000 vì Render dùng port 10000
 });
 
 const client = new Client({
-  intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent, GatewayIntentBits.GuildMembers, GatewayIntentBits.GuildModeration,]
+  intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent, GatewayIntentBits.GuildMembers, GatewayIntentBits.GuildModeration, GatewayIntentBits.GuildPresences]
 });
 
 client.commands = new Collection();
@@ -35,15 +28,30 @@ for (const file of commandFiles) {
   }
 }
 
+// Hàm khởi động bot
+async function startBot() {
+    try {
+        console.log("🚀 Đang kết nối tới MongoDB...");
+        await mongoose.connect(process.env.MONGODB_URI);
+        console.log("✅ Đã kết nối thành công tới MongoDB.");
+
+        // Khởi động bot sau khi kết nối DB thành công
+        await client.login(process.env.TOKEN);
+
+    } catch (error) {
+        console.error("❌ Lỗi khi khởi động bot:", error);
+    }
+}
+
 client.once('ready', () => {
-  console.log(`✅ Logged in as ${client.user.tag}`);
-  const list = client.guilds.cache.map(g => `${g.name} — ${g.id}`);
-  console.log('Bot đang ở các server:\n' + list.join('\n'));
-  client.user.setPresence({
+    console.log(`✅ Logged in as ${client.user.tag}`);
+    const list = client.guilds.cache.map(g => `${g.name} — ${g.id}`);
+    console.log('Bot đang ở các server:\n' + list.join('\n'));
+    client.user.setPresence({
         activities: [
-            { name: 'Xì Zách', type: 0 }
+            { name: "blackjack-bot", type: 2 }
         ],
-        status: 'online'
+        status: "online"
     });
   
   // Kết nối đến MongoDB
