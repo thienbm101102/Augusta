@@ -8,33 +8,42 @@ module.exports = {
 
   async execute(interaction) {
     try {
-      // Sửa lỗi: Sử dụng hàm bất đồng bộ từ db.js để lấy dữ liệu đã được sắp xếp
-      const sorted = await getAllBalances();
+      await interaction.deferReply();
 
-      if (sorted.length === 0) {
-        return interaction.reply({ content: '<a:AbbyShocked:1393909368138895411> Không có dữ liệu người chơi!', ephemeral: true });
+      // Lấy dữ liệu người dùng đã được sắp xếp từ database
+      const sortedUsers = await getAllBalances();
+
+      if (sortedUsers.length === 0) {
+        return interaction.editReply({ content: '<a:AbbyShocked:1393909368138895411> Không có dữ liệu người chơi!', ephemeral: true });
       }
 
-      const medals = ['', '', '']; // 3 hạng đầu
-      let desc = sorted
-        .slice(0, 10) // Chỉ lấy top 10
-        .map((user, index) => {
+      const medals = ['<a:Verified:1406631971509243974>', '<a:Verified:1406631971509243974>', '<a:Verified:1406631971509243974>'];
+      
+      const leaderboardDescription = await Promise.all(
+        sortedUsers.slice(0, 10).map(async (user, index) => {
           let rankIcon = medals[index] || `**${index + 1}.**`;
-          return `${rankIcon} <@${user.id}> — **${user.balance.toLocaleString()}<a:diamondgem:1402590496647413811>**`;
+          let discordUser = 'Người dùng không xác định';
+          try {
+            const fetchedUser = await interaction.client.users.fetch(user.id);
+            discordUser = fetchedUser.tag;
+          } catch (e) {
+            console.error(`Không thể lấy thông tin người dùng ${user.id}:`, e);
+          }
+          return `${rankIcon} ${discordUser} — **${user.balance.toLocaleString()}**<a:diamondgem:1402590496647413811>`;
         })
-        .join('\n');
+      );
 
       const embed = new EmbedBuilder()
-        .setTitle('**<a:leaf_left:1408895436374413342> Bảng Xếp Hạng Tiền Mặt <a:leaf_right:1408895434771392602>**')
-        .setDescription(desc)
+        .setTitle('**<a:leaf_left:1408895436374413342> Bảng Xếp Hạng <a:leaf_right:1408895434771392602>**')
+        .setDescription(leaderboardDescription.join('\n'))
         .setTimestamp()
         .setColor('#e74c3c');
       
-      await interaction.reply({ embeds: [embed] });
+      await interaction.editReply({ embeds: [embed] });
 
     } catch (error) {
       console.error(error);
-      await interaction.reply({ content: 'Đã xảy ra lỗi khi tạo bảng xếp hạng!', ephemeral: true });
+      await interaction.editReply({ content: 'Đã xảy ra lỗi khi tạo bảng xếp hạng!', ephemeral: true });
     }
   },
 };
