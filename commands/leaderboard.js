@@ -1,4 +1,6 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+// leaderboard.js (Canvas version)
+const { SlashCommandBuilder, AttachmentBuilder, EmbedBuilder } = require('discord.js');
+const Canvas = require('canvas'); // hoặc require('@napi-rs/canvas')
 const { getAllBalances } = require('../db');
 
 module.exports = {
@@ -11,54 +13,102 @@ module.exports = {
       await interaction.deferReply();
 
       const sortedUsers = await getAllBalances();
-
-      if (sortedUsers.length === 0) {
-        return interaction.editReply({
-          content: '<a:AbbyShocked:1393909368138895411> Không có dữ liệu người chơi!',
-          ephemeral: true
-        });
+      if (!sortedUsers || sortedUsers.length === 0) {
+        return interaction.editReply({ content: '<a:AbbyShocked:1393909368138895411> Không có dữ liệu người chơi!', ephemeral: true });
       }
 
-      const medals = [
-        '<:gold_medal:1260462410385960960>',
-        '<:silver_medal:1260462432822151240>',
-        '<:bronze_medal:1260462412801458266>'
-      ];
+      const top = sortedUsers.slice(0, 10);
+      const width = 900;
+      const rowHeight = 70;
+      const padding = 20;
+      const headerHeight = 80;
+      const height = headerHeight + top.length * rowHeight + padding;
 
-      const leaderboardDescription = await Promise.all(
-        sortedUsers.slice(0, 10).map(async (user, index) => {
-          let rankIcon = medals[index] || `**${index + 1}.**`;
-          let discordUser = 'Người dùng không xác định';
-          let avatarURL = 'https://cdn.discordapp.com/embed/avatars/0.png';
+      const canvas = Canvas.createCanvas(width, height);
+      const ctx = canvas.getContext('2d');
 
-          try {
-            const fetchedUser = await interaction.client.users.fetch(user.id);
-            discordUser = fetchedUser.globalName || fetchedUser.username;
-            avatarURL = fetchedUser.displayAvatarURL({ size: 32 });
-          } catch (e) {
-            console.error(`Không thể lấy thông tin người dùng ${user.id}:`, e);
-          }
+      // Background
+      ctx.fillStyle = '#0b1220';
+      ctx.fillRect(0, 0, width, height);
 
-          // Hiện avatar + tên + số tiền
-          return `${rankIcon} [${discordUser}](${avatarURL}) — **${user.balance.toLocaleString()}** <a:diamondgem:1402590496647413811>`;
-        })
-      );
+      // Title
+      ctx.fillStyle = '#FFD700';
+      ctx.font = '28px Sans';
+      ctx.fillText('Bảng Xếp Hạng Tài Sản', padding, 46);
+
+      for (let i = 0; i < top.length; i++) {
+        const u = top[i];
+        const y = headerHeight + i * rowHeight;
+
+        // Row background alternate
+        if (i % 2 === 0) {
+          ctx.fillStyle = '#0f1725';
+          ctx.fillRect(0, y, width, rowHeight);
+        }
+
+        // Rank icon/text
+        const rankText = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `${i + 1}.`;
+        ctx.font = '26px Sans';
+        ctx.fillStyle = '#ffffff';
+        ctx.fillText(rankText, padding, y + 44);
+
+        // Try fetch user & avatar
+        let fetched = null;
+        try {
+          fetched = await interaction.client.users.fetch(u.id);
+        } catch (e) {
+          fetched = null;
+        }
+
+        const displayName = fetched ? (fetched.globalName || fetched.username) : 'Người dùng không xác định';
+        const avatarURL = fetched ? fetched.displayAvatarURL({ extension: 'png', size: 128 }) : 'https://cdn.discordapp.com/embed/avatars/0.png';
+
+        // Load avatar image
+        let avatarImg;
+        try {
+          avatarImg = await Canvas.loadImage(avatarURL);
+        } catch (e) {
+          avatarImg = await Canvas.loadImage('https://cdn.discordapp.com/embed/avatars/0.png');
+        }
+
+        // Draw circular avatar
+        const avSize = 52;
+        const avX = padding + 60;
+        const avY = y + 9;
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(avX + avSize / 2, avY + avSize / 2, avSize / 2, 0, Math.PI * 2, true);
+        ctx.closePath();
+        ctx.clip();
+        ctx.drawImage(avatarImg, avX, avY, avSize, avSize);
+        ctx.restore();
+
+        // Draw name & balance
+        ctx.fillStyle = '#ffffff';
+        ctx.font = '20px Sans';
+        ctx.fillText(displayName, avX + avSize + 12, y + 36);
+
+        const balanceText = u.balance.toLocaleString();
+        ctx.font = '20px Sans';
+        const textMetrics = ctx.measureText(balanceText);
+        ctx.fillStyle = '#9ae6b4';
+        ctx.fillText(balanceText, width - padding - textMetrics.width, y + 36);
+      }
+
+      // Export image buffer
+      const buffer = canvas.toBuffer('image/png');
+      const attachment = new AttachmentBuilder(buffer, { name: 'leaderboard.png' });
 
       const embed = new EmbedBuilder()
-        .setTitle('**<a:leaf_left:1408895436374413312> Bảng Xếp Hạng Tài Sản <a:leaf_right:1408895433555578880>**')
-        .setDescription(leaderboardDescription.join('\n'))
         .setColor('#FFD700')
-        .setThumbnail(interaction.client.user.displayAvatarURL())
+        .setImage('attachment://leaderboard.png')
         .setTimestamp();
 
-      await interaction.editReply({ embeds: [embed] });
+      await interaction.editReply({ embeds: [embed], files: [attachment] });
 
     } catch (error) {
       console.error(error);
-      await interaction.editReply({
-        content: 'Đã xảy ra lỗi khi tạo bảng xếp hạng!',
-        ephemeral: true
-      });
+      await interaction.editReply({ content: 'Đã xảy ra lỗi khi tạo bảng xếp hạng!', ephemeral: true });
     }
   },
 };
