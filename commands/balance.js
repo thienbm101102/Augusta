@@ -111,7 +111,7 @@ module.exports = {
     const framePath = path.join(__dirname, "../assets/frames", frameFile);
     if (fs.existsSync(framePath)) {
       const frame = await Canvas.loadImage(framePath);
-      const frameOffsetY = 80; // số pixel muốn đẩy khung lên
+      const frameOffsetY = 100; // số pixel muốn đẩy khung lên
       ctx.drawImage(
         frame,
         ax - avatarR - framePadding,
