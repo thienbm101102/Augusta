@@ -8,10 +8,8 @@ module.exports = {
 
   async execute(interaction) {
     try {
-      // DeferReply ngay lập tức vì việc fetch tên người dùng có thể mất thời gian
       await interaction.deferReply();
 
-      // Lấy dữ liệu người dùng đã được sắp xếp từ database
       const sortedUsers = await getAllBalances();
 
       if (sortedUsers.length === 0) {
@@ -25,29 +23,25 @@ module.exports = {
           let rankIcon = medals[index] || `**${index + 1}.**`;
           let discordUser = 'Người dùng không xác định';
           try {
-            // Lấy thông tin người dùng từ client để có tên và tag
             const fetchedUser = await interaction.client.users.fetch(user.id);
             discordUser = fetchedUser.tag;
           } catch (e) {
             console.error(`Không thể lấy thông tin người dùng ${user.id}:`, e);
+            discordUser = `<@${user.id}>`; // Fallback to mention
           }
           return `${rankIcon} ${discordUser} — **${user.balance.toLocaleString()}**<a:diamondgem:1402590496647413811>`;
         })
       );
 
       const embed = new EmbedBuilder()
-        .setTitle('**<a:leaf_left:1408895436374413312> Bảng Xếp Hạng Tài Sản <a:leaf_right:1408895433555578880>**')
-        .setDescription(desc)
-        .setColor('#FFD700')
-        .setThumbnail(interaction.client.user.displayAvatarURL())
-        .setTimestamp();
-      
-      await interaction.editReply({ embeds: [embed] });
+        .setTitle('**<a:leaf_left:1408895436374413346> Bảng Xếp Hạng Người Giàu Nhất <a:leaf_right:1408895438882414674>**')
+        .setDescription(leaderboardDescription.join('\n'))
+        .setColor('#2ecc71');
 
+      await interaction.editReply({ embeds: [embed] });
     } catch (error) {
       console.error(error);
-      await interaction.editReply({ content: 'Đã xảy ra lỗi khi tạo bảng xếp hạng!', ephemeral: true });
+      await interaction.editReply({ content: 'Đã xảy ra lỗi khi tạo bảng xếp hạng.', ephemeral: true });
     }
   },
 };
-
