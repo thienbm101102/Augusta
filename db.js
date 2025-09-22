@@ -107,6 +107,7 @@ async function getAllUsers() {
 }
 
 async function getAllBalances() {
+    // Sửa ở đây để chỉ lấy userId và balance
     return await User.find({}, "userId balance").sort({ balance: -1 }).limit(10);
 }
 
