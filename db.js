@@ -1,129 +1,116 @@
-const mongoose = require('mongoose');
+// db.js
+const mongoose = require("mongoose");
 
-// Định nghĩa Schema cho người dùng
-const userSchema = new mongoose.Schema({
-    _id: String, // Discord user ID
-    balance: { type: Number, default: 100000 },
-    lastDaily: { type: Number, default: 0 },
-    lastLoanDate: { type: Number, default: null },
-    debt: { type: Number, default: 0 },
-    banner: { type: String, default: 'banner.png' },
-    badge: { type: String, default: 'thulinh.png' },
-    ownedBanners: { type: [String], default: ['banner.png'] },
-    ownedBadges: { type: [String], default: ['thulinh.png'] },
-    city: {
-        buildings: { type: Array, default: [] },
-        lastIncomeClaim: { type: Number, default: 0 },
-    },
-    monsters: { type: Array, default: [] },
-    ownedEquipment: { type: Array, default: [] },
-    cards: { type: Array, default: [] },
-});
-
-// Tạo Model từ Schema
-const User = mongoose.model('User', userSchema);
-
-// Hàm kết nối đến MongoDB
+// Kết nối MongoDB
 async function connectDB() {
     try {
-        await mongoose.connect(process.env.MONGO_URI);
-        console.log('✅ Connected to MongoDB!');
-        // Đồng bộ hóa dữ liệu từ db.json cũ sang MongoDB (Chỉ chạy một lần)
-        // await migrateData();
+        await mongoose.connect(process.env.MONGO_URI, {
+            useNewUrlParser: true,
+            useUnifiedTopology: true,
+        });
+        console.log("✅ Đã kết nối tới MongoDB Atlas!");
     } catch (err) {
-        console.error('❌ Failed to connect to MongoDB:', err);
+        console.error("❌ Lỗi kết nối MongoDB:", err);
     }
 }
 
-// Hàm lấy thông tin người dùng. Nếu chưa có, tạo mới
-async function getUser(id) {
-    let user = await User.findById(id);
+// Schema User
+const userSchema = new mongoose.Schema({
+    userId: { type: String, required: true, unique: true },
+    balance: { type: Number, default: 0 },
+    debt: { type: Number, default: 0 },
+    lastDaily: { type: Date, default: null },
+    lastLoanDate: { type: Date, default: null },
+    birthday: {
+        day: { type: Number, default: null },
+        month: { type: Number, default: null },
+    },
+    cards: { type: [String], default: [] },
+    banners: { type: [String], default: [] },
+    badges: { type: [String], default: [] },
+    monsters: { type: [String], default: [] },
+}, { timestamps: true });
+
+const User = mongoose.model("User", userSchema);
+
+// Các hàm xử lý dữ liệu
+async function getUser(userId) {
+    let user = await User.findOne({ userId });
     if (!user) {
-        user = new User({ _id: id });
+        user = new User({ userId });
         await user.save();
     }
     return user;
 }
 
-// Các hàm thao tác với số dư
-async function addBalance(id, amount) {
-    const user = await getUser(id);
+async function addBalance(userId, amount) {
+    const user = await getUser(userId);
     user.balance += amount;
     await user.save();
     return user.balance;
 }
 
-async function deductBalance(id, amount) {
-    const user = await getUser(id);
-    if (user.balance < amount) return false;
-    user.balance -= amount;
+async function deductBalance(userId, amount) {
+    const user = await getUser(userId);
+    user.balance = Math.max(0, user.balance - amount);
     await user.save();
-    return true;
+    return user.balance;
 }
 
-async function setBalance(id, amount) {
-    const user = await getUser(id);
+async function setBalance(userId, amount) {
+    const user = await getUser(userId);
     user.balance = amount;
     await user.save();
     return user.balance;
 }
 
-async function getBalance(id) {
-    const user = await getUser(id);
+async function getBalance(userId) {
+    const user = await getUser(userId);
     return user.balance;
 }
 
-// Các hàm khác
-async function getLastDaily(id) {
-    const user = await getUser(id);
+async function getLastDaily(userId) {
+    const user = await getUser(userId);
     return user.lastDaily;
 }
 
-async function setLastDaily(id, timestamp) {
-    const user = await getUser(id);
-    user.lastDaily = timestamp;
+async function setLastDaily(userId, date) {
+    const user = await getUser(userId);
+    user.lastDaily = date;
     await user.save();
 }
 
-async function getDebt(id) {
-    const user = await getUser(id);
+async function getDebt(userId) {
+    const user = await getUser(userId);
     return user.debt;
 }
 
-async function setDebt(id, amount) {
-    const user = await getUser(id);
+async function setDebt(userId, amount) {
+    const user = await getUser(userId);
     user.debt = amount;
     await user.save();
 }
 
-async function getLastLoanDate(id) {
-    const user = await getUser(id);
+async function getLastLoanDate(userId) {
+    const user = await getUser(userId);
     return user.lastLoanDate;
 }
 
-async function setLastLoanDate(id, timestamp) {
-    const user = await getUser(id);
-    user.lastLoanDate = timestamp;
+async function setLastLoanDate(userId, date) {
+    const user = await getUser(userId);
+    user.lastLoanDate = date;
     await user.save();
 }
 
 async function getAllUsers() {
-    const users = await User.find({});
-    // Chuyển đổi định dạng để khớp với cấu trúc cũ
-    const result = {};
-    users.forEach(user => {
-        result[user._id] = user.toObject();
-    });
-    return result;
+    return await User.find({});
 }
 
 async function getAllBalances() {
-    const users = await User.find({}, 'balance');
-    const balances = users.map(user => ({ id: user._id, balance: user.balance }));
-    return balances.sort((a, b) => b.balance - a.balance);
+    return await User.find({}, "userId balance");
 }
 
-// Export các hàm
+// Export
 module.exports = {
     connectDB,
     getUser,
@@ -139,4 +126,5 @@ module.exports = {
     setLastLoanDate,
     getAllUsers,
     getAllBalances,
+    User, // ✅ để dùng trong index.js
 };
