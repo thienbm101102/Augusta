@@ -3,10 +3,8 @@ const {
   ActionRowBuilder, 
   StringSelectMenuBuilder 
 } = require("discord.js");
-const fs = require("fs");
 const path = require("path");
-
-const dbPath = path.join(__dirname, "../db.json");
+const { getUser, updateUser } = require("../db");
 
 // Hàm này sẽ lấy tên hiển thị từ tên file
 const getItemName = (filename) => {
@@ -28,23 +26,25 @@ module.exports = {
   async execute(interaction) {
     await interaction.deferReply({ ephemeral: true });
 
-    let db = {};
-    if (fs.existsSync(dbPath)) {
-      db = JSON.parse(fs.readFileSync(dbPath, "utf8"));
-    }
+    // Lấy dữ liệu người dùng từ MongoDB
+    const user = await getUser(interaction.user.id);
+    const userOwnedBanners = user.ownedBanners || [];
     
-    // Lấy danh sách banner người dùng sở hữu, thêm banner mặc định
-    const userOwnedBanners = db.users?.[interaction.user.id]?.ownedBanners || [];
-    const availableBanners = [...new Set(["banner.png", ...userOwnedBanners])];
+    // Lấy danh sách banner người dùng sở hữu
+    const availableBanners = userOwnedBanners;
 
     if (availableBanners.length === 0) {
-      return interaction.editReply({ content: "Bạn chưa sở hữu banner nào!" });
+        return interaction.editReply({
+            content: "Bạn chưa có banner nào để sử dụng. Hãy mua một cái trong cửa hàng!",
+            ephemeral: true
+        });
     }
 
+    // Tạo các tùy chọn cho select menu
     const options = availableBanners.map(f => ({
       label: getItemName(f), 
       value: f,
-      default: f === db.users[interaction.user.id].banner
+      default: f === user.banner
     }));
 
     const selectMenu = new StringSelectMenuBuilder()
@@ -58,34 +58,25 @@ module.exports = {
       content: "<a:AbbyCheers:1393909248076943380> Chọn background bạn muốn sử dụng:",
       components: [row]
     });
+  },
 
-    const collector = interaction.channel.createMessageComponentCollector({
-      filter: i => i.customId === `select-banner-${interaction.user.id}` && i.user.id === interaction.user.id,
-      time: 60_000,
-    });
+  async handleSelectMenu(interaction) {
+      await interaction.deferUpdate();
+      const [_, __, userId] = interaction.customId.split('-');
+      const bannerName = interaction.values[0];
 
-    collector.on("collect", async (i) => {
-      await i.deferUpdate();
-      const bannerName = i.values[0];
-      
-      db.users[interaction.user.id].banner = bannerName;
-      fs.writeFileSync(dbPath, JSON.stringify(db, null, 2), "utf8");
+      if (interaction.user.id !== userId) {
+          return interaction.followUp({ content: 'Bạn không thể tương tác với menu của người khác!', ephemeral: true });
+      }
 
-      await i.editReply({
-        content: `<a:AbbyHappy:1393909327848538122> Hồ sơ của bạn đã được đổi thành **${getItemName(bannerName)}**`,
+      // Cập nhật banner của người dùng
+      const user = await getUser(userId);
+      user.banner = bannerName;
+      await user.save(); // Lưu thay đổi vào MongoDB
+
+      await interaction.editReply({
+        content: `<a:AbbyHappy:1393909327848538122> Bạn đã đổi banner thành **${getItemName(bannerName)}** thành công!`,
         components: []
       });
-
-      collector.stop();
-    });
-
-    collector.on("end", async (_, reason) => {
-      if (reason === "time") {
-        await interaction.editReply({
-          content: "Hết thời gian chọn!",
-          components: []
-        });
-      }
-    });
-  },
+  }
 };
