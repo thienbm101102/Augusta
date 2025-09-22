@@ -1,3 +1,5 @@
+// File: leaderboard.js
+
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const { getAllBalances } = require('../db');
 
@@ -8,8 +10,10 @@ module.exports = {
 
   async execute(interaction) {
     try {
+      // DeferReply ngay lập tức vì việc fetch tên người dùng có thể mất thời gian
       await interaction.deferReply();
 
+      // Lấy dữ liệu người dùng đã được sắp xếp từ database
       const sortedUsers = await getAllBalances();
 
       if (sortedUsers.length === 0) {
