@@ -1,5 +1,5 @@
 const { SlashCommandBuilder, EmbedBuilder, InteractionFlags } = require('discord.js');
-const { addBalance, getBalance, getUser, saveDB, getDebt, setDebt, getLastLoanDate, setLastLoanDate } = require('../db');
+const { addBalance, getBalance, getDebt, setDebt, getLastLoanDate, setLastLoanDate } = require('../db');
 
 // --- Cấu hình ngân hàng ---
 const LOAN_COOLDOWN = 24 * 60 * 60 * 1000; // 24 giờ
@@ -38,20 +38,19 @@ module.exports = {
     async execute(interaction) {
         const userId = interaction.user.id;
         const subcommand = interaction.options.getSubcommand();
-        const user = getUser(userId);
         const now = Date.now();
 
         switch (subcommand) {
             case 'vay': {
                 const amount = interaction.options.getInteger('sotien');
-                const lastLoanDate = getLastLoanDate(userId);
-                const debt = getDebt(userId);
+                const lastLoanDate = await getLastLoanDate(userId);
+                const debt = await getDebt(userId);
 
                 if (debt > 0) {
                     return interaction.reply({ content: `<a:AbbyAnnoyed:1393909340914845706> Bạn đang có nợ là **${debt.toLocaleString()}**<a:diamondgem:1402590496647413811>. Vui lòng trả hết nợ để vay tiếp!`, ephemeral: true });
                 }
 
-                if (now - lastLoanDate < LOAN_COOLDOWN) {
+                if (lastLoanDate && now - lastLoanDate < LOAN_COOLDOWN) {
                     const remainingTime = LOAN_COOLDOWN - (now - lastLoanDate);
                     const remainingHours = Math.ceil(remainingTime / (1000 * 60 * 60));
                     return interaction.reply({ content: `<a:AbbyAnnoyed:1393909340914845706> Bạn chỉ có thể vay tiền mỗi **24 giờ**. Vui lòng chờ **${remainingHours} giờ** nữa!`, ephemeral: true });
@@ -63,15 +62,16 @@ module.exports = {
 
                 const debtWithInterest = Math.floor(amount + amount * INTEREST_RATE);
                 
-                addBalance(userId, amount);
-                setDebt(userId, debtWithInterest);
-                setLastLoanDate(userId, now);
+                await addBalance(userId, amount);
+                await setDebt(userId, debtWithInterest);
+                await setLastLoanDate(userId, now);
+                const newBalance = await getBalance(userId);
 
                 const embed = new EmbedBuilder()
                     .setTitle('<a:Verified:1406631971509243974> Vay Tiền Thành Công!')
                     .setDescription(`Bạn đã vay thành công **${amount.toLocaleString()}**<a:diamondgem:1402590496647413811>.`)
                     .addFields(
-                        { name: 'Số dư mới', value: `\`${getBalance(userId).toLocaleString()}\`<a:diamondgem:1402590496647413811>`, inline: true },
+                        { name: 'Số dư mới', value: `\`${newBalance.toLocaleString()}\`<a:diamondgem:1402590496647413811>`, inline: true },
                         { name: 'Tổng nợ (gồm lãi)', value: `\`${debtWithInterest.toLocaleString()}\`<a:diamondgem:1402590496647413811>`, inline: true },
                         { name: 'Lãi suất', value: `${INTEREST_RATE * 100}%`, inline: true }
                     )
@@ -81,8 +81,8 @@ module.exports = {
 
             case 'tra': {
                 const amount = interaction.options.getInteger('sotien');
-                const debt = getDebt(userId);
-                const userBalance = getBalance(userId);
+                const debt = await getDebt(userId);
+                const userBalance = await getBalance(userId);
 
                 if (debt <= 0) {
                     return interaction.reply({ content: '<a:AbbyHappy:1393909327848538122> Bạn không có nợ!', ephemeral: true });
@@ -92,23 +92,26 @@ module.exports = {
                     return interaction.reply({ content: `<a:AbbyAnnoyed:1393909340914845706> Số tiền trả không hợp lệ. Bạn cần trả từ **1** đến **${Math.min(debt, userBalance).toLocaleString()}**<a:diamondgem:1402590496647413811>.`, ephemeral: true });
                 }
                 
-                addBalance(userId, -amount);
-                setDebt(userId, debt - amount);
+                await addBalance(userId, -amount);
+                await setDebt(userId, debt - amount);
+                const newBalance = await getBalance(userId);
+                const remainingDebt = await getDebt(userId);
+
 
                 const embed = new EmbedBuilder()
                     .setTitle('<a:Verified:1406631971509243974> Trả Nợ Thành Công!')
                     .setDescription(`Bạn đã trả thành công **${amount.toLocaleString()}**<a:diamondgem:1402590496647413811>.`)
                     .addFields(
-                        { name: 'Số dư mới', value: `\`${getBalance(userId).toLocaleString()}\`<a:diamondgem:1402590496647413811>`, inline: true },
-                        { name: 'Nợ còn lại', value: `\`${getDebt(userId).toLocaleString()}\`<a:diamondgem:1402590496647413811>`, inline: true }
+                        { name: 'Số dư mới', value: `\`${newBalance.toLocaleString()}\`<a:diamondgem:1402590496647413811>`, inline: true },
+                        { name: 'Nợ còn lại', value: `\`${remainingDebt.toLocaleString()}\`<a:diamondgem:1402590496647413811>`, inline: true }
                     )
                     .setColor('#2ecc71');
                 return interaction.reply({ embeds: [embed] });
             }
 
             case 'xem': {
-                const debt = getDebt(userId);
-                const lastLoanDate = getLastLoanDate(userId);
+                const debt = await getDebt(userId);
+                const lastLoanDate = await getLastLoanDate(userId);
                 const nextLoanTime = lastLoanDate ? lastLoanDate + LOAN_COOLDOWN : null;
                 const remainingTime = nextLoanTime ? nextLoanTime - now : 0;
                 
