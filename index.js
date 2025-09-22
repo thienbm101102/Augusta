@@ -98,21 +98,25 @@ client.on('interactionCreate', async interaction => {
   try {
     if (interaction.isChatInputCommand()) {
       const command = client.commands.get(interaction.commandName);
-      if (command) await command.execute(interaction, client);
+      if (!command) return;
+      await command.execute(interaction, client);
     } else if (interaction.isButton()) {
       const [commandName] = interaction.customId.split(/[_-]/);
       const command = client.commands.get(commandName);
-      if (command?.handleButton) {
+
+      if (command && typeof command.handleButton === 'function') {
         await command.handleButton(interaction);
       }
     }
   } catch (error) {
     console.error(error);
-    const errorMsg = { content: '❌ Có lỗi xảy ra khi thực thi tương tác này!', flags: 64 };
+    // Xử lý lỗi một cách an toàn
+    // Nếu tương tác đã được phản hồi hoặc hoãn, sử dụng followUp
     if (interaction.replied || interaction.deferred) {
-      await interaction.followUp(errorMsg);
+      await interaction.followUp({ content: '❌ Có lỗi xảy ra khi thực thi tương tác này!', ephemeral: true });
     } else {
-      await interaction.reply(errorMsg);
+      // Nếu chưa, sử dụng reply
+      await interaction.reply({ content: '❌ Có lỗi xảy ra khi thực thi tương tác này!', ephemeral: true });
     }
   }
 });
