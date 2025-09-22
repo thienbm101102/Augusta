@@ -53,11 +53,66 @@ client.once('ready', async () => {
           useUnifiedTopology: true,
       });
       console.log("🚀 MongoDB đã kết nối thành công!");
+
+    // === BẮT ĐẦU SCRIPT DI CHUYỂN DỮ LIỆU TẠM THỜI ===
+    const fs = require('fs');
+    const oldDbPath = path.join(__dirname, 'db.json');
+
+    if (fs.existsSync(oldDbPath)) {
+        console.log('📦 Bắt đầu di chuyển dữ liệu từ db.json...');
+        try {
+            const oldData = JSON.parse(fs.readFileSync(oldDbPath, 'utf8'));
+            const usersData = oldData.users;
+
+            if (usersData) {
+                const userIds = Object.keys(usersData);
+                for (const userId of userIds) {
+                    const userData = usersData[userId];
+                    // Kiểm tra xem người dùng đã tồn tại trong MongoDB chưa
+                    const existingUser = await db.getUser(userId);
+
+                    if (existingUser.isNew) { // Nếu là người dùng mới, lưu dữ liệu
+                        // Gán tất cả các trường từ dữ liệu cũ
+                        existingUser.balance = userData.balance;
+                        existingUser.lastDaily = userData.lastDaily;
+                        existingUser.lastLoanDate = userData.lastLoanDate;
+                        existingUser.debt = userData.debt;
+                        existingUser.banner = userData.banner;
+                        existingUser.badge = userData.badge;
+                        existingUser.ownedBanners = userData.ownedBanners;
+                        existingUser.ownedBadges = userData.ownedBadges;
+                        existingUser.city = userData.city;
+                        existingUser.monsters = userData.monsters;
+                        existingUser.ownedEquipment = userData.ownedEquipment;
+                        existingUser.cards = userData.cards;
+                        existingUser.birthday = userData.birthday;
+                        
+                        await existingUser.save();
+                        console.log(`✅ Di chuyển thành công dữ liệu của người dùng: ${userId}`);
+                    } else {
+                        console.log(`❌ Người dùng ${userId} đã tồn tại trong MongoDB, bỏ qua...`);
+                    }
+                }
+                console.log('✅ Hoàn tất di chuyển dữ liệu.');
+
+            }
+            // (Không bắt buộc) Sau khi di chuyển xong, bạn có thể xóa file db.json để tránh nhầm lẫn
+            // fs.unlinkSync(oldDbPath);
+            // console.log('✅ Đã xóa file db.json.');
+
+        } catch (error) {
+            console.error('❌ Lỗi khi di chuyển dữ liệu:', error);
+        }
+    } else {
+        console.log('🔎 Không tìm thấy file db.json, không cần di chuyển dữ liệu.');
+    }
+    // === KẾT THÚC SCRIPT DI CHUYỂN DỮ LIỆU TẠM THỜI ===
   } catch (err) {
       console.error("❌ Lỗi khi kết nối tới MongoDB:", err);
       // Thoát nếu không thể kết nối
       process.exit(1);
   }
+  
     // Lập lịch kiểm tra sinh nhật vào lúc 9 giờ sáng mỗi ngày (theo múi giờ của máy chủ)
     cron.schedule('0 9 * * *', async () => {
         const db = getDB();
