@@ -1,6 +1,5 @@
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
-const { readFileSync } = require('fs');
-const path = require('path');
+const { getAllBalances } = require('../db');
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -9,39 +8,44 @@ module.exports = {
 
   async execute(interaction) {
     try {
-      // Đọc database
-      const dbPath = path.join(__dirname, '../db.json');
-      const db = JSON.parse(readFileSync(dbPath, 'utf8'));
+      // DeferReply ngay lập tức vì việc fetch tên người dùng có thể mất thời gian
+      await interaction.deferReply();
 
-      const users = db.users || {};
-      const sorted = Object.entries(users)
-        .map(([id, data]) => ({ id, balance: data.balance || 0 }))
-        .sort((a, b) => b.balance - a.balance)
-        .slice(0, 10);
+      // Lấy dữ liệu người dùng đã được sắp xếp từ database
+      const sortedUsers = await getAllBalances();
 
-      if (sorted.length === 0) {
-        return interaction.reply({ content: '<a:AbbyShocked:1393909368138895411> Không có dữ liệu người chơi!', ephemeral: true });
+      if (sortedUsers.length === 0) {
+        return interaction.editReply({ content: '<a:AbbyShocked:1393909368138895411> Không có dữ liệu người chơi!', ephemeral: true });
       }
 
-      const medals = ['', '', '']; // 3 hạng đầu
-let desc = sorted
-  .map((user, index) => {
-    let rankIcon = medals[index] || `**${index + 1}.**`;
-    return `${rankIcon} <@${user.id}> — **${user.balance.toLocaleString()}<a:diamondgem:1402590496647413811>**`;
-  })
-  .join('\n');
+      const medals = ['<:gold_medal:1260462410385960960>', '<:silver_medal:1260462432822151240>', '<:bronze_medal:1260462412801458266>'];
+      
+      const leaderboardDescription = await Promise.all(
+        sortedUsers.slice(0, 10).map(async (user, index) => {
+          let rankIcon = medals[index] || `**${index + 1}.**`;
+          let discordUser = 'Người dùng không xác định';
+          try {
+            // Lấy thông tin người dùng từ client để có tên và tag
+            const fetchedUser = await interaction.client.users.fetch(user.id);
+            discordUser = fetchedUser.tag;
+          } catch (e) {
+            console.error(`Không thể lấy thông tin người dùng ${user.id}:`, e);
+          }
+          return `${rankIcon} ${discordUser} — **${user.balance.toLocaleString()}**<a:diamondgem:1402590496647413811>`;
+        })
+      );
 
       const embed = new EmbedBuilder()
-        .setTitle('**<a:leaf_left:1408895436374413312> Bảng Xếp Hạng Tài Sản <a:leaf_right:1408895433555578880>**')
-        .setDescription(desc)
-        .setColor('#FFD700')
-        .setThumbnail(interaction.client.user.displayAvatarURL())
-        .setTimestamp();
+        .setTitle('**<a:leaf_left:1408895436374413342> Bảng Xếp Hạng Tiền Mặt <a:leaf_right:1408895434771392602>**')
+        .setDescription(leaderboardDescription.join('\n'))
+        .setTimestamp()
+        .setColor('#e74c3c');
+      
+      await interaction.editReply({ embeds: [embed] });
 
-      await interaction.reply({ embeds: [embed] });
-    } catch (err) {
-      console.error(err);
-      await interaction.reply({ content: '<a:AbbyShocked:1393909368138895411> Lỗi khi hiển thị bảng xếp hạng!', ephemeral: true });
+    } catch (error) {
+      console.error(error);
+      await interaction.editReply({ content: 'Đã xảy ra lỗi khi tạo bảng xếp hạng!', ephemeral: true });
     }
-  }
+  },
 };
