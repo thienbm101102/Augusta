@@ -1,6 +1,7 @@
 // commands/leaderboard.js
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
-const { getAllBalances } = require('../db');
+const { readFileSync } = require('fs');
+const path = require('path');
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -9,61 +10,60 @@ module.exports = {
 
   async execute(interaction) {
     try {
-      await interaction.deferReply();
+      // Đọc dữ liệu từ db.json
+      const dbPath = path.join(__dirname, '../db.json');
+      const db = JSON.parse(readFileSync(dbPath, 'utf8'));
+      const users = db.users || {};
 
-      const sortedUsers = await getAllBalances();
-      if (!sortedUsers || sortedUsers.length === 0) {
-        return interaction.editReply({
+      // Sắp xếp top 10 theo balance
+      const sorted = Object.entries(users)
+        .map(([id, data]) => ({ id, balance: data.balance || 0 }))
+        .sort((a, b) => b.balance - a.balance)
+        .slice(0, 10);
+
+      if (sorted.length === 0) {
+        return interaction.reply({
           content: '<a:AbbyShocked:1393909368138895411> Không có dữ liệu người chơi!',
           ephemeral: true
         });
       }
 
+      // Icon cho top 3
       const medals = [
         '<:gold_medal:1260462410385960960>',
         '<:silver_medal:1260462432822151240>',
         '<:bronze_medal:1260462412801458266>'
       ];
 
-      // Build lines - dùng mention <@ID> để Discord tự hiển thị tên
-      const top = sortedUsers.slice(0, 10);
-      const invalidIds = [];
-      const lines = top.map((user, index) => {
+      // Tạo description
+      const desc = sorted.map((user, index) => {
         const rankIcon = medals[index] || `**${index + 1}.**`;
-        const idStr = String(user.id ?? '');
-        // kiểm tra cơ bản định dạng snowflake (17-19 chữ số)
-        if (!/^\d{17,19}$/.test(idStr)) {
-          invalidIds.push({ index: index + 1, id: user.id });
-        }
-        const mention = idStr ? `<@${idStr}>` : 'Người dùng không xác định';
-        const balance = (user.balance ?? 0).toLocaleString();
-        return `${rankIcon} ${mention} — **${balance}** <a:diamondgem:1402590496647413811>`;
-      });
+        // dùng mention <@id> để Discord tự hiển thị tên
+        return `${rankIcon} <@${user.id}> — **${user.balance.toLocaleString()}** <a:diamondgem:1402590496647413811>`;
+      }).join('\n');
 
-      // Debug log: nếu có id không hợp lệ thì in ra console để bạn kiểm tra DB
-      if (invalidIds.length > 0) {
-        console.warn('[bangxephang] Invalid/malformed user IDs in DB (top 10):', invalidIds);
-      }
-
-      // đảm bảo length description không vượt quá limit Discord
-      let description = lines.join('\n');
-      if (description.length > 4096) description = description.slice(0, 4093) + '...';
-
+      // Embed
       const embed = new EmbedBuilder()
         .setTitle('**<a:leaf_left:1408895436374413312> Bảng Xếp Hạng Tài Sản <a:leaf_right:1408895433555578880>**')
-        .setDescription(description)
+        .setDescription(desc)
         .setColor('#FFD700')
         .setThumbnail(interaction.client.user.displayAvatarURL())
         .setTimestamp();
 
-      await interaction.editReply({ embeds: [embed] });
-    } catch (error) {
-      console.error('[bangxephang] Error:', error);
-      if (interaction.deferred || interaction.replied) {
-        await interaction.editReply({ content: 'Đã xảy ra lỗi khi tạo bảng xếp hạng!', ephemeral: true });
+      await interaction.reply({ embeds: [embed] });
+    } catch (err) {
+      console.error('[bangxephang] Error:', err);
+      if (interaction.replied || interaction.deferred) {
+        await interaction.editReply({
+          content: '<a:AbbyShocked:1393909368138895411> Lỗi khi hiển thị bảng xếp hạng!',
+          ephemeral: true
+        });
       } else {
-        await interaction.reply({ content: 'Đã xảy ra lỗi khi tạo bảng xếp hạng!', ephemeral: true });
+        await interaction.reply({
+          content: '<a:AbbyShocked:1393909368138895411> Lỗi khi hiển thị bảng xếp hạng!',
+          ephemeral: true
+        });
       }
     }
-  },
+  }
 };
