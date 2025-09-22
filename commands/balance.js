@@ -2,10 +2,11 @@ const { SlashCommandBuilder, AttachmentBuilder } = require("discord.js");
 const Canvas = require("canvas");
 const path = require("path");
 const fs = require("fs");
+const db = require("../db"); // Import module db mới để dùng MongoDB
 
 // --- cấu hình đường dẫn tài nguyên ---
-const FONT_FILE = "Roboto-Bold.ttf";     // đổi tên nếu bạn dùng font khác
-const FONT_FAMILY = "RobotoBold";       // tên alias sẽ dùng trong ctx.font
+const FONT_FILE = "Roboto-Bold.ttf"; // đổi tên nếu bạn dùng font khác
+const FONT_FAMILY = "RobotoBold"; // tên alias sẽ dùng trong ctx.font
 
 // --- đăng ký font (an toàn, có fallback) ---
 try {
@@ -18,19 +19,6 @@ try {
   }
 } catch (e) {
   console.log("⚠️ Cannot register font -> fallback to Sans:", e.message);
-}
-
-// --- helper getBalance ---
-let getBalanceFromDb;
-try {
-  const db = require("../db");
-  getBalanceFromDb = (id) => {
-    if (typeof db.getBalance === "function") return db.getBalance(id);
-    if (db.users) return db.users[id]?.balance ?? 0;
-    return 0;
-  };
-} catch {
-  getBalanceFromDb = () => 0;
 }
 
 // Hàm roundRect
@@ -52,31 +40,27 @@ module.exports = {
   data: new SlashCommandBuilder()
     .setName("taisan")
     .setDescription("Xem số dư của bạn")
-    .addUserOption(option =>
+    .addUserOption((option) =>
       option
         .setName("user")
         .setDescription("Người dùng muốn xem (bỏ trống để xem của bạn)")
         .setRequired(false)
     ),
-  async execute(interaction, db) {
+  async execute(interaction) {
+    // Luôn deferReply trước mọi logic mất thời gian
+    await interaction.deferReply(); 
+
     const targetUser = interaction.options.getMember("user") || interaction.member;
-    /*const targetUser = interaction.options.getUser("user") || interaction.user;*/
-    const userId = interaction.user.id;
-    const userBalance = getBalanceFromDb(targetUser.id);
-    await interaction.deferReply(); // báo với Discord là bot đang xử lý
+
+    // Lấy thông tin người dùng từ MongoDB
+    // db.getUser() là hàm bạn đã tạo để lấy dữ liệu từ MongoDB
+    const userData = await db.getUser(targetUser.id);
+    const userBalance = userData?.balance ?? 0;
 
     // Tạo canvas
     const canvas = Canvas.createCanvas(700, 250);
     const ctx = canvas.getContext("2d");
 
-    // Đường dẫn tới db.json
-    const dbPath = path.join(__dirname, "../db.json");
-    if (fs.existsSync(dbPath)) {
-      db = JSON.parse(fs.readFileSync(dbPath, "utf8"));
-    }
-    
-    // Lấy thông tin người dùng từ dữ liệu mới nhất
-    const userData = db.users?.[targetUser.id] || {};
     const bannerFile = userData.banner || "banner.png"; // default nếu chưa chọn
     const bannerPath = path.join(__dirname, "../assets/banners", bannerFile);
 
@@ -94,47 +78,48 @@ module.exports = {
     ctx.fillStyle = "rgba(0,0,0,0.6)";
     ctx.roundRect(20, 20, 660, 210, 25);
     ctx.fill();
-    
-    let frameFile = "bronze.png";
-if (userBalance >= 600000) frameFile = "challenger.png";
-else if (userBalance >= 500000) frameFile = "grandmaster.png";
-else if (userBalance >= 400000) frameFile = "master.png";
-else if (userBalance >= 300000) frameFile = "diamond.png";
-else if (userBalance >= 200000) frameFile = "platinum.png";
-else if (userBalance >= 100000) frameFile = "gold.png";
-else if (userBalance >= 50000) frameFile = "silver.png";
-// dưới 50000 thì mặc định bronze
 
-// ===== Khai báo tọa độ và bán kính avatar =====
-const ax = 140;  // X của tâm avatar
-const ay = 125;  // Y của tâm avatar
-const avatarR = 60;    // bán kính avatar
+    let frameFile = "bronze.png";
+    if (userBalance >= 600000) frameFile = "challenger.png";
+    else if (userBalance >= 500000) frameFile = "grandmaster.png";
+    else if (userBalance >= 400000) frameFile = "master.png";
+    else if (userBalance >= 300000) frameFile = "diamond.png";
+    else if (userBalance >= 200000) frameFile = "platinum.png";
+    else if (userBalance >= 100000) frameFile = "gold.png";
+    else if (userBalance >= 50000) frameFile = "silver.png";
+    // dưới 50000 thì mặc định bronze
+
+    // ===== Khai báo tọa độ và bán kính avatar =====
+    const ax = 140; // X của tâm avatar
+    const ay = 125; // Y của tâm avatar
+    const avatarR = 60; // bán kính avatar
 
     // Avatar
-const avatar = await Canvas.loadImage(
-  targetUser.displayAvatarURL({ extension: "png", size: 256 })
-);
-ctx.save();
-ctx.beginPath();
-ctx.arc(ax, ay, avatarR, 0, Math.PI * 2);
-ctx.closePath();
-ctx.clip();
-ctx.drawImage(avatar, ax - avatarR, ay - avatarR, avatarR*2, avatarR*2);
-ctx.restore();
+    const avatar = await Canvas.loadImage(
+      targetUser.displayAvatarURL({ extension: "png", size: 256 })
+    );
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(ax, ay, avatarR, 0, Math.PI * 2);
+    ctx.closePath();
+    ctx.clip();
+    ctx.drawImage(avatar, ax - avatarR, ay - avatarR, avatarR * 2, avatarR * 2);
+    ctx.restore();
 
-// Khung PNG
-const framePadding = 110; // tăng padding khung to hơn
-const framePath = path.join(__dirname, "../assets/frames", frameFile);
-if (fs.existsSync(framePath)) {
-  const frame = await Canvas.loadImage(framePath);
-  const frameOffsetY = 80; // số pixel muốn đẩy khung lên
-ctx.drawImage(frame,
-  ax - avatarR - framePadding,
-  ay - avatarR - framePadding - frameOffsetY, // trừ offsetY
-  (avatarR*2) + framePadding*2,
-  (avatarR*2) + framePadding*2 * (frame.height / frame.width)
-);
-} 
+    // Khung PNG
+    const framePadding = 110; // tăng padding khung to hơn
+    const framePath = path.join(__dirname, "../assets/frames", frameFile);
+    if (fs.existsSync(framePath)) {
+      const frame = await Canvas.loadImage(framePath);
+      const frameOffsetY = 80; // số pixel muốn đẩy khung lên
+      ctx.drawImage(
+        frame,
+        ax - avatarR - framePadding,
+        ay - avatarR - framePadding - frameOffsetY, // trừ offsetY
+        avatarR * 2 + framePadding * 2,
+        (avatarR * 2 + framePadding * 2) * (frame.height / frame.width)
+      );
+    }
 
     // Tên người dùng
     ctx.font = `32px ${FONT_FAMILY}, Sans`;
@@ -149,16 +134,16 @@ ctx.drawImage(frame,
       ctx.font = `${fontSize}px ${FONT_FAMILY}, Sans`;
     }
 
-    ctx.fillText(nameText, 280, 70)
+    ctx.fillText(nameText, 280, 70);
 
     // Vẽ huy hiệu
     const badgeFile = userData.badge; // Lấy tên file huy hiệu từ database
-    if (badgeFile) { // Kiểm tra xem người dùng có huy hiệu không
+    if (badgeFile) {
+      // Kiểm tra xem người dùng có huy hiệu không
       const badgePath = path.join(__dirname, "../assets/badges", badgeFile);
       if (fs.existsSync(badgePath)) {
         const badge = await Canvas.loadImage(badgePath);
         // Tên của người dùng
-        const nameText = targetUser.displayName;
         const nameMetrics = ctx.measureText(nameText);
         // Tính toán vị trí X và Y của huy hiệu, đặt nó bên cạnh tên
         const badgeX = 280 + nameMetrics.width + 2; // 10 là khoảng cách giữa tên và huy hiệu
@@ -186,11 +171,19 @@ ctx.drawImage(frame,
     ctx.shadowBlur = 0; // reset
 
     // Load và vẽ icon
-    const coinIcon = await Canvas.loadImage(path.join(__dirname, "../assets/icons/diamond.png"));
-    ctx.drawImage(coinIcon, 230 + ctx.measureText(userBalance.toLocaleString()).width + 55, 120, 25, 25);
+    const coinIcon = await Canvas.loadImage(
+      path.join(__dirname, "../assets/icons/diamond.png")
+    );
+    ctx.drawImage(
+      coinIcon,
+      230 + ctx.measureText(userBalance.toLocaleString()).width + 55,
+      120,
+      25,
+      25
+    );
 
     // === Progress bar (ví dụ level dựa trên balance) ===
-    const level = Math.floor(userBalance / 100000); 
+    const level = Math.floor(userBalance / 100000);
     const progress = (userBalance % 100000) / 100000;
 
     ctx.fillStyle = "#333";
@@ -217,7 +210,8 @@ ctx.drawImage(frame,
     const attachment = new AttachmentBuilder(canvas.toBuffer("image/png"), {
       name: "taisan.png",
     });
-    
+
+    // Sử dụng editReply sau khi đã defer
     await interaction.editReply({ files: [attachment] });
   },
 };
