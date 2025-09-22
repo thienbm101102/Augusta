@@ -1,154 +1,160 @@
-const fs = require('fs-extra');
-const path = require('path');
-const dbPath = path.join(__dirname, 'db.json');
+const mongoose = require('mongoose');
 
-let db = { 
-    users: {},  
-    games: {},
-    marketplace: [], 
-    marketData: {},
-    lastMarketUpdate: 0,
-};
+// Định nghĩa Schema cho các loại dữ liệu lồng nhau
+const buildingSchema = new mongoose.Schema({
+    type: String,
+    level: Number
+});
 
-function loadDB() {
-    try {
-        if (fs.existsSync(dbPath)) {
-            const loadedDb = fs.readJsonSync(dbPath);
-            // Gán trực tiếp dữ liệu từ file để đảm bảo luôn cập nhật
-            db = loadedDb;
-            // Đảm bảo các thuộc tính chính luôn tồn tại
-            if (!db.users) db.users = {};
-            if (!db.games) db.games = {};
-            if (!db.marketplace) db.marketplace = [];
-            if (!db.marketData) db.marketData = {};
-            if (!db.lastMarketUpdate) db.lastMarketUpdate = 0;
-        } else {
-            console.log("Database file not found, creating a new one.");
-            saveDB();
-        }
-    } catch (err) {
-        console.error('Lỗi khi tải database:', err);
-        // Reset về trạng thái an toàn nếu file bị lỗi
-        db = { users: {}, games: {}, marketplace: [], marketData: {}, lastMarketUpdate: 0 };
-        saveDB();
+const monsterSchema = new mongoose.Schema({
+    id: String,
+    type: String,
+    name: String,
+    level: Number,
+    exp: Number,
+    hp: Number,
+    maxHp: Number,
+    equippedEquipment: mongoose.Schema.Types.Mixed,
+    attack: Number,
+    defense: Number
+});
+
+const equipmentSchema = new mongoose.Schema({
+    id: String,
+    type: String
+});
+
+const cardSchema = new mongoose.Schema({
+    type: String,
+    rarity: String,
+    data: {
+        name: String,
+        rarity: String,
+        description: String,
+        stats: {
+            attack: Number,
+            hp: Number
+        },
+        imageUrl: String
+    },
+    count: Number
+});
+
+// Định nghĩa Schema chính cho người dùng
+const userSchema = new mongoose.Schema({
+    userId: { type: String, unique: true, required: true },
+    balance: { type: Number, default: 100000 },
+    lastDaily: { type: Number, default: 0 },
+    lastLoanDate: { type: Number, default: null },
+    debt: { type: Number, default: 0 },
+    banner: { type: String, default: "banner.png" },
+    badge: { type: String, default: "thulinh.png" },
+    ownedBanners: { type: [String], default: ["banner.png"] },
+    ownedBadges: { type: [String], default: ["lehoinguyentieu.png"] },
+    city: {
+        buildings: { type: [buildingSchema], default: [] },
+        lastIncomeClaim: { type: Number, default: Date.now() }
+    },
+    monsters: { type: [monsterSchema], default: [] },
+    ownedEquipment: { type: [equipmentSchema], default: [] },
+    cards: { type: [cardSchema], default: [] },
+    adventure: {
+        currentLocation: { type: String, default: null },
+        inventory: { type: Array, default: [] }
+    },
+    birthday: {
+        month: { type: Number, default: null },
+        day: { type: Number, default: null }
     }
-}
+}, {
+    // Tùy chọn để có thể thêm các trường khác mà không cần định nghĩa trước
+    strict: false
+});
 
-function saveDB() {
-    try {
-        fs.writeJsonSync(dbPath, db, { spaces: 2 });
-    } catch (err) {
-        console.error('Lỗi khi lưu database:', err);
+const User = mongoose.model('User', userSchema);
+
+// Các hàm tương tác với database
+async function getUser(id) {
+    let user = await User.findOne({ userId: id });
+    if (!user) {
+        // Tạo người dùng mới nếu không tìm thấy
+        user = new User({ userId: id });
+        await user.save();
     }
+    return user;
 }
 
-function getDB() {
-    // Luôn tải lại database từ file mỗi khi cần
-    loadDB();
-    return db;
-}
-
-function getUser(id) {
-    // Đảm bảo đối tượng database đã được tải
-    if (!db || !db.users) {
-        loadDB();
-    }
-    
-    const defaultUser = {
-        balance: 100000,
-        lastDaily: 0,
-        lastLoanDate: null,
-        debt: 0,
-        banner: "banner.png",
-        badge: "thulinh.png",
-        ownedBanners: ["banner.png"],
-        ownedBadges: ["lehoinguyentieu.png"],
-        city: { buildings: [], lastIncomeClaim: Date.now()},
-        monsters: [],
-        ownedEquipment: [],
-        cards: [],
-    };
-
-    if (!db.users[id]) {
-        db.users[id] = defaultUser;
-    } else {
-        db.users[id] = { ...defaultUser, ...db.users[id] };
-    }
-    saveDB();
-    return db.users[id];
-}
-
-function getBalance(id) {
-    return getUser(id).balance;
-}
-
-function addBalance(id, amount) {
-    const user = getUser(id);
-    user.balance += amount;
-    saveDB();
+async function getBalance(id) {
+    const user = await getUser(id);
     return user.balance;
 }
 
-function deductBalance(id, amount) {
-    const user = getUser(id);
+async function addBalance(id, amount) {
+    const user = await getUser(id);
+    user.balance += amount;
+    await user.save();
+    return user.balance;
+}
+
+async function deductBalance(id, amount) {
+    const user = await getUser(id);
     if (user.balance < amount) return false;
     user.balance -= amount;
-    saveDB();
+    await user.save();
     return true;
 }
 
-function setBalance(id, amount) {
-    const user = getUser(id);
+async function setBalance(id, amount) {
+    const user = await getUser(id);
     user.balance = amount;
-    saveDB();
+    await user.save();
     return user.balance;
 }
 
-function getLastDaily(id) {
-    return getUser(id).lastDaily;
+async function getLastDaily(id) {
+    const user = await getUser(id);
+    return user.lastDaily;
 }
 
-function setLastDaily(id, timestamp) {
-    const user = getUser(id);
+async function setLastDaily(id, timestamp) {
+    const user = await getUser(id);
     user.lastDaily = timestamp;
-    saveDB();
+    await user.save();
 }
 
-function getDebt(id) {
-    return getUser(id).debt;
+async function getDebt(id) {
+    const user = await getUser(id);
+    return user.debt;
 }
 
-function setDebt(id, amount) {
-    const user = getUser(id);
+async function setDebt(id, amount) {
+    const user = await getUser(id);
     user.debt = amount;
-    saveDB();
+    await user.save();
 }
 
-function getLastLoanDate(id) {
-    return getUser(id).lastLoanDate;
+async function getLastLoanDate(id) {
+    const user = await getUser(id);
+    return user.lastLoanDate;
 }
 
-function setLastLoanDate(id, timestamp) {
-    const user = getUser(id);
+async function setLastLoanDate(id, timestamp) {
+    const user = await getUser(id);
     user.lastLoanDate = timestamp;
-    saveDB();
+    await user.save();
 }
 
-function getAllUsers() {
-    return db.users;
+async function getAllUsers() {
+    return await User.find({});
 }
 
-function getAllBalances() {
-    const users = getAllUsers();
-    const balances = Object.entries(users).map(([id, data]) => ({ id, balance: data.balance }));
+async function getAllBalances() {
+    const users = await getAllUsers();
+    const balances = users.map(user => ({ id: user.userId, balance: user.balance }));
     return balances.sort((a, b) => b.balance - a.balance);
 }
 
 module.exports = {
-    db,
-    getDB,
-    loadDB,
-    saveDB,
     getUser,
     getBalance,
     addBalance,
