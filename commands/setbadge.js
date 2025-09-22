@@ -1,12 +1,10 @@
-const { 
-  SlashCommandBuilder, 
-  ActionRowBuilder, 
-  StringSelectMenuBuilder 
+const {
+  SlashCommandBuilder,
+  ActionRowBuilder,
+  StringSelectMenuBuilder
 } = require("discord.js");
-const fs = require("fs");
 const path = require("path");
-
-const dbPath = path.join(__dirname, "../db.json");
+const { getUser, updateUser } = require("../db");
 
 // Hàm này sẽ lấy tên hiển thị từ tên file (giống shop.js)
 const getItemName = (filename) => {
@@ -32,26 +30,25 @@ module.exports = {
   async execute(interaction) {
     await interaction.deferReply({ ephemeral: true });
 
-    // Đọc dữ liệu người dùng từ db
-    let db = {};
-    if (fs.existsSync(dbPath)) {
-      db = JSON.parse(fs.readFileSync(dbPath, "utf8"));
-    }
-    
+    // Lấy dữ liệu người dùng từ MongoDB
+    const user = await getUser(interaction.user.id);
+    const userOwnedBadges = user.ownedBadges || [];
+
     // Lấy danh sách danh hiệu người dùng sở hữu
-    const userOwnedBadges = db.users?.[interaction.user.id]?.ownedBadges || [];
-    
-    // Nếu người dùng chưa có danh hiệu nào
-    if (userOwnedBadges.length === 0) {
-      return interaction.editReply({ content: "Bạn chưa sở hữu danh hiệu nào! Bạn có thể mua chúng trong `/shop badges`." });
+    const availableBadges = userOwnedBadges;
+
+    if (availableBadges.length === 0) {
+        return interaction.editReply({
+            content: "Bạn chưa có danh hiệu nào để sử dụng. Hãy mua một cái trong cửa hàng!",
+            ephemeral: true
+        });
     }
 
-    // Tạo select menu
-    const options = userOwnedBadges.map(f => ({
-      label: getItemName(f), 
+    // Tạo các tùy chọn cho select menu
+    const options = availableBadges.map(f => ({
+      label: getItemName(f),
       value: f,
-      // Tùy chọn: đặt danh hiệu hiện tại làm mặc định
-      default: f === db.users[interaction.user.id].badge
+      default: f === user.badge
     }));
 
     const selectMenu = new StringSelectMenuBuilder()
@@ -65,36 +62,25 @@ module.exports = {
       content: "<a:AbbyCheers:1393909248076943380> Chọn danh hiệu bạn muốn sử dụng:",
       components: [row]
     });
+  },
 
-    // --- chờ user chọn ---
-    const collector = interaction.channel.createMessageComponentCollector({
-      filter: i => i.customId === `select-badge-${interaction.user.id}` && i.user.id === interaction.user.id,
-      time: 60_000,
-    });
+  async handleSelectMenu(interaction) {
+      await interaction.deferUpdate();
+      const [_, __, userId] = interaction.customId.split('-');
+      const badgeName = interaction.values[0];
 
-    collector.on("collect", async (i) => {
-      await i.deferUpdate();
-      const badgeName = i.values[0];
-      
-      // cập nhật danh hiệu
-      db.users[interaction.user.id].badge = badgeName;
-      fs.writeFileSync(dbPath, JSON.stringify(db, null, 2), "utf8");
+      if (interaction.user.id !== userId) {
+          return interaction.followUp({ content: 'Bạn không thể tương tác với menu của người khác!', ephemeral: true });
+      }
 
-      await i.editReply({
-        content: `<a:AbbyHappy:1393909327848538122> Hồ sơ của bạn đã được đổi thành **${getItemName(badgeName)}**`,
+      // Cập nhật danh hiệu của người dùng
+      const user = await getUser(userId);
+      user.badge = badgeName;
+      await user.save(); // Lưu thay đổi vào MongoDB
+
+      await interaction.editReply({
+        content: `<a:AbbyHappy:1393909327848538122> Bạn đã đổi danh hiệu thành **${getItemName(badgeName)}** thành công!`,
         components: []
       });
-
-      collector.stop();
-    });
-
-    collector.on("end", async (_, reason) => {
-      if (reason === "time") {
-        await interaction.editReply({
-          content: "Hết thời gian chọn!",
-          components: []
-        });
-      }
-    });
-  },
+  }
 };
