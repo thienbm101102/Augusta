@@ -46,25 +46,22 @@ client.once('ready', async () => {
         status: 'online'
     });
   
-  // Kết nối đến MongoDB
-  try {
-      await mongoose.connect(process.env.MONGODB_URI, {
-          useNewUrlParser: true,
-          useUnifiedTopology: true,
-      });
-      console.log("🚀 MongoDB đã kết nối thành công!");
-        } catch (error) {
-            console.error('❌ Lỗi khi di chuyển dữ liệu:', error);
-        }
-    } else {
-        console.log('🔎 Không tìm thấy file db.json, không cần di chuyển dữ liệu.');
+  client.once('ready', async () => {
+    console.log(`✅ Logged in as ${client.user.tag}`);
+    // ... các đoạn code khác ...
+    
+    // Kết nối đến MongoDB
+    try {
+        await mongoose.connect(process.env.MONGODB_URI, {
+            useNewUrlParser: true,
+            useUnifiedTopology: true,
+        });
+        console.log("🚀 MongoDB đã kết nối thành công!");
+    } catch (err) {
+        console.error("❌ Lỗi khi kết nối tới MongoDB:", err);
+        process.exit(1); 
     }
-    // === KẾT THÚC SCRIPT DI CHUYỂN DỮ LIỆU TẠM THỜI ===
-  } catch (err) {
-      console.error("❌ Lỗi khi kết nối tới MongoDB:", err);
-      // Thoát nếu không thể kết nối
-      process.exit(1);
-  }
+});
   
     // Lập lịch kiểm tra sinh nhật vào lúc 9 giờ sáng mỗi ngày (theo múi giờ của máy chủ)
     cron.schedule('0 9 * * *', async () => {
