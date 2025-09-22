@@ -1,5 +1,6 @@
 const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
-const db = require('../db'); // Import module db mới để dùng MongoDB
+const db = require('../db');
+const mongoose = require('mongoose'); // 👈 Dòng code cần thêm
 
 // Các hàm phụ trợ
 function drawCard() {
