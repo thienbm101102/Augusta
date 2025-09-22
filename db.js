@@ -48,7 +48,7 @@ const userSchema = new mongoose.Schema({
     lastLoanDate: { type: Number, default: null },
     debt: { type: Number, default: 0 },
     banner: { type: String, default: "banner.png" },
-    badge: { type: String, default: "thulinh.png" },
+    badge: { type: String, default: "lehoinguyentieu.png" },
     ownedBanners: { type: [String], default: ["banner.png"] },
     ownedBadges: { type: [String], default: ["lehoinguyentieu.png"] },
     city: {
