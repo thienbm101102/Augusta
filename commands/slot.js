@@ -75,18 +75,19 @@ module.exports = {
             ),
 
     async execute(interaction) {
+        await interaction.deferReply();
         const bet = interaction.options.getInteger('bet');
-        const userBalance = getBalance(interaction.user.id);
+        const userBalance = await getBalance(interaction.user.id);
 
         if (userBalance < bet) {
-            return interaction.reply({
-                content: `<a:AbbyShocked:1393909368138895411> Bạn không đủ <a:diamondgem:1402590496647413811> để đặt **${bet}**! Số dư của bạn là **${userBalance}**<:diamondgem:1402590496647413811>`,
+            return interaction.editReply({
+                content: `<a:AbbyShocked:1393909368138895411> Bạn không đủ <a:diamondgem:1402590496647413811> để đặt **${bet}**! Số dư của bạn là **${userBalance}**<a:diamondgem:1402590496647413811>`,
                 ephemeral: true
             });
         }
         
         // Trừ tiền cược ngay lập tức
-        addBalance(interaction.user.id, -bet);
+        await addBalance(interaction.user.id, -bet);
         const spinning = '❓';
         const initialReel = `${spinning} ${spinning} ${spinning}`;
         const initialEmbed = new EmbedBuilder()
@@ -100,7 +101,7 @@ module.exports = {
             .setFooter({ text: `Người chơi: ${interaction.member.displayName}` });
 
         // Gửi tin nhắn ban đầu với hiệu ứng quay
-        await interaction.reply({ embeds: [initialEmbed] });
+        await interaction.editReply({ embeds: [initialEmbed] });
 
         // Quay ngẫu nhiên và tính toán kết quả cuối cùng
         const finalReel = spin();
@@ -131,8 +132,8 @@ module.exports = {
         await new Promise(resolve => setTimeout(resolve, 500));
 
         // Cập nhật số dư cuối cùng và hiển thị tin nhắn kết quả
-        addBalance(interaction.user.id, winnings);
-        const newBalance = getBalance(interaction.user.id);
+        await addBalance(interaction.user.id, winnings);
+        const newBalance = await getBalance(interaction.user.id);
 
         // Tạo chuỗi bảng tỷ lệ thắng
         let oddsTable = '';
@@ -150,6 +151,7 @@ module.exports = {
                 { name: 'Kết Quả:', value: `\`\`\`\n${finalReel.join(' ')}\n\`\`\`` },
                 { name: 'Bạn đặt:', value: `${bet.toLocaleString()}<a:diamondgem:1402590496647413811>`, inline: true },
                 { name: 'Thu về:', value: `${winnings.toLocaleString()}<a:diamondgem:1402590496647413811>`, inline: true },
+                { name: 'Số dư mới:', value: `${newBalance.toLocaleString()}<a:diamondgem:1402590496647413811>`, inline: true },
                 /*{ name: 'Bảng Tỷ Lệ Thắng', value: oddsTable },*/
             )
             .setFooter({ text: `${resultMessage} | Người chơi: ${interaction.member.displayName}` });
