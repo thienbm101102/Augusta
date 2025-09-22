@@ -1,6 +1,6 @@
 // commands/leaderboard.js
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
-const { readFileSync } = require('fs');
+const fs = require('fs');
 const path = require('path');
 
 module.exports = {
@@ -10,59 +10,98 @@ module.exports = {
 
   async execute(interaction) {
     try {
-      // Đọc dữ liệu từ db.json
-      const dbPath = path.join(__dirname, '../db.json');
-      const db = JSON.parse(readFileSync(dbPath, 'utf8'));
-      const users = db.users || {};
+      // Defer để yên tâm (vì có thể fetch user)
+      await interaction.deferReply();
 
-      // Sắp xếp top 10 theo balance
-      const sorted = Object.entries(users)
-        .map(([id, data]) => ({ id, balance: data.balance || 0 }))
-        .sort((a, b) => b.balance - a.balance)
-        .slice(0, 10);
-
-      if (sorted.length === 0) {
-        return interaction.reply({
-          content: '<a:AbbyShocked:1393909368138895411> Không có dữ liệu người chơi!',
-          ephemeral: true
-        });
+      const dbPath = path.resolve(__dirname, '..', 'db.json');
+      if (!fs.existsSync(dbPath)) {
+        console.warn('[bangxephang] db.json not found at', dbPath);
+        return await interaction.editReply({ content: '❌ Không tìm thấy db.json trên server.', ephemeral: true });
       }
 
-      // Icon cho top 3
+      let raw;
+      try {
+        raw = fs.readFileSync(dbPath, 'utf8');
+      } catch (e) {
+        console.error('[bangxephang] Read db.json error:', e);
+        return await interaction.editReply({ content: '❌ Lỗi khi đọc db.json', ephemeral: true });
+      }
+
+      let db;
+      try {
+        db = JSON.parse(raw);
+      } catch (e) {
+        console.error('[bangxephang] Parse db.json error:', e);
+        return await interaction.editReply({ content: '❌ db.json không phải JSON hợp lệ', ephemeral: true });
+      }
+
+      const usersObj = db.users || {};
+      const entries = Object.entries(usersObj).map(([id, data]) => ({
+        id: String(id),
+        balance: Number((data && data.balance) || 0)
+      }));
+
+      if (entries.length === 0) {
+        return await interaction.editReply({ content: '<a:AbbyShocked:1393909368138895411> Không có dữ liệu người chơi!', ephemeral: true });
+      }
+
+      const sorted = entries.sort((a, b) => b.balance - a.balance).slice(0, 10);
+
       const medals = [
         '<:gold_medal:1260462410385960960>',
         '<:silver_medal:1260462432822151240>',
         '<:bronze_medal:1260462412801458266>'
       ];
 
-      // Tạo description
-      const desc = sorted.map((user, index) => {
-        const rankIcon = medals[index] || `**${index + 1}.**`;
-        // dùng mention <@id> để Discord tự hiển thị tên
-        return `${rankIcon} <@${user.id}> — **${user.balance.toLocaleString()}** <a:diamondgem:1402590496647413811>`;
-      }).join('\n');
+      const lines = [];
+      const debug = [];
 
-      // Embed
+      // Fetch từng user (tối đa 10) — không throw nếu fail
+      for (let i = 0; i < sorted.length; i++) {
+        const u = sorted[i];
+        const rankIcon = medals[i] || `**${i + 1}.**`;
+        let fetched = null;
+        let display = null;
+
+        try {
+          fetched = await interaction.client.users.fetch(u.id);
+        } catch (e) {
+          // fetch thất bại (user không tồn tại / invalid id / rate limit) -> tiếp tục
+          fetched = null;
+        }
+
+        if (fetched) {
+          // ưu tiên globalName (nếu người dùng bật), sau đó tag (username#discrim), sau đó username
+          display = fetched.globalName || fetched.tag || fetched.username || `<@${u.id}> (ID: ${u.id})`;
+        } else {
+          // KHÔNG dùng "Người dùng không xác định" nữa — hiển thị mention kèm id cho dễ debug
+          display = `<@${u.id}> (ID: ${u.id})`;
+        }
+
+        debug.push({ pos: i + 1, id: u.id, fetched: !!fetched, display });
+        lines.push(`${rankIcon} ${display} — **${u.balance.toLocaleString()}** <a:diamondgem:1402590496647413811>`);
+      }
+
+      // In debug ra console để bạn kiểm tra (nếu cần)
+      console.info('[bangxephang] Top debug:', JSON.stringify(debug, null, 2));
+
+      let description = lines.join('\n');
+      if (description.length > 4096) description = description.slice(0, 4093) + '...';
+
       const embed = new EmbedBuilder()
         .setTitle('**<a:leaf_left:1408895436374413312> Bảng Xếp Hạng Tài Sản <a:leaf_right:1408895433555578880>**')
-        .setDescription(desc)
+        .setDescription(description)
         .setColor('#FFD700')
         .setThumbnail(interaction.client.user.displayAvatarURL())
         .setTimestamp();
 
-      await interaction.reply({ embeds: [embed] });
+      await interaction.editReply({ embeds: [embed] });
     } catch (err) {
-      console.error('[bangxephang] Error:', err);
-      if (interaction.replied || interaction.deferred) {
-        await interaction.editReply({
-          content: '<a:AbbyShocked:1393909368138895411> Lỗi khi hiển thị bảng xếp hạng!',
-          ephemeral: true
-        });
+      console.error('[bangxephang] Unexpected error:', err);
+      if (interaction.deferred || interaction.replied) {
+        await interaction.editReply({ content: '<a:AbbyShocked:1393909368138895411> Lỗi khi hiển thị bảng xếp hạng!', ephemeral: true });
       } else {
-        await interaction.reply({
-          content: '<a:AbbyShocked:1393909368138895411> Lỗi khi hiển thị bảng xếp hạng!',
-          ephemeral: true
-        });
+        await interaction.reply({ content: '<a:AbbyShocked:1393909368138895411> Lỗi khi hiển thị bảng xếp hạng!', ephemeral: true });
       }
     }
   }
