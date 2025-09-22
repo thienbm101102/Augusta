@@ -1,5 +1,5 @@
 const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
-const { db, saveDB, getUser, addBalance, getBalance, setBalance } = require('../db');
+const db = require('../db'); // Import module db mới để dùng MongoDB
 
 function drawCard() {
   const ranks = [2,3,4,5,6,7,8,9,10,'J','Q','K','A'];
@@ -109,3 +109,4 @@ module.exports = {
   }
 
 };
+
