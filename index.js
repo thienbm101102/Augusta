@@ -86,11 +86,4 @@ client.on('messageCreate', async message => {
             await doansoCommand.handleMessage(message);
         }
     }
-
-  if (!message.author.bot) {
-    await db.handleMessage(message.author.id); // lưu XP/level vào MongoDB
-  }
 });
-
-// 🚀 Chạy bot
-startBot();
