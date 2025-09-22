@@ -1,94 +1,51 @@
 const mongoose = require('mongoose');
 
-// Định nghĩa Schema cho các loại dữ liệu lồng nhau
-const buildingSchema = new mongoose.Schema({
-    type: String,
-    level: Number
-});
-
-const monsterSchema = new mongoose.Schema({
-    id: String,
-    type: String,
-    name: String,
-    level: Number,
-    exp: Number,
-    hp: Number,
-    maxHp: Number,
-    equippedEquipment: mongoose.Schema.Types.Mixed,
-    attack: Number,
-    defense: Number
-});
-
-const equipmentSchema = new mongoose.Schema({
-    id: String,
-    type: String
-});
-
-const cardSchema = new mongoose.Schema({
-    type: String,
-    rarity: String,
-    data: {
-        name: String,
-        rarity: String,
-        description: String,
-        stats: {
-            attack: Number,
-            hp: Number
-        },
-        imageUrl: String
-    },
-    count: Number
-});
-
-// Định nghĩa Schema chính cho người dùng
+// Định nghĩa Schema cho người dùng
 const userSchema = new mongoose.Schema({
-    userId: { type: String, unique: true, required: true },
+    _id: String, // Discord user ID
     balance: { type: Number, default: 100000 },
     lastDaily: { type: Number, default: 0 },
     lastLoanDate: { type: Number, default: null },
     debt: { type: Number, default: 0 },
-    banner: { type: String, default: "banner.png" },
-    badge: { type: String, default: "lehoinguyentieu.png" },
-    ownedBanners: { type: [String], default: ["banner.png"] },
-    ownedBadges: { type: [String], default: ["lehoinguyentieu.png"] },
+    banner: { type: String, default: 'banner.png' },
+    badge: { type: String, default: 'thulinh.png' },
+    ownedBanners: { type: [String], default: ['banner.png'] },
+    ownedBadges: { type: [String], default: ['thulinh.png'] },
     city: {
-        buildings: { type: [buildingSchema], default: [] },
-        lastIncomeClaim: { type: Number, default: Date.now() }
+        buildings: { type: Array, default: [] },
+        lastIncomeClaim: { type: Number, default: 0 },
     },
-    monsters: { type: [monsterSchema], default: [] },
-    ownedEquipment: { type: [equipmentSchema], default: [] },
-    cards: { type: [cardSchema], default: [] },
-    adventure: {
-        currentLocation: { type: String, default: null },
-        inventory: { type: Array, default: [] }
-    },
-    birthday: {
-        month: { type: Number, default: null },
-        day: { type: Number, default: null }
-    }
-}, {
-    // Tùy chọn để có thể thêm các trường khác mà không cần định nghĩa trước
-    strict: false
+    monsters: { type: Array, default: [] },
+    ownedEquipment: { type: Array, default: [] },
+    cards: { type: Array, default: [] },
 });
 
+// Tạo Model từ Schema
 const User = mongoose.model('User', userSchema);
 
-// Các hàm tương tác với database
+// Hàm kết nối đến MongoDB
+async function connectDB() {
+    try {
+        await mongoose.connect(process.env.MONGO_URI);
+        console.log('✅ Connected to MongoDB!');
+        // Đồng bộ hóa dữ liệu từ db.json cũ sang MongoDB (Chỉ chạy một lần)
+        // await migrateData();
+    } catch (err) {
+        console.error('❌ Failed to connect to MongoDB:', err);
+    }
+}
+
+// Hàm lấy thông tin người dùng. Nếu chưa có, tạo mới
 async function getUser(id) {
-    let user = await User.findOne({ userId: id });
+    let user = await User.findById(id);
     if (!user) {
-        // Tạo người dùng mới nếu không tìm thấy
-        user = new User({ userId: id });
+        user = new User({ _id: id });
         await user.save();
     }
     return user;
 }
 
-async function getBalance(id) {
-    const user = await getUser(id);
-    return user.balance;
-}
-
+// Các hàm thao tác với số dư
 async function addBalance(id, amount) {
     const user = await getUser(id);
     user.balance += amount;
@@ -111,6 +68,12 @@ async function setBalance(id, amount) {
     return user.balance;
 }
 
+async function getBalance(id) {
+    const user = await getUser(id);
+    return user.balance;
+}
+
+// Các hàm khác
 async function getLastDaily(id) {
     const user = await getUser(id);
     return user.lastDaily;
@@ -145,21 +108,29 @@ async function setLastLoanDate(id, timestamp) {
 }
 
 async function getAllUsers() {
-    return await User.find({});
+    const users = await User.find({});
+    // Chuyển đổi định dạng để khớp với cấu trúc cũ
+    const result = {};
+    users.forEach(user => {
+        result[user._id] = user.toObject();
+    });
+    return result;
 }
 
 async function getAllBalances() {
-    const users = await getAllUsers();
-    const balances = users.map(user => ({ id: user.userId, balance: user.balance }));
+    const users = await User.find({}, 'balance');
+    const balances = users.map(user => ({ id: user._id, balance: user.balance }));
     return balances.sort((a, b) => b.balance - a.balance);
 }
 
+// Export các hàm
 module.exports = {
+    connectDB,
     getUser,
-    getBalance,
     addBalance,
     deductBalance,
     setBalance,
+    getBalance,
     getLastDaily,
     setLastDaily,
     getDebt,
@@ -167,5 +138,5 @@ module.exports = {
     getLastLoanDate,
     setLastLoanDate,
     getAllUsers,
-    getAllBalances
+    getAllBalances,
 };
