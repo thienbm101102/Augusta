@@ -86,16 +86,6 @@ client.on('messageCreate', async message => {
             await doansoCommand.handleMessage(message);
         }
     }
-});
-
-// 📌 Xử lý message thường (VD: điểm kinh nghiệm, đoán số)
-client.on('messageCreate', async message => {
-  if (client.commands.has('doanso')) {
-    const doansoCommand = client.commands.get('doanso');
-    if (doansoCommand.handleMessage) {
-      await doansoCommand.handleMessage(message);
-    }
-  }
 
   if (!message.author.bot) {
     await db.handleMessage(message.author.id); // lưu XP/level vào MongoDB
