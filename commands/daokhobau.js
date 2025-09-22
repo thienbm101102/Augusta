@@ -68,8 +68,6 @@ function createButtons(game) {
             const item = game.board[i][j];
             const button = new ButtonBuilder()
                 .setCustomId(`daokhobau-dig-${i}-${j}`)
-                // Chỉ hiển thị emoji khi ô đã được lật và đó không phải là kho báu (để tránh lỗi)
-                // Kho báu sẽ chỉ hiển thị ở phần mô tả
                 .setLabel(isRevealed && item.type !== 'treasure' ? item.emoji : '\u200B')
                 .setStyle(isRevealed ? (item.type === 'treasure' ? ButtonStyle.Success : ButtonStyle.Secondary) : ButtonStyle.Primary)
                 .setDisabled(isRevealed || game.state !== 'playing');
@@ -87,7 +85,6 @@ function updateEmbed(game) {
     if (game.state === 'playing') {
         description += `Hãy nhấn vào ô bạn muốn đào!`;
     } else if (game.state === 'won') {
-        // Emoji kho báu động sẽ được hiển thị ở đây
         description += `**Chúc mừng!** Bạn đã tìm thấy kho báu! ${ITEMS.TREASURE.emoji}`;
     } else if (game.state === 'lost-bomb') {
         description += `Bạn đã đào trúng một quả bom! Game đã kết thúc <a:AbbyShocked:1393909368138895411>`;
@@ -125,13 +122,13 @@ module.exports = {
         }
         
         const betAmount = interaction.options.getInteger('bet');
-        const userBalance = getBalance(interaction.user.id);
+        const userBalance = await getBalance(interaction.user.id);
         
         if (userBalance < betAmount) {
             return interaction.editReply({ content: `Bạn không có đủ **${betAmount.toLocaleString()}**<a:diamondgem:1402590496647413811> để cược.`, ephemeral: true });
         }
         
-        addBalance(interaction.user.id, -betAmount);
+        await addBalance(interaction.user.id, -betAmount);
 
         const game = {
             state: 'playing',
@@ -177,7 +174,7 @@ module.exports = {
         if (item.type === 'treasure') {
             game.state = 'won';
             const winnings = item.value(game.bet);
-            addBalance(interaction.user.id, winnings);
+            await addBalance(interaction.user.id, winnings);
             
             const updatedEmbed = updateEmbed(game);
             updatedEmbed.setDescription(`<a:AbbyHappy:1393909327848538122> **Chúc mừng!** Bạn đã tìm thấy kho báu ${item.emoji} và nhận được **${winnings.toLocaleString()}**<a:diamondgem:1402590496647413811>`);
@@ -189,7 +186,7 @@ module.exports = {
             activeGames.delete(interaction.user.id);
         } else if (item.type === 'diamond') {
             const winnings = item.value(game.bet);
-            addBalance(interaction.user.id, winnings);
+            await addBalance(interaction.user.id, winnings);
             
             const updatedEmbed = updateEmbed(game);
             updatedEmbed.setDescription(`${messageToUser} và nhận được **${winnings.toLocaleString()}**<a:diamondgem:1402590496647413811>.\n\nTiếp tục đào nào!`);
@@ -197,7 +194,7 @@ module.exports = {
             await interaction.update({ embeds: [updatedEmbed], components: updatedComponents });
         } else if (item.type === 'money') {
             const winnings = item.value(game.bet);
-            addBalance(interaction.user.id, winnings);
+            await addBalance(interaction.user.id, winnings);
             
             const updatedEmbed = updateEmbed(game);
             updatedEmbed.setDescription(`${messageToUser} và nhận được **${winnings.toLocaleString()}**<a:diamondgem:1402590496647413811>.\n\nTiếp tục đào nào!`);
@@ -212,7 +209,7 @@ module.exports = {
         } else if (item.type === 'bomb' || item.type === 'spikes') {
             game.state = item.type === 'bomb' ? 'lost-bomb' : 'lost-spikes';
             const losses = item.value(game.bet);
-            addBalance(interaction.user.id, losses);
+            await addBalance(interaction.user.id, losses);
             
             const updatedEmbed = updateEmbed(game);
             updatedEmbed.setDescription(`${messageToUser}! Bạn mất **${Math.abs(losses).toLocaleString()}**<a:diamondgem:1402590496647413811>. Game đã kết thúc`);
