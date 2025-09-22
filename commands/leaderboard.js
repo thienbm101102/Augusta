@@ -1,6 +1,5 @@
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
-const { readFileSync } = require('fs');
-const path = require('path');
+const { getAllBalances } = require('../db');
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -9,39 +8,33 @@ module.exports = {
 
   async execute(interaction) {
     try {
-      // Đọc database
-      const dbPath = path.join(__dirname, '../db.json');
-      const db = JSON.parse(readFileSync(dbPath, 'utf8'));
-
-      const users = db.users || {};
-      const sorted = Object.entries(users)
-        .map(([id, data]) => ({ id, balance: data.balance || 0 }))
-        .sort((a, b) => b.balance - a.balance)
-        .slice(0, 10);
+      // Sửa lỗi: Sử dụng hàm bất đồng bộ từ db.js để lấy dữ liệu đã được sắp xếp
+      const sorted = await getAllBalances();
 
       if (sorted.length === 0) {
         return interaction.reply({ content: '<a:AbbyShocked:1393909368138895411> Không có dữ liệu người chơi!', ephemeral: true });
       }
 
       const medals = ['', '', '']; // 3 hạng đầu
-let desc = sorted
-  .map((user, index) => {
-    let rankIcon = medals[index] || `**${index + 1}.**`;
-    return `${rankIcon} <@${user.id}> — **${user.balance.toLocaleString()}<a:diamondgem:1402590496647413811>**`;
-  })
-  .join('\n');
+      let desc = sorted
+        .slice(0, 10) // Chỉ lấy top 10
+        .map((user, index) => {
+          let rankIcon = medals[index] || `**${index + 1}.**`;
+          return `${rankIcon} <@${user.id}> — **${user.balance.toLocaleString()}<a:diamondgem:1402590496647413811>**`;
+        })
+        .join('\n');
 
       const embed = new EmbedBuilder()
-        .setTitle('**<a:leaf_left:1408895436374413312> Bảng Xếp Hạng Tài Sản <a:leaf_right:1408895433555578880>**')
+        .setTitle('**<a:leaf_left:1408895436374413342> Bảng Xếp Hạng Tiền Mặt <a:leaf_right:1408895434771392602>**')
         .setDescription(desc)
-        .setColor('#FFD700')
-        .setThumbnail(interaction.client.user.displayAvatarURL())
-        .setTimestamp();
-
+        .setTimestamp()
+        .setColor('#e74c3c');
+      
       await interaction.reply({ embeds: [embed] });
-    } catch (err) {
-      console.error(err);
-      await interaction.reply({ content: '<a:AbbyShocked:1393909368138895411> Lỗi khi hiển thị bảng xếp hạng!', ephemeral: true });
+
+    } catch (error) {
+      console.error(error);
+      await interaction.reply({ content: 'Đã xảy ra lỗi khi tạo bảng xếp hạng!', ephemeral: true });
     }
-  }
+  },
 };
