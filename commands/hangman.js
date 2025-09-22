@@ -209,7 +209,7 @@ module.exports = {
             // Game over, thắng
             activeGames.delete(interaction.message.id);
             const reward = 1000;
-            addBalance(userId, reward);
+            await addBalance(userId, reward); // Đã sửa: Thêm await
             embed.setDescription(
                 `<a:AbbyHappy:1393909327848538122> Chúc mừng ${interaction.member.displayName} đã đoán đúng từ: **${game.word}**! <a:AbbyHappy:1393909327848538122>\n\n` +
                 `Bạn đã nhận được **${reward.toLocaleString()}**<a:diamondgem:1402590496647413811>`
