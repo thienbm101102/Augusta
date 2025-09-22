@@ -1,5 +1,5 @@
 const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
-const { addBalance, getBalance, loadDB, saveDB } = require('../db');
+const { addBalance, getBalance } = require('../db');
 
 // --- Cấu hình trò chơi ---
 const HORSES = ['<:87484pinkhorse:1413162074938277888>', '🐎', '🏇', '<a:51622unicornmagic:1413162071897669652>', '🦄'];
@@ -39,7 +39,7 @@ class HorseRacingGame {
     }
 
     createBettingEmbed(timeLeft) {
-        const pot = Array.from(this.bets.values()).reduce((sum, bet) => sum + bet.amount, 0);
+        const pot = Array.from(this.bets.values()).reduce((sum, bet) => sum + (bet.amount || 0), 0);
         const allBets = Array.from(this.bets.entries())
             .filter(([_, bet]) => bet.horseIndex !== null && bet.amount !== null)
             .map(([userId, bet]) => `<@${userId}> đã cược **${bet.amount.toLocaleString()}**<a:diamondgem:1402590496647413811> vào **${HORSE_NAMES[bet.horseIndex]}**`)
@@ -101,7 +101,7 @@ class HorseRacingGame {
         }, 1000);
     }
 
-    handleBet(interaction) {
+    async handleBet(interaction) {
         const [_, type, value] = interaction.customId.split('_');
         const userId = interaction.user.id;
         let userBet = this.bets.get(userId) || { horseIndex: null, amount: null };
@@ -111,9 +111,8 @@ class HorseRacingGame {
         } else if (type === 'amount') {
             userBet.amount = parseInt(value);
         }
-        
-        // Kiểm tra tiền cược
-        if (userBet.amount > getBalance(userId)) {
+
+        if (userBet.amount > await getBalance(userId)) {
              return interaction.reply({
                 content: 'Bạn không đủ tiền để đặt cược số tiền này!',
                 ephemeral: true
@@ -123,7 +122,7 @@ class HorseRacingGame {
         this.bets.set(userId, userBet);
         
         const updatedEmbed = this.createBettingEmbed(this.betTime);
-        interaction.update({ embeds: [updatedEmbed] });
+        await interaction.update({ embeds: [updatedEmbed] });
     }
     
     async startRace() {
@@ -186,19 +185,19 @@ class HorseRacingGame {
         const winners = [];
         let totalWinnings = 0;
         
-        loadDB();
         for (const [userId, bet] of this.bets.entries()) {
             // Trừ tiền cược của tất cả người chơi
-            addBalance(userId, -bet.amount);
+            if (bet.amount) {
+                await addBalance(userId, -bet.amount);
+            }
 
             if (bet.horseIndex === winnerIndex) {
                 const winnings = Math.floor(bet.amount * winningOdds);
-                addBalance(userId, winnings); // Cộng tiền thắng (tiền cược + lãi)
+                await addBalance(userId, winnings); // Cộng tiền thắng (tiền cược + lãi)
                 winners.push(`<@${userId}> (Thắng: ${winnings.toLocaleString()}<a:diamondgem:1402590496647413811>)`);
                 totalWinnings += winnings;
             }
         }
-        saveDB();
 
         const finalEmbed = new EmbedBuilder()
             .setColor('#3498db')
@@ -240,6 +239,6 @@ module.exports = {
             return interaction.reply({ content: 'Không có trận đua ngựa nào đang diễn ra để đặt cược!', ephemeral: true });
         }
         
-        game.handleBet(interaction);
+        await game.handleBet(interaction);
     }
 };
