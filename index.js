@@ -46,10 +46,6 @@ client.once('ready', async () => {
         status: 'online'
     });
   
-  client.once('ready', async () => {
-    console.log(`✅ Logged in as ${client.user.tag}`);
-    // ... các đoạn code khác ...
-    
     // Kết nối đến MongoDB
     try {
         await mongoose.connect(process.env.MONGODB_URI, {
@@ -96,27 +92,37 @@ client.once('ready', async () => {
 });
 
 client.on('interactionCreate', async interaction => {
-  try {
-    if (interaction.isChatInputCommand()) {
-      const command = client.commands.get(interaction.commandName);
-      if (!command) return;
-      await command.execute(interaction, client);
-    } else if (interaction.isButton()) {
-      // Tìm tên lệnh bằng cách chia customId tại dấu _ hoặc -
-      // Giờ đây, mỗi file lệnh sẽ tự deferUpdate, tránh lỗi 40060
-      const [commandName] = interaction.customId.split(/[_-]/);
-      const command = client.commands.get(commandName);
-
-      if (command && typeof command.handleButton === 'function') {
-        await command.handleButton(interaction);
+  if (interaction.isChatInputCommand()) {
+    const command = client.commands.get(interaction.commandName);
+    if (!command) return;
+    try {
+      await command.execute(interaction);
+    } catch (error) {
+      console.error(error);
+      if (interaction.replied || interaction.deferred) {
+        // Nếu tương tác đã được xử lý (deferred/replied), dùng followUp để trả lời lỗi
+        await interaction.followUp({ content: '❌ Có lỗi xảy ra khi thực thi tương tác này!', ephemeral: true });
+      } else {
+        // Nếu tương tác chưa được xử lý, dùng reply để trả lời lỗi
+        await interaction.reply({ content: '❌ Có lỗi xảy ra khi thực thi tương tác này!', ephemeral: true });
       }
     }
-  } catch (error) {
-    console.error(error);
-    if (interaction.replied || interaction.deferred) {
-      await interaction.followUp({ content: '❌ Có lỗi xảy ra khi thực thi tương tác này!', ephemeral: true });
-    } else {
-      await interaction.reply({ content: '❌ Có lỗi xảy ra khi thực thi tương tác này!', ephemeral: true });
+  } else if (interaction.isButton()) {
+    // Tìm tên lệnh bằng cách chia customId tại dấu _ hoặc -
+    const [commandName] = interaction.customId.split(/[_-]/);
+    const command = client.commands.get(commandName);
+
+    if (command && typeof command.handleButton === 'function') {
+      try {
+        await command.handleButton(interaction);
+      } catch (error) {
+        console.error(error);
+        if (interaction.replied || interaction.deferred) {
+          await interaction.followUp({ content: '❌ Có lỗi xảy ra khi thực thi tương tác này!', ephemeral: true });
+        } else {
+          await interaction.reply({ content: '❌ Có lỗi xảy ra khi thực thi tương tác này!', ephemeral: true });
+        }
+      }
     }
   }
 });
