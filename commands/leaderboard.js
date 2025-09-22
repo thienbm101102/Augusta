@@ -24,7 +24,7 @@ module.exports = {
           let discordUser = 'Người dùng không xác định';
           try {
             const fetchedUser = await interaction.client.users.fetch(user.id);
-            discordUser = fetchedUser.tag;
+            discordUser = fetchedUser.username;
           } catch (e) {
             console.error(`Không thể lấy thông tin người dùng ${user.id}:`, e);
             discordUser = `<@${user.id}>`; // Fallback to mention
