@@ -20,7 +20,8 @@ module.exports = {
         const userId = interaction.user.id;
         const betAmount = interaction.options.getInteger('bet');
         const channelId = interaction.channel.id;
-        const userBalance = getBalance(userId);
+        // Sửa lỗi: Thêm await trước getBalance
+        const userBalance = await getBalance(userId);
 
         // Nếu đã có game đang hoạt động
         if (activeGames.has(channelId)) {
@@ -37,12 +38,13 @@ module.exports = {
                 // Kiểm tra đủ tiền để tham gia không
                 if (userBalance < betAmount) {
                     return interaction.reply({
-                        content: `Bạn không đủ tiền để tham gia vòng này. Cần **${betAmount}**<a:diamondgem:1402590496647413811> nhưng bạn chỉ có **${userBalance}**<a:diamondgem:1402590496647413811>.`,
+                        content: `Bạn không đủ tiền để tham gia vòng này. Cần **${betAmount}**<a:diamondgem:1402590496647413811> nhưng bạn chỉ có **${userBalance.toLocaleString()}**<a:diamondgem:1402590496647413811>.`,
                         ephemeral: true
                     });
                 }
 
-                addBalance(userId, -betAmount);
+                // Sửa lỗi: Thêm await trước addBalance
+                await addBalance(userId, -betAmount);
                 game.players.set(userId, { bet: betAmount });
                 game.pot += betAmount;
 
@@ -72,10 +74,11 @@ module.exports = {
         }
 
         if (userBalance < betAmount) {
-            return interaction.reply({ content: `<a:AbbyCry:1393909295665643540> Bạn không đủ tiền! Bạn cần **${betAmount}**<a:diamondgem:1402590496647413811> nhưng bạn chỉ có **${userBalance}**<a:diamondgem:1402590496647413811>.`, ephemeral: true });
+            return interaction.reply({ content: `<a:AbbyCry:1393909295665643540> Bạn không đủ tiền! Bạn cần **${betAmount}**<a:diamondgem:1402590496647413811> nhưng bạn chỉ có **${userBalance.toLocaleString()}**<a:diamondgem:1402590496647413811>.`, ephemeral: true });
         }
 
-        addBalance(userId, -betAmount);
+        // Sửa lỗi: Thêm await trước addBalance
+        await addBalance(userId, -betAmount);
         const targetNumber = Math.floor(Math.random() * MAX_NUMBER) + 1;
         const game = {
             state: 'guessing',
@@ -131,7 +134,8 @@ module.exports = {
             // Thắng!
             const winner = game.players.get(userId);
             const winnings = game.pot;
-            addBalance(userId, winnings); // Cộng tiền
+            // Sửa lỗi: Thêm await trước addBalance
+            await addBalance(userId, winnings); // Cộng tiền
             
             const finalEmbed = new EmbedBuilder()
                 .setColor('#2ecc71')
