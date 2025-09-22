@@ -43,34 +43,35 @@ module.exports = {
         ),
 
     async execute(interaction) {
+        await interaction.deferReply();
         const baitCost = interaction.options.getInteger('bait');
-        const userBalance = getBalance(interaction.user.id);
+        const userBalance = await getBalance(interaction.user.id);
 
         if (userBalance < baitCost) {
-            return interaction.reply({
-                content: `🎣 Bạn không đủ tiền mồi! Bạn cần **${baitCost}**<a:diamondgem:1402590496647413811> nhưng chỉ có **${userBalance}**<a:diamondgem:1402590496647413811>.`,
+            return interaction.editReply({
+                content: `🎣 Bạn không đủ tiền mồi! Bạn cần **${baitCost.toLocaleString()}**<a:diamondgem:1402590496647413811> nhưng chỉ có **${userBalance.toLocaleString()}**<a:diamondgem:1402590496647413811>.`,
                 ephemeral: true
             });
         }
         
         // Trừ tiền mồi ngay lập tức
-        addBalance(interaction.user.id, -baitCost);
+        await addBalance(interaction.user.id, -baitCost);
         
         const initialEmbed = new EmbedBuilder()
             .setColor('#0099ff')
-            .setTitle('<a:Verified:1406631971509243974> Đang Câu Cá ...')
+            .setTitle('<:fishing:1412513704989429760> Đang Câu Cá ...')
             .setDescription('**Bạn đang kiên nhẫn chờ đợi, có thứ gì đó đang cắn câu!**\n\n')
             .setFooter({ text: `Người câu: ${interaction.member.displayName}` });
 
-        await interaction.reply({ embeds: [initialEmbed] });
+        await interaction.editReply({ embeds: [initialEmbed] });
 
         // Tạo hiệu ứng chờ
         await new Promise(resolve => setTimeout(resolve, 3000));
 
         const loot = getRandomLoot();
         const winnings = baitCost * loot.multiplier;
-        addBalance(interaction.user.id, winnings);
-        const newBalance = getBalance(interaction.user.id);
+        await addBalance(interaction.user.id, winnings);
+        const newBalance = await getBalance(interaction.user.id);
 
         let resultMessage;
         let finalColor;
@@ -88,15 +89,15 @@ module.exports = {
 
         const finalEmbed = new EmbedBuilder()
             .setColor(finalColor)
-            .setTitle('**<a:Verified:1406631971509243974> Kết Quả Câu Cá**')
+            .setTitle('**<:fishing:1412513704989429760> Kết Quả Câu Cá**')
             .setDescription(resultMessage)
             .addFields(
                 { name: 'Vật phẩm nhận:', value: `${loot.emoji} ${loot.name}`, inline: true },
                 { name: 'Thu về:', value: `${winnings.toLocaleString()}<a:diamondgem:1402590496647413811>`, inline: true },
+                { name: 'Số dư mới:', value: `${newBalance.toLocaleString()}<a:diamondgem:1402590496647413811>`, inline: true },
             )
             .setFooter({ text: `Người câu: ${interaction.member.displayName}` });
 
         await interaction.editReply({ embeds: [finalEmbed] });
     },
-
 };
