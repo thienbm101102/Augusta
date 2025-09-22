@@ -52,7 +52,7 @@ async function addBalance(userId, amount) {
 
 async function deductBalance(userId, amount) {
     const user = await getUser(userId);
-    user.balance = Math.max(0, user.balance - amount);
+    user.balance -= amount;
     await user.save();
     return user.balance;
 }
@@ -107,7 +107,7 @@ async function getAllUsers() {
 }
 
 async function getAllBalances() {
-    return await User.find({}, "userId balance");
+    return await User.find({}, "userId balance").sort({ balance: -1 }).limit(10);
 }
 
 // Export
