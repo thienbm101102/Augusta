@@ -17,7 +17,7 @@ module.exports = {
         return interaction.editReply({ content: '<a:AbbyShocked:1393909368138895411> Không có dữ liệu người chơi!', ephemeral: true });
       }
 
-      const medals = ['<a:Verified:1406631971509243974>', '<a:Verified:1406631971509243974>', '<a:Verified:1406631971509243974>'];
+      const medals = [];
       
       const leaderboardDescription = await Promise.all(
         sortedUsers.slice(0, 10).map(async (user, index) => {
@@ -29,7 +29,7 @@ module.exports = {
           } catch (e) {
             console.error(`Không thể lấy thông tin người dùng ${user.id}:`, e);
           }
-          return `${rankIcon} ${discordUser} — **${user.balance.toLocaleString()}**<a:diamondgem:1402590496647413811>`;
+          return `${rankIcon} <@${user.id}> — **${user.balance.toLocaleString()}**<a:diamondgem:1402590496647413811>`;
         })
       );
 
@@ -47,3 +47,4 @@ module.exports = {
     }
   },
 };
+
