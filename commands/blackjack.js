@@ -48,10 +48,10 @@ module.exports = {
     activeGames[interaction.user.id] = { bet, playerHand, dealerHand };
 
     const embed = new EmbedBuilder()
-      .setTitle(`**<:cards:1407796608220794981> Xì Zách Cùng Augusta | Số <a:diamondgem:1402590496647413811> Đặt ${bet}**`)
+      .setTitle(`**Xì Zách Cùng Augusta | Số <a:diamondgem:1402590496647413811> Đặt ${bet}**`)
       .setDescription(
-        `* <:poker:1407782940246802634> **Bài Của Bạn:** ${playerHand.map(c=>c.rank+c.suit).join(' ')} (**Tổng:** ${calcHand(playerHand)})\n` +
-        `* <:poker:1407782940246802634> **Bài Của BOT:** ${dealerHand[0].rank+dealerHand[0].suit} ???`
+        `* **Bài Của Bạn:** ${playerHand.map(c=>c.rank+c.suit).join(' ')} (**Tổng:** ${calcHand(playerHand)})\n` +
+        `* **Bài Của BOT:** ${dealerHand[0].rank+dealerHand[0].suit} ???`
       )
       .setColor('Blue');
 
@@ -75,12 +75,12 @@ module.exports = {
       if (val > 21) {
         delete activeGames[interaction.user.id];
         return interaction.update({
-          embeds: [new EmbedBuilder().setTitle(`**<:cards:1407796608220794981> Xì Zách Cùng Augusta | Số <a:diamondgem:1402590496647413811> Đặt ${bet}**`).setDescription(`* <:poker:1407782940246802634> **Bài Của Bạn:** ${game.playerHand.map(c=>c.rank+c.suit).join(' ')}  (${val})\n\n<a:AbbyCry:1393909295665643540> Bạn đã thua ${game.bet}<a:diamondgem:1402590496647413811> do **NGOẮC**`).setColor('Red')],
+          embeds: [new EmbedBuilder().setTitle(`**Xì Zách Cùng Augusta | Số <a:diamondgem:1402590496647413811> Đặt ${bet}**`).setDescription(`* **Bài Của Bạn:** ${game.playerHand.map(c=>c.rank+c.suit).join(' ')}  (${val})\n\n<a:AbbyCry:1393909295665643540> Bạn đã thua ${game.bet}<a:diamondgem:1402590496647413811> do **NGOẮC**`).setColor('Red')],
           components: []
         });
       }
       return interaction.update({
-        embeds: [new EmbedBuilder().setTitle(`**<:cards:1407796608220794981> Xì Zách Cùng Augusta | Số <a:diamondgem:1402590496647413811> Đặt ${bet}**`).setDescription(`* <:poker:1407782940246802634> **Bài Của Bạn:** ${game.playerHand.map(c=>c.rank+c.suit).join(' ')} (${val})\n* <:poker:1407782940246802634> **Bài Của BOT:** ${game.dealerHand[0].rank+game.dealerHand[0].suit} ???`).setColor('Green')],
+        embeds: [new EmbedBuilder().setTitle(`**Xì Zách Cùng Augusta | Số <a:diamondgem:1402590496647413811> Đặt ${bet}**`).setDescription(`* **Bài Của Bạn:** ${game.playerHand.map(c=>c.rank+c.suit).join(' ')} (${val})\n* **Bài Của BOT:** ${game.dealerHand[0].rank+game.dealerHand[0].suit} ???`).setColor('Green')],
         components: interaction.message.components
       });
     }
@@ -107,9 +107,10 @@ module.exports = {
       delete activeGames[interaction.user.id];
 
       return interaction.update({
-        embeds: [new EmbedBuilder().setTitle(`**<:cards:1407796608220794981> Xì Zách Cùng Augusta | Số <a:diamondgem:1402590496647413811> Đặt ${bet}**`).setDescription(`* <:poker:1407782940246802634> **Bài Của Bạn:** ${game.playerHand.map(c=>c.rank+c.suit).join(' ')} (${playerVal})\n* <:poker:1407782940246802634> **Bài Của BOT:** ${game.dealerHand.map(c=>c.rank+c.suit).join(' ')} (${dealerVal})\n\n${result}`).setColor('Blue')],
+        embeds: [new EmbedBuilder().setTitle(`**Xì Zách Cùng Augusta | Số <a:diamondgem:1402590496647413811> Đặt ${bet}**`).setDescription(`* **Bài Của Bạn:** ${game.playerHand.map(c=>c.rank+c.suit).join(' ')} (${playerVal})\n* **Bài Của BOT:** ${game.dealerHand.map(c=>c.rank+c.suit).join(' ')} (${dealerVal})\n\n${result}`).setColor('Blue')],
         components: []
       });
     }
   }
 };
+
