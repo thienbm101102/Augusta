@@ -8,16 +8,18 @@ module.exports = {
 
   async execute(interaction) {
     try {
+      // Bất kỳ hành động nào tốn thời gian (như fetch dữ liệu) đều cần deferReply
       await interaction.deferReply();
 
       // Lấy dữ liệu người dùng đã được sắp xếp từ database
       const sortedUsers = await getAllBalances();
 
       if (sortedUsers.length === 0) {
+        // Sửa lỗi: Sử dụng editReply thay vì reply sau khi đã defer
         return interaction.editReply({ content: '<a:AbbyShocked:1393909368138895411> Không có dữ liệu người chơi!', ephemeral: true });
       }
 
-      const medals = [];
+      const medals = ['<:gold_medal:1260462410385960960>', '<:silver_medal:1260462432822151240>', '<:bronze_medal:1260462412801458266>'];
       
       const leaderboardDescription = await Promise.all(
         sortedUsers.slice(0, 10).map(async (user, index) => {
@@ -34,7 +36,7 @@ module.exports = {
       );
 
       const embed = new EmbedBuilder()
-        .setTitle('**<a:Verified:1406631971509243974> Bảng Xếp Hạng Tài Sản**')
+        .setTitle('**Bảng Xếp Hạng Tài Sản**')
         .setDescription(leaderboardDescription.join('\n'))
         .setTimestamp()
         .setColor('#e74c3c');
@@ -43,10 +45,8 @@ module.exports = {
 
     } catch (error) {
       console.error(error);
+      // Sửa lỗi: Sử dụng editReply thay vì reply
       await interaction.editReply({ content: 'Đã xảy ra lỗi khi tạo bảng xếp hạng!', ephemeral: true });
     }
   },
 };
-
-
-
