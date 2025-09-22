@@ -15,10 +15,10 @@ try {
     Canvas.registerFont(fontPath, { family: FONT_FAMILY });
     console.log(`✅ Loaded font: ${fontPath}`);
   } else {
-    console.log(`⚠️ Font not found: ${fontPath} -> fallback to Sans`);
+    console.log(`⚠️ Font not found: ${fontPath}`);
   }
 } catch (e) {
-  console.log("⚠️ Cannot register font -> fallback to Sans:", e.message);
+  console.log("⚠️ Cannot register font:", e.message);
 }
 
 // Hàm roundRect
@@ -52,6 +52,7 @@ module.exports = {
     const targetUser =
       interaction.options.getMember("user") || interaction.member;
 
+    // Lấy dữ liệu từ MongoDB
     const userData = await db.getUser(targetUser.id);
     const userBalance = userData?.balance ?? 0;
 
@@ -61,6 +62,7 @@ module.exports = {
     const bannerFile = userData.banner || "banner.png";
     const bannerPath = path.join(__dirname, "../assets/banners", bannerFile);
 
+    // Vẽ banner nền
     if (fs.existsSync(bannerPath)) {
       const banner = await Canvas.loadImage(bannerPath);
       ctx.drawImage(banner, 0, 0, canvas.width, canvas.height);
@@ -69,10 +71,12 @@ module.exports = {
       ctx.fillRect(0, 0, canvas.width, canvas.height);
     }
 
+    // Vẽ khung nền mờ
     ctx.fillStyle = "rgba(0,0,0,0.6)";
     ctx.roundRect(20, 20, 660, 210, 25);
     ctx.fill();
 
+    // Chọn khung theo số dư
     let frameFile = "bronze.png";
     if (userBalance >= 600000) frameFile = "challenger.png";
     else if (userBalance >= 500000) frameFile = "grandmaster.png";
@@ -82,6 +86,7 @@ module.exports = {
     else if (userBalance >= 100000) frameFile = "gold.png";
     else if (userBalance >= 50000) frameFile = "silver.png";
 
+    // Avatar
     const ax = 140;
     const ay = 125;
     const avatarR = 60;
@@ -97,6 +102,7 @@ module.exports = {
     ctx.drawImage(avatar, ax - avatarR, ay - avatarR, avatarR * 2, avatarR * 2);
     ctx.restore();
 
+    // Khung avatar
     const framePadding = 110;
     const framePath = path.join(__dirname, "../assets/frames", frameFile);
     if (fs.existsSync(framePath)) {
@@ -111,18 +117,19 @@ module.exports = {
       );
     }
 
-    // --- Fix font ---
-    ctx.font = `32px "${FONT_FAMILY}"`;
+    // === Font RobotoBold ===
+    let fontSize = 32;
+    ctx.font = `${fontSize}px ${FONT_FAMILY}`;
     ctx.fillStyle = "#ffffff";
     const nameText = targetUser.displayName;
     const maxWidth = 260;
-    let fontSize = 32;
     while (ctx.measureText(nameText).width > maxWidth && fontSize > 20) {
       fontSize--;
-      ctx.font = `${fontSize}px "${FONT_FAMILY}"`;
+      ctx.font = `${fontSize}px ${FONT_FAMILY}`;
     }
     ctx.fillText(nameText, 280, 70);
 
+    // Badge
     const badgeFile = userData.badge;
     if (badgeFile) {
       const badgePath = path.join(__dirname, "../assets/badges", badgeFile);
@@ -135,22 +142,23 @@ module.exports = {
       }
     }
 
-    ctx.font = `20px "${FONT_FAMILY}"`;
+    // Text phụ
+    ctx.font = `20px ${FONT_FAMILY}`;
     ctx.fillStyle = "#cccccc";
     ctx.fillText("Số dư của bạn:", 280, 110);
 
+    // Balance gradient
     const gradient = ctx.createLinearGradient(200, 0, 600, 0);
     gradient.addColorStop(0, "#FFD700");
     gradient.addColorStop(1, "#FFA500");
     ctx.fillStyle = gradient;
-    ctx.lineWidth = 4;
-    ctx.strokeStyle = "rgba(0,0,0,0.6)";
     ctx.shadowColor = "rgba(0,0,0,0.7)";
     ctx.shadowBlur = 8;
-    ctx.font = `30px "${FONT_FAMILY}"`;
+    ctx.font = `30px ${FONT_FAMILY}`;
     ctx.fillText(`${userBalance.toLocaleString()}`, 280, 145);
     ctx.shadowBlur = 0;
 
+    // Coin icon
     const coinIcon = await Canvas.loadImage(
       path.join(__dirname, "../assets/icons/diamond.png")
     );
@@ -162,6 +170,7 @@ module.exports = {
       25
     );
 
+    // Progress bar
     const level = Math.floor(userBalance / 100000);
     const progress = (userBalance % 100000) / 100000;
 
@@ -176,14 +185,16 @@ module.exports = {
     ctx.roundRect(280, 165, 300 * progress, 25, 12);
     ctx.fill();
 
-    ctx.font = `16px "${FONT_FAMILY}"`;
+    ctx.font = `16px ${FONT_FAMILY}`;
     ctx.fillStyle = "#fff";
     ctx.fillText(`Cấp ${level}`, 590, 185);
 
-    ctx.font = `14px "${FONT_FAMILY}"`;
+    // Credit
+    ctx.font = `14px ${FONT_FAMILY}`;
     ctx.fillStyle = "#888888";
     ctx.fillText("©Copyright ©2025「✦ Áp Lực Chơi Game ✦」", 280, 215);
 
+    // Xuất ảnh
     const attachment = new AttachmentBuilder(canvas.toBuffer("image/png"), {
       name: "taisan.png",
     });
