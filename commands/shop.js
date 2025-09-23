@@ -4,8 +4,8 @@ const path = require("path");
 const { addBalance, getBalance, getUser } = require("../db");
 
 const shopPath = path.join(__dirname, "../shop.json");
-const bannersFolder = path.join(__dirname, "../banners");
-const badgesFolder = path.join(__dirname, "../badges");
+const bannersFolder = path.join(__dirname, "../assets/banners");
+const badgesFolder = path.join(__dirname, "../assets/badges");
 
 const getItemName = (filename) => {
     const customNames = {
@@ -255,3 +255,4 @@ module.exports = {
         await interaction.editReply({ embeds: [embed] });
     }
 };
+
