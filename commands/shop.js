@@ -22,10 +22,7 @@ const getItemName = (filename) => {
         "daivuongsamac.png": "Danh hiệu: Đại Vương Sa Mạc",
         "thulinh.png": "Danh hiệu: Thủ Lĩnh Tộc Bom",
         "tinhanh.png": "Danh hiệu: Tinh Anh Tộc Bom",
-        "quocvuongbom.png": "Danh hiệu: Quốc Vương Tộc Bom",
-        "king.png": "Danh hiệu: Vua",
-        "hacker.png": "Danh hiệu: Hacker",
-        "bupbe.png": "Danh hiệu: Búp Bê",
+        "quocvuong.png": "Danh hiệu: Quốc Vương Tộc Bom",
     };
     return customNames[filename] || filename.split('.')[0];
 };
@@ -282,3 +279,4 @@ module.exports = {
         await interaction.editReply({ embeds: [embed] });
     }
 };
+
