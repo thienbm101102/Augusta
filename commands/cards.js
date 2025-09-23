@@ -122,100 +122,93 @@ module.exports = {
                 }
     
                 case 'xem': {
-                    if (!user.cards || user.cards.length === 0) {
-                        return interaction.editReply({ content: 'Bạn chưa có thẻ bài nào. Hãy dùng `/thebai mo` để mở gói thẻ đầu tiên!', ephemeral: true });
-                    }
-                    
-                    const rarityOption = interaction.options.getString('rarity');
-                    const allCards = Object.values(CARDS).flat();
-                    
-                    if (rarityOption) {
-                        const cardsToShow = user.cards.filter(c => c.rarity === rarityOption);
-                        if (cardsToShow.length === 0) {
-                            return interaction.editReply({ content: `Bạn không có thẻ bài nào với độ hiếm **${rarityOption}**.`, ephemeral: true });
+                        if (!user.cards || user.cards.length === 0) {
+                            return interaction.editReply({ content: 'Bạn chưa có thẻ bài nào. Hãy dùng `/cards mo` để mở gói thẻ đầu tiên!', ephemeral: true });
                         }
                         
-                        const cards = cardsToShow.map(card => {
-                            const cardData = allCards.find(c => c.name.replace(/\s/g, '_') === card.type);
-                            if (!cardData) return null;
-                            const embed = new EmbedBuilder()
-                                .setTitle(`${cardData.emoji} **${cardData.name}** [${card.rarity}]`)
-                                .setDescription(`*${cardData.description}*`)
-                                .addFields(
-                                    { name: 'Số lượng', value: `\`${card.count}\``, inline: true },
-                                    { name: 'Chỉ số', value: `ATK: \`${cardData.stats.attack}\`, HP: \`${cardData.stats.hp}\``, inline: true }
-                                )
-                                .setColor(cardData.color || '#3498db');
-                            if (cardData.imageUrl) {
-                                embed.setImage(cardData.imageUrl);
-                            }
-                            return embed;
-                        }).filter(Boolean);
+                        const rarityOption = interaction.options.getString('rarity');
+                        let cardsToShow = user.cards;
 
-                        if (cards.length > 0) {
-                            return interaction.editReply({ embeds: cards });
+                        if (rarityOption) {
+                            cardsToShow = user.cards.filter(c => c.rarity === rarityOption);
+                            if (cardsToShow.length === 0) {
+                                return interaction.editReply({ content: `Bạn không có thẻ bài nào với độ hiếm **${rarityOption}**.`, ephemeral: true });
+                            }
+
+                            let page = 0;
+                            await renderCollectionPage(interaction, cardsToShow, page, rarityOption);
+
+                            const filter = i => i.user.id === interaction.user.id && (i.customId.startsWith('prev_collection') || i.customId.startsWith('next_collection'));
+                            const collector = interaction.channel.createMessageComponentCollector({ filter, time: 60000 });
+
+                            collector.on('collect', async i => {
+                                const [, , rarityId] = i.customId.split('_');
+
+                                if (rarityId !== (rarityOption || 'all')) {
+                                    return;
+                                }
+
+                                if (i.customId.startsWith('next_collection')) {
+                                    page++;
+                                } else if (i.customId.startsWith('prev_collection')) {
+                                    page--;
+                                }
+
+                                await i.deferUpdate();
+                                await renderCollectionPage(i, cardsToShow, page, rarityOption);
+                            });
+
+                            collector.on('end', async () => {
+                                try {
+                                    const disabledRow = new ActionRowBuilder().addComponents(
+                                        new ButtonBuilder().setCustomId('prev_collection').setLabel('Trang Trước').setStyle(ButtonStyle.Secondary).setDisabled(true),
+                                        new ButtonBuilder().setCustomId('next_collection').setLabel('Trang Sau').setStyle(ButtonStyle.Secondary).setDisabled(true)
+                                    );
+                                    await interaction.editReply({ components: [disabledRow] });
+                                } catch (e) {
+                                    console.error('Error disabling buttons:', e.message);
+                                }
+                            });
                         } else {
-                            return interaction.editReply({ content: 'Không tìm thấy thẻ bài để hiển thị.', ephemeral: true });
-                        }
-                    } else {
-                        const cardsByRarity = {
-                            'Thường': [], 'Hiếm': [], 'Sử Thi': [], 'Huyền Thoại': [], 'Thần Thoại': []
-                        };
-                        
-                        user.cards.forEach(card => {
-                            if (cardsByRarity[card.rarity]) {
-                                cardsByRarity[card.rarity].push(card);
-                            }
-                        });
+                            const embeds = [];
 
-                        const embeds = [];
-                        
-                        // Embeds for cards with images
-                        const imageRarities = ['Sử Thi', 'Huyền Thoại', 'Thần Thoại'];
-                        for (const rarity of imageRarities) {
-                            const cards = cardsByRarity[rarity];
-                            if (cards.length > 0) {
-                                const embed = new EmbedBuilder()
-                                    .setTitle(`Bộ sưu tập thẻ [${rarity}]`)
-                                    .setColor(allCards.find(c => c.rarity === rarity)?.color || '#3498db');
-                                
-                                cards.forEach(card => {
-                                    const cardData = allCards.find(c => c.name.replace(/\s/g, '_') === card.type);
+                            const imageCards = user.cards.filter(c => RARITIES_WITH_IMAGES.includes(c.rarity));
+                            for (const card of imageCards) {
+                                const cardData = Object.values(CARDS).flat().find(c => c.name.replace(/\s/g, '_') === card.type);
+                                if (cardData) {
+                                    const embed = new EmbedBuilder()
+                                        .setTitle(`${cardData.name} [${card.rarity}]`)
+                                        .setDescription(`**Số lượng:** ${card.count}\n**Chỉ số:** Tấn công: ${cardData.stats.attack}, Máu: ${cardData.stats.hp}`)
+                                        .setColor('#9b59b6')
+                                        .setImage(cardData.imageUrl);
+                                    embeds.push(embed);
+                                }
+                            }
+
+                            const textCards = user.cards.filter(c => RARITIES_WITHOUT_IMAGES.includes(c.rarity));
+                            if (textCards.length > 0) {
+                                const textEmbed = new EmbedBuilder()
+                                    .setTitle('Các Thẻ Thường và Hiếm')
+                                    .setColor('#7f8c8d');
+                                const textContent = textCards.map(card => {
+                                    const cardData = Object.values(CARDS).flat().find(c => c.name.replace(/\s/g, '_') === card.type);
                                     if (cardData) {
-                                        embed.addFields({
-                                            name: `${cardData.emoji} **${cardData.name}**`,
-                                            value: `Số lượng: **${card.count}**`,
-                                            inline: false
-                                        });
+                                        return `- **${cardData.name}** [${card.rarity}]: ${card.count} thẻ`;
                                     }
+                                    return '';
                                 });
-                                embeds.push(embed);
+                                textEmbed.setDescription(textContent.filter(Boolean).join('\n'));
+                                embeds.push(textEmbed);
                             }
-                        }
 
-                        // Single embed for cards without images
-                        const textRarities = ['Thường', 'Hiếm'];
-                        const textCards = user.cards.filter(c => textRarities.includes(c.rarity));
-                        if (textCards.length > 0) {
-                            const textEmbed = new EmbedBuilder()
-                                .setTitle('Các thẻ Thường và Hiếm')
-                                .setColor('#7f8c8d');
-                            const textContent = textCards.map(card => {
-                                const cardData = allCards.find(c => c.name.replace(/\s/g, '_') === card.type);
-                                return `- **${cardData.name}** [${card.rarity}]: **${card.count}** thẻ`;
-                            }).join('\n');
-                            textEmbed.setDescription(textContent);
-                            embeds.push(textEmbed);
-                        }
+                            if (embeds.length === 0) {
+                                return interaction.editReply({ content: 'Bạn chưa có thẻ bài nào. Hãy dùng `/cards mo` để mở gói thẻ đầu tiên!', ephemeral: true });
+                            }
 
-                        if (embeds.length === 0) {
-                            return interaction.editReply({ content: 'Bạn chưa có thẻ bài nào. Hãy dùng `/thebai mo` để mở gói thẻ đầu tiên!', ephemeral: true });
+                            await interaction.editReply({ embeds: embeds });
                         }
-
-                        await interaction.editReply({ embeds: embeds });
+                        break;
                     }
-                    break;
-                }
     
                 case 'ban': {
                     const cardName = interaction.options.getString('card_name');
@@ -261,3 +254,4 @@ module.exports = {
         }
     }
 };
+
