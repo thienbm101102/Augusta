@@ -88,7 +88,7 @@ module.exports = {
         await addBalance(interaction.user.id, bet * 2);
         delete activeGames[interaction.user.id];
         return interaction.update({
-          embeds: [new EmbedBuilder().setTitle(`**<a:Verified:1406631971509243974> Xì Zách Cùng Augusta | Số <a:diamondgem:1402590496647413811> Đặt ${bet}**`).setDescription(`* **Bài Của Bạn:** ${game.playerHand.map(c => c.rank + c.suit).join(' ')} (2 Át)\n\n<a:AbbyWOW:1393909383884439602> Bạn đã thắng **XÌ BÀN**! Nhận được **${bet}**<a:diamondgem:1402590496647413811>`).setColor('Gold')],
+          embeds: [new EmbedBuilder().setTitle(`**<a:Verified:1406631971509243974> Xì Zách Cùng Augusta | Số <a:diamondgem:1402590496647413811> Đặt ${bet}**`).setDescription(`* **Bài Của Bạn:** ${game.playerHand.map(c => c.rank + c.suit).join(' ')} (2 Át)\n\n<a:AbbyWOW:1393909383884439602> Bạn đã thắng **2 ÁT**! Nhận được **${bet}**<a:diamondgem:1402590496647413811>`).setColor('Gold')],
           components: []
         });
       } else if (isPlayerXidach) {
