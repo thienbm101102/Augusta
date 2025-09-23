@@ -34,6 +34,64 @@ function getRandomCard() {
     return null;
 }
 
+async function renderCollectionPage(interaction, cardsToDisplay, page, rarity) {
+    const start = page * ITEMS_PER_PAGE;
+    const end = start + ITEMS_PER_PAGE;
+    const paginatedCards = cardsToDisplay.slice(start, end);
+    const totalPages = Math.ceil(cardsToDisplay.length / ITEMS_PER_PAGE);
+
+    let title = `Bộ Sưu Tập Thẻ Của ${interaction.member.displayName}`;
+    let description = `Bạn đang sở hữu **${cardsToDisplay.reduce((sum, card) => sum + card.count, 0)}** thẻ bài.`;
+    if (rarity) {
+        title = `Bộ Sưu Tập Thẻ [${rarity}] của ${interaction.member.displayName}`;
+        description = `Bạn đang sở hữu **${cardsToDisplay.reduce((sum, card) => sum + card.count, 0)}** thẻ bài ${rarity}.`;
+    }
+    description += `\n Trang **${page + 1}/${totalPages === 0 ? 1 : totalPages}**`;
+
+    const embed = new EmbedBuilder()
+        .setTitle(title)
+        .setDescription(description)
+        .setColor('#3498db');
+
+    if (paginatedCards.length > 0) {
+        const firstCardData = Object.values(CARDS).flat().find(c => c.name.replace(/\s/g, '_') === paginatedCards[0].type);
+        if (firstCardData && RARITIES_WITH_IMAGES.includes(firstCardData.rarity)) {
+            embed.setImage(firstCardData.imageUrl);
+        }
+        
+        paginatedCards.forEach(card => {
+            const cardData = Object.values(CARDS).flat().find(c => c.name.replace(/\s/g, '_') === card.type);
+            if (cardData) {
+                embed.addFields({
+                    name: `**${cardData.name}** [${card.rarity}]`,
+                    value: `**Số lượng:** ${card.count}\n**Chỉ số:** Tấn công: ${cardData.stats.attack}, Máu: ${cardData.stats.hp}`,
+                    inline: false
+                });
+            }
+        });
+    }
+
+    const row = new ActionRowBuilder().addComponents(
+        new ButtonBuilder()
+            .setCustomId(`prev_collection_${rarity || 'all'}`)
+            .setLabel('Trang Trước')
+            .setStyle(ButtonStyle.Primary)
+            .setDisabled(page === 0),
+        new ButtonBuilder()
+            .setCustomId(`next_collection_${rarity || 'all'}`)
+            .setLabel('Trang Sau')
+            .setStyle(ButtonStyle.Primary)
+            .setDisabled(page >= totalPages - 1)
+    );
+
+    // Sử dụng i.editReply thay vì interaction.editReply để phản hồi lại tương tác của nút bấm
+    if (interaction.deferred || interaction.replied) {
+        await interaction.editReply({ embeds: [embed], components: [row] });
+    } else {
+        await interaction.reply({ embeds: [embed], components: [row] });
+    }
+}
+
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('thebai')
@@ -254,4 +312,5 @@ module.exports = {
         }
     }
 };
+
 
