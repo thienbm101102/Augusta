@@ -1,6 +1,6 @@
-// File: index.js
+// index.js
 
-const { Client, Collection, GatewayIntentBits, MessageFlags, EmbedBuilder, AttachmentBuilder, DiscordAPIError } = require('discord.js');
+const { Client, Collection, GatewayIntentBits, MessageFlags, EmbedBuilder, AttachmentBuilder } = require('discord.js');
 const fs = require('fs');
 const path = require('path');
 const mongoose = require('mongoose');
@@ -36,9 +36,6 @@ async function startBot() {
         console.log("🚀 Đang kết nối tới MongoDB...");
         await mongoose.connect(process.env.MONGODB_URI);
         console.log("✅ Đã kết nối thành công tới MongoDB.");
-
-        // Khởi động bot sau khi kết nối thành công
-        await client.login(process.env.TOKEN);
     } catch (err) {
         console.error("❌ Failed to connect to MongoDB:", err);
     }
@@ -67,21 +64,19 @@ client.on('interactionCreate', async interaction => {
       if (command && typeof command.handleButton === 'function') {
         await command.handleButton(interaction);
       }
+    } else if (interaction.isStringSelectMenu()) {
+      const [commandName] = interaction.customId.split(/[_-]/);
+      const command = client.commands.get(commandName);
+      if (command && typeof command.handleSelectMenu === 'function') {
+        await command.handleSelectMenu(interaction);
+      }
     }
   } catch (error) {
     console.error(error);
-
-    // Xử lý lỗi "Unknown interaction" một cách đặc biệt
-    if (error instanceof DiscordAPIError && error.code === 10062) {
-      console.log("❌ Tương tác đã hết hạn, không thể phản hồi.");
-      // Không cần làm gì thêm, chỉ log lỗi và thoát
+    if (interaction.replied || interaction.deferred) {
+      await interaction.followUp({ content: '❌ Có lỗi xảy ra khi thực thi tương tác này!', ephemeral: true });
     } else {
-      // Xử lý các lỗi khác
-      if (interaction.replied || interaction.deferred) {
-        await interaction.followUp({ content: '❌ Có lỗi xảy ra khi thực thi tương tác này!', ephemeral: true });
-      } else {
-        await interaction.reply({ content: '❌ Có lỗi xảy ra khi thực thi tương tác này!', ephemeral: true });
-      }
+      await interaction.reply({ content: '❌ Có lỗi xảy ra khi thực thi tương tác này!', ephemeral: true });
     }
   }
 });
@@ -90,8 +85,10 @@ client.on('messageCreate', async message => {
     // 📌 Xử lý logic đoán số
     if (client.commands.has('doanso')) {
         const doansoCommand = client.commands.get('doanso');
-        if (typeof doansoCommand.handleMessage === 'function') {
-            await doansoCommand.handleMessage(message);
+        if (message.content === 'doanso') {
+            await doansoCommand.execute(message, client);
         }
     }
 });
+
+client.login(process.env.TOKEN);
