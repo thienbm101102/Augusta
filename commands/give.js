@@ -29,9 +29,6 @@ module.exports = {
       .setColor('Blue')
       .setTitle('**<a:Verified:1406631971509243974> Giao Dịch Thành Công**')
       .setDescription(`<a:PenguRich:1402589007683407943> **|** **${senderMember.displayName}** đã tặng **${amount.toLocaleString()}**<a:diamondgem:1402590496647413811> cho **${receiverMember.displayName}**!`)
-      .addFields(
-        { name: 'Số dư mới của bạn', value: `\`${newSenderBalance.toLocaleString()}\`<a:diamondgem:1402590496647413811>`}
-      )
       .setTimestamp();
     return interaction.reply({ embeds: [embed] });
   }
