@@ -156,7 +156,5 @@ module.exports = {
     setLastLoanDate,
     getAllUsers,
     getAllBalances,
-    addUserCard,
-    removeUserCard,
     User
 };
