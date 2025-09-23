@@ -7,7 +7,7 @@ const emojis = [
     '🍋', '🥝', '🥥', '🥭', '🍐', '🍑', '🌶️', '🌽',
 ];
 
-const BOARD_SIZE = 5; // Kích thước bàn cờ (BOARD_SIZE x BOARD_SIZE)
+const BOARD_SIZE = 4; // Kích thước bàn cờ (BOARD_SIZE x BOARD_SIZE)
 const TIME_LIMIT_MINUTES = 2; // Thời gian tối đa để hoàn thành game (phút)
 const activeGames = new Map();
 
@@ -199,3 +199,4 @@ module.exports = {
         }
     }
 };
+
