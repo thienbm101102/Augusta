@@ -179,7 +179,7 @@ module.exports = {
 
       delete activeGames[interaction.user.id];
       
-      const finalColor = isWin ? 'Green' : 'Red';
+      let finalColor = isWin ? 'Green' : 'Red';
       if (isDraw) finalColor = 'Blue';
 
       return interaction.update({
