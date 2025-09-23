@@ -1,6 +1,7 @@
 const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 const { getUser, addBalance, deductBalance, getBalance } = require('../db');
 
+// This is a temporary in-memory store for active games.
 const activeGames = {};
 
 function drawCard() {
@@ -19,7 +20,6 @@ function calcHand(hand) {
   let total = hand.reduce((s, c) => s + getValue(c), 0);
   let aces = hand.filter(c => c.rank === 'A').length;
   while (total > 21 && aces > 0) { total -= 10; aces--; }
-  
   return total;
 }
 
@@ -72,6 +72,10 @@ module.exports = {
       game.playerHand.push(drawCard());
       const playerVal = calcHand(game.playerHand);
       
+      const isPlayerXiban = game.playerHand.length === 2 && playerVal === 20;
+      const isPlayerXidach = game.playerHand.length === 2 && playerVal === 21;
+      const isPlayerNguLinh = game.playerHand.length === 5 && playerVal <= 21;
+      
       if (playerVal > 21) {
         delete activeGames[interaction.user.id];
         return interaction.update({
@@ -79,34 +83,21 @@ module.exports = {
           components: []
         });
       }
-      
-      const isPlayerXiban = game.playerHand.length === 2 && playerVal === 20;
-      const isPlayerXidach = game.playerHand.length === 2 && playerVal === 21;
-      const isPlayerNguLinh = game.playerHand.length === 5 && playerVal <= 21;
 
-      if (isPlayerXiban) {
+      if (isPlayerXiban || isPlayerXidach || isPlayerNguLinh) {
+        let winMessage;
+        if (isPlayerXiban) winMessage = 'XÌ BÀN';
+        else if (isPlayerXidach) winMessage = 'XÌ DÁCH';
+        else if (isPlayerNguLinh) winMessage = 'NGŨ LINH';
+
         await addBalance(interaction.user.id, bet * 2);
         delete activeGames[interaction.user.id];
         return interaction.update({
-          embeds: [new EmbedBuilder().setTitle(`**<a:Verified:1406631971509243974> Xì Zách Cùng Augusta | Số <a:diamondgem:1402590496647413811> Đặt ${bet}**`).setDescription(`* **Bài Của Bạn:** ${game.playerHand.map(c => c.rank + c.suit).join(' ')} (${playerVal})\n\n<a:AbbyWOW:1393909383884439602> Bạn đã thắng **XÌ BÀN**! Nhận được **${bet}**<a:diamondgem:1402590496647413811>`).setColor('Gold')],
-          components: []
-        });
-      } else if (isPlayerXidach) {
-        await addBalance(interaction.user.id, bet * 2);
-        delete activeGames[interaction.user.id];
-        return interaction.update({
-          embeds: [new EmbedBuilder().setTitle(`**<a:Verified:1406631971509243974> Xì Zách Cùng Augusta | Số <a:diamondgem:1402590496647413811> Đặt ${bet}**`).setDescription(`* **Bài Của Bạn:** ${game.playerHand.map(c => c.rank + c.suit).join(' ')} (${playerVal})\n\n<a:AbbyWOW:1393909383884439602> Bạn đã thắng **XÌ DÁCH**! Nhận được **${bet}**<a:diamondgem:1402590496647413811>`).setColor('Gold')],
-          components: []
-        });
-      } else if (isPlayerNguLinh) {
-        await addBalance(interaction.user.id, bet * 2);
-        delete activeGames[interaction.user.id];
-        return interaction.update({
-          embeds: [new EmbedBuilder().setTitle(`**<a:Verified:1406631971509243974> Xì Zách Cùng Augusta | Số <a:diamondgem:1402590496647413811> Đặt ${bet}**`).setDescription(`* **Bài Của Bạn:** ${game.playerHand.map(c => c.rank + c.suit).join(' ')} (${playerVal})\n\n<a:AbbyWOW:1393909383884439602> Bạn đã thắng **NGŨ LINH**! Nhận được **${bet}**<a:diamondgem:1402590496647413811>`).setColor('Gold')],
+          embeds: [new EmbedBuilder().setTitle(`**<a:Verified:1406631971509243974> Xì Zách Cùng Augusta | Số <a:diamondgem:1402590496647413811> Đặt ${bet}**`).setDescription(`* **Bài Của Bạn:** ${game.playerHand.map(c => c.rank + c.suit).join(' ')} (${playerVal})\n\n<a:AbbyWOW:1393909383884439602> Bạn đã thắng **${winMessage}**! Nhận được **${bet}**<a:diamondgem:1402590496647413811>`).setColor('Gold')],
           components: []
         });
       }
-
+      
       return interaction.update({
         embeds: [new EmbedBuilder().setTitle(`**<a:Verified:1406631971509243974> Xì Zách Cùng Augusta | Số <a:diamondgem:1402590496647413811> Đặt ${bet}**`).setDescription(`* **Bài Của Bạn:** ${game.playerHand.map(c => c.rank + c.suit).join(' ')} (${playerVal})\n* **Bài Của BOT:** ${game.dealerHand[0].rank + game.dealerHand[0].suit} ???`).setColor('Green')],
         components: interaction.message.components
