@@ -14,7 +14,14 @@ async function connectDB() {
     }
 }
 
-// Schema User
+// 1. Định nghĩa schema cho một đối tượng thẻ bài
+const cardSchema = new mongoose.Schema({
+    type: { type: String, required: true },
+    count: { type: Number, required: true, default: 1 },
+    rarity: { type: String, required: true }
+});
+
+// 2. Schema User đã được cập nhật
 const userSchema = new mongoose.Schema({
     userId: { type: String, required: true, unique: true },
     balance: { type: Number, default: 100000 },
@@ -25,7 +32,8 @@ const userSchema = new mongoose.Schema({
         day: { type: Number, default: null },
         month: { type: Number, default: null },
     },
-    cards: { type: [String], default: [] },
+    // Thay đổi kiểu dữ liệu của cards thành một mảng các đối tượng cardSchema
+    cards: [cardSchema], 
     banners: { type: [String], default: [] },
     badges: { type: [String], default: [] },
     monsters: { type: [String], default: [] },
@@ -107,8 +115,37 @@ async function getAllUsers() {
 }
 
 async function getAllBalances() {
-    // Sửa ở đây để chỉ lấy userId và balance
     return await User.find({}, "userId balance").sort({ balance: -1 }).limit(10);
+}
+
+// 3. Thêm các hàm quản lý thẻ bài
+async function addUserCard(userId, card) {
+    const user = await getUser(userId);
+    const existingCard = user.cards.find(c => c.type === card.type);
+
+    if (existingCard) {
+        existingCard.count++;
+    } else {
+        user.cards.push({ type: card.type, count: 1, rarity: card.rarity });
+    }
+    await user.save();
+    return user;
+}
+
+async function removeUserCard(userId, cardType) {
+    const user = await getUser(userId);
+    const cardIndex = user.cards.findIndex(c => c.type === cardType);
+
+    if (cardIndex !== -1) {
+        if (user.cards[cardIndex].count > 1) {
+            user.cards[cardIndex].count--;
+        } else {
+            user.cards.splice(cardIndex, 1);
+        }
+        await user.save();
+        return true;
+    }
+    return false;
 }
 
 // Export
@@ -127,5 +164,8 @@ module.exports = {
     setLastLoanDate,
     getAllUsers,
     getAllBalances,
+    User,
+    addUserCard,
+    removeUserCard,
     User, // ✅ để dùng trong index.js
 };
