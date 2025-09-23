@@ -64,7 +64,6 @@ module.exports = {
                     return interaction.editReply({ content: 'Đã xảy ra lỗi khi đọc dữ liệu cửa hàng. Vui lòng kiểm tra file `shop.json` của bạn.' });
                 }
 
-                // Tạo embed cho Banners
                 const bannersEmbed = new EmbedBuilder()
                     .setTitle('🖼️ Banners trong Cửa Hàng')
                     .setDescription(`Sử dụng các nút bên dưới để mua banner.`)
@@ -89,7 +88,6 @@ module.exports = {
                     );
                 }
 
-                // Tạo embed cho Badges
                 const badgesEmbed = new EmbedBuilder()
                     .setTitle('🏅 Huy Hiệu trong Cửa Hàng')
                     .setDescription(`Sử dụng các nút bên dưới để mua huy hiệu.`)
