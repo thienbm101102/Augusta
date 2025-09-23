@@ -52,13 +52,11 @@ const userSchema = new mongoose.Schema({
         month: { type: Number, default: null },
     },
     // Thay đổi kiểu dữ liệu của cards thành một mảng các đối tượng cardSchema
-    cards: [cardSchema], 
-    banners: { type: [String], default: [] },
-    badges: { type: [String], default: [] },
-    // Thay đổi kiểu dữ liệu của monsters thành một mảng các đối tượng monsterSchema
-    monsters: [monsterSchema],
-    // Thêm trường mới cho trang bị của người dùng
-    ownedEquipment: [equipmentSchema],
+    cards: { type: [Object], default: [] },
+    ownedEquipment: { type: [Object], default: [] }, // Thêm trường này nếu chưa có
+    monsters: { type: [Object], default: [] }, // ✅ SỬA LỖI Ở ĐÂY
+    ownedBanners: { type: [String], default: [] }, // Kiểu dữ liệu này đúng rồi
+    ownedBadges: { type: [String], default: [] }, // Kiểu dữ liệu này đúng rồi
 }, { timestamps: true });
 
 const User = mongoose.model("User", userSchema);
