@@ -1,39 +1,38 @@
 {
   "banners": [
-        {
-            "file": "banner1.png",
-            "cost": 50000
-        },
-        {
-            "file": "banner2.png",
-            "cost": 70000
-        },
-        {
-            "file": "banner3.png",
-            "cost": 80000
-        },
-        {
-            "file": "banner4.png",
-            "cost": 100000
-        }
+    {
+      "file": "banner1.png",
+      "cost": 5000
+    },
+    {
+      "file": "banner2.png",
+      "cost": 7000
+    },
+    {
+      "file": "banner3.png",
+      "cost": 8000
+    },
+    {
+      "file": "banner4.png",
+      "cost": 10000
+    }
   ],
   "badges": [
-       {
-            "file": "vannguoime.png",
-            "cost": 100000
-        },
-       {
-            "file": "uyviencakhia.png",
-            "cost": 100000
-        },
-        {
-            "file": "tinhyeubenvung.png",
-            "cost": 100000
-        },
-        {
-            "file": "daivuongsamac.png",
-            "cost": 100000
-        }
+    {
+      "file": "vannguoime.png",
+      "cost": 5000
+    },
+    {
+      "file": "uyviencakhia.png",
+      "cost": 6000
+    },
+    {
+      "file": "tinhyeubenvung.png",
+      "cost": 7000
+    },
+    {
+      "file": "daivuongsamac.png",
+      "cost": 8000
+    }
   ]
-
 }
