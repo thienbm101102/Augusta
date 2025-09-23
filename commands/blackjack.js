@@ -11,15 +11,23 @@ function drawCard() {
   const suits = ['♠️','♥️','♦️','♣️'];
   return { rank: ranks[Math.floor(Math.random()*ranks.length)], suit: suits[Math.floor(Math.random()*suits.length)] };
 }
+
 function getValue(card) {
   if (['J','Q','K'].includes(card.rank)) return 10;
   if (card.rank === 'A') return 11;
   return card.rank;
 }
+
 function calcHand(hand) {
   let total = hand.reduce((s,c)=>s+getValue(c),0);
   let aces = hand.filter(c=>c.rank==='A').length;
   while (total>21 && aces>0) { total-=10; aces--; }
+  
+  // Kiểm tra Ngũ Linh
+  if (hand.length === 5 && total <= 21) {
+      return 22; // Trả về 22 để biểu thị Ngũ Linh
+  }
+
   return total;
 }
 
@@ -50,7 +58,7 @@ module.exports = {
     const embed = new EmbedBuilder()
       .setTitle(`**<a:Verified:1406631971509243974> Xì Zách Cùng Augusta | Số <a:diamondgem:1402590496647413811> Đặt ${bet}**`)
       .setDescription(
-        `* **Bài Của Bạn:** ${playerHand.map(c=>c.rank+c.suit).join(' ')} (**Tổng:** ${calcHand(playerHand)})\n` +
+        `* **Bài Của Bạn:** ${playerHand.map(c=>c.rank+c.suit).join(' ')} (**Tổng:** ${calcHand(playerHand) > 21 ? 'QUẮC' : calcHand(playerHand)})\n` +
         `* **Bài Của BOT:** ${dealerHand[0].rank+dealerHand[0].suit} ???`
       )
       .setColor('Blue');
@@ -72,13 +80,25 @@ module.exports = {
     if (interaction.customId === 'xizach_hit') {
       game.playerHand.push(drawCard());
       const val = calcHand(game.playerHand);
-      if (val > 21) {
+
+      // Kiểm tra Ngũ Linh sau khi rút
+      if (game.playerHand.length === 5 && val <= 21) {
+        await addBalance(interaction.user.id, game.bet * 2.5); // Thắng 2.5 lần tiền cược
         delete activeGames[interaction.user.id];
         return interaction.update({
-          embeds: [new EmbedBuilder().setTitle(`**<a:Verified:1406631971509243974> Xì Zách Cùng Augusta | Số <a:diamondgem:1402590496647413811> Đặt ${bet}**`).setDescription(`* **Bài Của Bạn:** ${game.playerHand.map(c=>c.rank+c.suit).join(' ')}  (${val})\n\n<a:AbbyCry:1393909295665643540> Bạn đã thua ${game.bet}<a:diamondgem:1402590496647413811> do **NGOẮC**`).setColor('Red')],
+          embeds: [new EmbedBuilder().setTitle(`**<a:Verified:1406631971509243974> Xì Zách Cùng Augusta | Số <a:diamondgem:1402590496647413811> Đặt ${bet}**`).setDescription(`* **Bài Của Bạn:** ${game.playerHand.map(c=>c.rank+c.suit).join(' ')} (${val})\n\n<a:AbbyWOW:1393909383884439602> Bạn đã thắng **NGŨ LINH**! Nhận được **${game.bet * 1.5}**<a:diamondgem:1402590496647413811>`).setColor('Gold')],
           components: []
         });
       }
+
+      if (val > 21) {
+        delete activeGames[interaction.user.id];
+        return interaction.update({
+          embeds: [new EmbedBuilder().setTitle(`**<a:Verified:1406631971509243974> Xì Zách Cùng Augusta | Số <a:diamondgem:1402590496647413811> Đặt ${bet}**`).setDescription(`* **Bài Của Bạn:** ${game.playerHand.map(c=>c.rank+c.suit).join(' ')}  (${val})\n\n<a:AbbyCry:1393909295665643540> Bạn đã thua ${game.bet}<a:diamondgem:1402590496647413811> do **QUẮC**`).setColor('Red')],
+          components: []
+        });
+      }
+
       return interaction.update({
         embeds: [new EmbedBuilder().setTitle(`**<a:Verified:1406631971509243974> Xì Zách Cùng Augusta | Số <a:diamondgem:1402590496647413811> Đặt ${bet}**`).setDescription(`* **Bài Của Bạn:** ${game.playerHand.map(c=>c.rank+c.suit).join(' ')} (${val})\n* **Bài Của BOT:** ${game.dealerHand[0].rank+game.dealerHand[0].suit} ???`).setColor('Green')],
         components: interaction.message.components
@@ -87,14 +107,32 @@ module.exports = {
 
     if (interaction.customId === 'xizach_stand') {
       let dealerVal = calcHand(game.dealerHand);
-      while (dealerVal < 17) {
+      while (dealerVal < 17 && dealerVal !== 22) { // Ngừng rút khi Ngũ Linh
         game.dealerHand.push(drawCard());
         dealerVal = calcHand(game.dealerHand);
       }
       const playerVal = calcHand(game.playerHand);
 
       let result;
-      if (dealerVal > 21 || playerVal > dealerVal) {
+      let winAmount = 0;
+
+      // Kiểm tra Ngũ Linh trước
+      const playerHasQuintuple = playerVal === 22;
+      const dealerHasQuintuple = dealerVal === 22;
+
+      if (playerHasQuintuple && !dealerHasQuintuple) {
+        winAmount = game.bet * 1.5;
+        await addBalance(interaction.user.id, game.bet + winAmount);
+        result = `<a:AbbyWOW:1393909383884439602> Bạn đã thắng **NGŨ LINH**! Nhận được **${winAmount}**<a:diamondgem:1402590496647413811>`;
+      } else if (dealerHasQuintuple && !playerHasQuintuple) {
+        result = `<a:AbbyCry:1393909295665643540> BOT đã thắng **NGŨ LINH**! Bạn bị mất **${game.bet}**<a:diamondgem:1402590496647413811>`;
+      } else if (playerHasQuintuple && dealerHasQuintuple) {
+          // Cả hai cùng Ngũ Linh, người chơi thắng
+          winAmount = game.bet * 1.5;
+          await addBalance(interaction.user.id, game.bet + winAmount);
+          result = `<a:AbbyWOW:1393909383884439602> Cả hai cùng **NGŨ LINH**! Bạn thắng và nhận được **${winAmount}**<a:diamondgem:1402590496647413811>`;
+      }
+      else if (dealerVal > 21 || playerVal > dealerVal) {
         await addBalance(interaction.user.id, game.bet * 2);
         result = `<a:AbbyWOW:1393909383884439602> Bạn đã thắng! Nhận được **${game.bet}**<a:diamondgem:1402590496647413811>`;
       } else if (playerVal === dealerVal) {
@@ -107,11 +145,9 @@ module.exports = {
       delete activeGames[interaction.user.id];
 
       return interaction.update({
-        embeds: [new EmbedBuilder().setTitle(`**<a:Verified:1406631971509243974> Xì Zách Cùng Augusta | Số <a:diamondgem:1402590496647413811> Đặt ${bet}**`).setDescription(`* **Bài Của Bạn:** ${game.playerHand.map(c=>c.rank+c.suit).join(' ')} (${playerVal})\n* **Bài Của BOT:** ${game.dealerHand.map(c=>c.rank+c.suit).join(' ')} (${dealerVal})\n\n${result}`).setColor('Blue')],
+        embeds: [new EmbedBuilder().setTitle(`**<a:Verified:1406631971509243974> Xì Zách Cùng Augusta | Số <a:diamondgem:1402590496647413811> Đặt ${bet}**`).setDescription(`* **Bài Của Bạn:** ${game.playerHand.map(c=>c.rank+c.suit).join(' ')} (${playerVal === 22 ? 'NGŨ LINH' : playerVal})\n* **Bài Của BOT:** ${game.dealerHand.map(c=>c.rank+c.suit).join(' ')} (${dealerVal === 22 ? 'NGŨ LINH' : dealerVal})\n\n${result}`).setColor('Blue')],
         components: []
       });
     }
   }
 };
-
-
