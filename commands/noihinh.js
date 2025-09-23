@@ -1,14 +1,13 @@
 const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
-const { addBalance, getBalance } = require('../db');
+const { addBalance } = require('../db');
 
-// Danh sách các cặp emoji
 const emojis = [
     '🍎', '🍌', '🍇', '🍉', '🍊', '🍍', '🍓', '🍒',
     '🍋', '🥝', '🥥', '🥭', '🍐', '🍑', '🌶️', '🌽',
 ];
 
-const BOARD_SIZE = 4; // Kích thước bàn cờ (BOARD_SIZE x BOARD_SIZE)
-const TIME_LIMIT_MINUTES = 1; // Thời gian tối đa để hoàn thành game (phút)
+const BOARD_SIZE = 4;
+const TIME_LIMIT_MINUTES = 1;
 const activeGames = new Map();
 
 function createBoard() {
@@ -29,7 +28,7 @@ function createButtons(board, revealedCards) {
             const isRevealed = revealedCards.some(card => card.row === i && card.col === j);
             const button = new ButtonBuilder()
                 .setCustomId(`noihinh-flip-${i}-${j}`)
-                .setLabel(isRevealed ? board[i][j] : '\u200B') // Hiển thị emoji khi đã lật
+                .setLabel(isRevealed ? board[i][j] : '\u200B')
                 .setStyle(isRevealed ? ButtonStyle.Secondary : ButtonStyle.Primary)
                 .setDisabled(isRevealed);
             row.addComponents(button);
@@ -40,12 +39,13 @@ function createButtons(board, revealedCards) {
 }
 
 function updateEmbed(game) {
+    const remainingTime = Math.floor((game.endTime - Date.now()) / 1000);
     const embed = new EmbedBuilder()
         .setColor('#3498db')
         .setTitle('<a:Verified:1406631971509243974> **Nối Hình**')
         .setDescription(`Tìm tất cả các cặp emoji trong **${TIME_LIMIT_MINUTES}** phút!`)
         .addFields(
-            { name: 'Thời gian còn lại:', value: `${Math.floor((game.endTime - Date.now()) / 1000)} giây` },
+            { name: 'Thời gian còn lại:', value: `${remainingTime > 0 ? remainingTime : 0} giây` },
             { name: 'Số cặp đã tìm:', value: `${game.pairsFound} / ${(BOARD_SIZE * BOARD_SIZE) / 2}` }
         );
     return embed;
@@ -73,7 +73,8 @@ module.exports = {
             messageId: null,
             endTime: Date.now() + TIME_LIMIT_MINUTES * 60 * 1000,
             timer: null,
-            winnings: 10000 // Tiền thưởng khi thắng game
+            updateInterval: null,
+            winnings: 10000
         };
 
         const embed = updateEmbed(game);
@@ -83,10 +84,10 @@ module.exports = {
         game.messageId = reply.id;
         activeGames.set(userId, game);
 
-        // Thiết lập bộ đếm thời gian
         game.timer = setTimeout(async () => {
             if (activeGames.has(userId)) {
                 activeGames.delete(userId);
+                clearInterval(game.updateInterval);
                 const timeoutEmbed = new EmbedBuilder()
                     .setTitle('Hết Giờ!')
                     .setDescription('Bạn đã hết thời gian để hoàn thành trò chơi.')
@@ -94,6 +95,21 @@ module.exports = {
                 await interaction.editReply({ embeds: [timeoutEmbed], components: [] });
             }
         }, TIME_LIMIT_MINUTES * 60 * 1000);
+        
+        game.updateInterval = setInterval(async () => {
+            if (activeGames.has(userId)) {
+                const updatedGame = activeGames.get(userId);
+                const newEmbed = updateEmbed(updatedGame);
+                try {
+                    await interaction.editReply({ embeds: [newEmbed] });
+                } catch (e) {
+                    console.error('Lỗi khi cập nhật đồng hồ:', e);
+                    clearInterval(game.updateInterval);
+                    clearTimeout(game.timer);
+                    activeGames.delete(userId);
+                }
+            }
+        }, 1000);
     },
 
     async handleButton(interaction) {
@@ -115,60 +131,63 @@ module.exports = {
             return interaction.deferUpdate();
         }
 
-        // Thêm thẻ đã lật vào mảng
         game.revealed.push(card);
 
-        const updatedComponents = createButtons(game.board, game.revealed);
-
         if (!game.firstFlip) {
-            // Đây là thẻ đầu tiên được lật
             game.firstFlip = card;
             const newEmbed = updateEmbed(game);
+            const updatedComponents = createButtons(game.board, game.revealed);
             await interaction.update({ embeds: [newEmbed], components: updatedComponents });
         } else {
             // Đây là thẻ thứ hai, kiểm tra xem có khớp không
             const firstCard = game.firstFlip;
             const card1Emoji = game.board[firstCard.row][firstCard.col];
             const card2Emoji = game.board[card.row][card.col];
+            
+            // Phản hồi ngay lập tức để tránh lỗi
+            await interaction.deferUpdate();
+            
+            game.firstFlip = null;
 
             if (card1Emoji === card2Emoji) {
-                // Là một cặp!
-                game.firstFlip = null;
                 game.pairsFound++;
+                const newEmbed = updateEmbed(game);
+                const updatedComponents = createButtons(game.board, game.revealed);
+                await interaction.editReply({ embeds: [newEmbed], components: updatedComponents });
 
                 if (game.pairsFound === (BOARD_SIZE * BOARD_SIZE) / 2) {
-                    clearTimeout(game.timer); // Dừng bộ đếm thời gian
+                    clearTimeout(game.timer);
+                    clearInterval(game.updateInterval);
                     activeGames.delete(userId);
                     await addBalance(userId, game.winnings);
                     const finalEmbed = updateEmbed(game)
                         .setDescription(`<a:AbbyHappy:1393909327848538122> Chúc mừng, **<@${game.originalPlayerId}>** đã thắng!\\nBạn đã tìm được tất cả các cặp và nhận được **${game.winnings.toLocaleString()}**<a:diamondgem:1402590496647413811>!`)
                         .setColor('#2ecc71');
-                    await interaction.update({ embeds: [finalEmbed], components: [] });
-                } else {
-                    // Tiếp tục
-                    const newEmbed = updateEmbed(game);
-                    await interaction.update({ embeds: [newEmbed], components: updatedComponents });
+                    await interaction.editReply({ embeds: [finalEmbed], components: [] });
                 }
             } else {
                 // Không phải cặp, lật lại sau 2 giây
-                const firstCard = game.firstFlip;
-                game.firstFlip = null;
+                const currentRevealed = [...game.revealed];
+                const newRevealed = game.revealed.filter(c =>
+                    !(c.row === card.row && c.col === card.col) &&
+                    !(c.row === firstCard.row && c.col === firstCard.col)
+                );
+
+                const embedShowing = updateEmbed(game);
+                embedShowing.setDescription('Không khớp! Vui lòng thử lại.');
+                const componentsShowing = createButtons(game.board, currentRevealed);
+                await interaction.editReply({ embeds: [embedShowing], components: componentsShowing });
+                
                 setTimeout(async () => {
-                    const newRevealed = game.revealed.filter(c =>
-                        !(c.row === card.row && c.col === card.col) &&
-                        !(c.row === firstCard.row && c.col === firstCard.col)
-                    );
                     game.revealed = newRevealed;
                     const finalComponents = createButtons(game.board, game.revealed);
-                    const newEmbed = updateEmbed(game)
-                        .setDescription('Không khớp! Vui lòng thử lại.');
+                    const finalEmbed = updateEmbed(game);
                     try {
-                        await interaction.editReply({ embeds: [newEmbed], components: finalComponents });
+                        await interaction.editReply({ embeds: [finalEmbed], components: finalComponents });
                     } catch (e) {
-                        console.error('Lỗi khi cập nhật tin nhắn:', e);
+                        console.error('Lỗi khi cập nhật tin nhắn sau timeout:', e);
                     }
                 }, 2000);
-                await interaction.deferUpdate();
             }
         }
     }
