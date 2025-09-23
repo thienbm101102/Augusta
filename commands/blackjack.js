@@ -72,7 +72,7 @@ module.exports = {
       game.playerHand.push(drawCard());
       const playerVal = calcHand(game.playerHand);
       
-      const isPlayerXiban = game.playerHand.length === 2 && playerVal === 20;
+      const isPlayerTwoAces = game.playerHand.length === 2 && game.playerHand.every(card => card.rank === 'A');
       const isPlayerXidach = game.playerHand.length === 2 && playerVal === 21;
       const isPlayerNguLinh = game.playerHand.length === 5 && playerVal <= 21;
       
@@ -84,16 +84,25 @@ module.exports = {
         });
       }
 
-      if (isPlayerXiban || isPlayerXidach || isPlayerNguLinh) {
-        let winMessage;
-        if (isPlayerXiban) winMessage = 'XÌ BÀN';
-        else if (isPlayerXidach) winMessage = 'XÌ DÁCH';
-        else if (isPlayerNguLinh) winMessage = 'NGŨ LINH';
-
+      if (isPlayerTwoAces) {
         await addBalance(interaction.user.id, bet * 2);
         delete activeGames[interaction.user.id];
         return interaction.update({
-          embeds: [new EmbedBuilder().setTitle(`**<a:Verified:1406631971509243974> Xì Zách Cùng Augusta | Số <a:diamondgem:1402590496647413811> Đặt ${bet}**`).setDescription(`* **Bài Của Bạn:** ${game.playerHand.map(c => c.rank + c.suit).join(' ')} (${playerVal})\n\n<a:AbbyWOW:1393909383884439602> Bạn đã thắng **${winMessage}**! Nhận được **${bet}**<a:diamondgem:1402590496647413811>`).setColor('Gold')],
+          embeds: [new EmbedBuilder().setTitle(`**<a:Verified:1406631971509243974> Xì Zách Cùng Augusta | Số <a:diamondgem:1402590496647413811> Đặt ${bet}**`).setDescription(`* **Bài Của Bạn:** ${game.playerHand.map(c => c.rank + c.suit).join(' ')} (2 Át)\n\n<a:AbbyWOW:1393909383884439602> Bạn đã thắng **XÌ BÀN**! Nhận được **${bet}**<a:diamondgem:1402590496647413811>`).setColor('Gold')],
+          components: []
+        });
+      } else if (isPlayerXidach) {
+        await addBalance(interaction.user.id, bet * 2);
+        delete activeGames[interaction.user.id];
+        return interaction.update({
+          embeds: [new EmbedBuilder().setTitle(`**<a:Verified:1406631971509243974> Xì Zách Cùng Augusta | Số <a:diamondgem:1402590496647413811> Đặt ${bet}**`).setDescription(`* **Bài Của Bạn:** ${game.playerHand.map(c => c.rank + c.suit).join(' ')} (${playerVal})\n\n<a:AbbyWOW:1393909383884439602> Bạn đã thắng **XÌ DÁCH**! Nhận được **${bet}**<a:diamondgem:1402590496647413811>`).setColor('Gold')],
+          components: []
+        });
+      } else if (isPlayerNguLinh) {
+        await addBalance(interaction.user.id, bet * 2);
+        delete activeGames[interaction.user.id];
+        return interaction.update({
+          embeds: [new EmbedBuilder().setTitle(`**<a:Verified:1406631971509243974> Xì Zách Cùng Augusta | Số <a:diamondgem:1402590496647413811> Đặt ${bet}**`).setDescription(`* **Bài Của Bạn:** ${game.playerHand.map(c => c.rank + c.suit).join(' ')} (${playerVal})\n\n<a:AbbyWOW:1393909383884439602> Bạn đã thắng **NGŨ LINH**! Nhận được **${bet}**<a:diamondgem:1402590496647413811>`).setColor('Gold')],
           components: []
         });
       }
@@ -115,59 +124,53 @@ module.exports = {
 
       let result;
       let isWin = false;
+      let isDraw = false;
 
-      const isPlayerXiban = playerHand.length === 2 && playerVal === 20;
+      const isPlayerTwoAces = playerHand.length === 2 && playerHand.every(card => card.rank === 'A');
       const isPlayerXidach = playerHand.length === 2 && playerVal === 21;
       const isPlayerNguLinh = playerHand.length === 5 && playerVal <= 21;
 
-      const isDealerXiban = dealerHand.length === 2 && dealerVal === 20;
+      const isDealerTwoAces = dealerHand.length === 2 && dealerHand.every(card => card.rank === 'A');
       const isDealerXidach = dealerHand.length === 2 && dealerVal === 21;
       const isDealerNguLinh = dealerHand.length === 5 && dealerVal <= 21;
 
-      // Ưu tiên Xì Bàn
-      if (isPlayerXiban) {
-        if (isDealerXiban) {
-          await addBalance(interaction.user.id, bet);
-          result = `<a:AbbyFlower:1393909312761364541> Cả hai cùng **XÌ BÀN**! Hòa, bạn được hoàn lại **${bet}**<a:diamondgem:1402590496647413811>`;
-        } else {
-          isWin = true;
-          await addBalance(interaction.user.id, bet * 2);
-          result = `<a:AbbyWOW:1393909383884439602> Bạn đã thắng **XÌ BÀN**! Nhận được **${bet}**<a:diamondgem:1402590496647413811>`;
-        }
-      } else if (isDealerXiban) {
-        result = `<a:AbbyCry:1393909295665643540> BOT đã thắng **XÌ BÀN**! Bạn bị mất **${bet}**<a:diamondgem:1402590496647413811>`;
+      // Ưu tiên 2 Át
+      if (isPlayerTwoAces && isDealerTwoAces) {
+        isDraw = true;
+      } else if (isPlayerTwoAces) {
+        isWin = true;
+      } else if (isDealerTwoAces) {
+        isWin = false;
       // Tiếp theo là Xì Dách
+      } else if (isPlayerXidach && isDealerXidach) {
+        isDraw = true;
       } else if (isPlayerXidach) {
-        if (isDealerXidach) {
-          await addBalance(interaction.user.id, bet);
-          result = `<a:AbbyFlower:1393909312761364541> Cả hai cùng **XÌ DÁCH**! Hòa, bạn được hoàn lại **${bet}**<a:diamondgem:1402590496647413811>`;
-        } else {
-          isWin = true;
-          await addBalance(interaction.user.id, bet * 2);
-          result = `<a:AbbyWOW:1393909383884439602> Bạn đã thắng **XÌ DÁCH**! Nhận được **${bet}**<a:diamondgem:1402590496647413811>`;
-        }
+        isWin = true;
       } else if (isDealerXidach) {
-        result = `<a:AbbyCry:1393909295665643540> BOT đã thắng **XÌ DÁCH**! Bạn bị mất **${bet}**<a:diamondgem:1402590496647413811>`;
+        isWin = false;
       // Tiếp theo là Ngũ Linh
+      } else if (isPlayerNguLinh && isDealerNguLinh) {
+        isDraw = true;
       } else if (isPlayerNguLinh) {
-          if (isDealerNguLinh) {
-            await addBalance(interaction.user.id, bet);
-            result = `<a:AbbyFlower:1393909312761364541> Cả hai cùng **NGŨ LINH**! Hòa, bạn được hoàn lại **${bet}**<a:diamondgem:1402590496647413811>`;
-          } else {
-            isWin = true;
-            await addBalance(interaction.user.id, bet * 2);
-            result = `<a:AbbyWOW:1393909383884439602> Bạn đã thắng **NGŨ LINH**! Nhận được **${bet}**<a:diamondgem:1402590496647413811>`;
-          }
+        isWin = true;
       } else if (isDealerNguLinh) {
-        result = `<a:AbbyCry:1393909295665643540> BOT đã thắng **NGŨ LINH**! Bạn bị mất **${bet}**<a:diamondgem:1402590496647413811>`;
+        isWin = false;
       // Cuối cùng là so điểm thông thường
       } else if (dealerVal > 21 || playerVal > dealerVal) {
         isWin = true;
-        await addBalance(interaction.user.id, bet * 2);
-        result = `<a:AbbyWOW:1393909383884439602> Bạn đã thắng! Nhận được **${bet}**<a:diamondgem:1402590496647413811>`;
       } else if (playerVal === dealerVal) {
+        isDraw = true;
+      } else {
+        isWin = false;
+      }
+      
+      // Cập nhật kết quả và tiền
+      if (isDraw) {
         await addBalance(interaction.user.id, bet);
         result = `<a:AbbyFlower:1393909312761364541> Hòa, bạn được hoàn lại **${bet}**<a:diamondgem:1402590496647413811>`;
+      } else if (isWin) {
+        await addBalance(interaction.user.id, bet * 2);
+        result = `<a:AbbyWOW:1393909383884439602> Bạn đã thắng! Nhận được **${bet}**<a:diamondgem:1402590496647413811>`;
       } else {
         result = `<a:AbbyCry:1393909295665643540> BOT đã thắng! Bạn bị mất **${bet}**<a:diamondgem:1402590496647413811>`;
       }
@@ -175,6 +178,7 @@ module.exports = {
       delete activeGames[interaction.user.id];
       
       const finalColor = isWin ? 'Green' : 'Red';
+      if (isDraw) finalColor = 'Blue';
 
       return interaction.update({
         embeds: [new EmbedBuilder()
