@@ -214,11 +214,10 @@ module.exports = {
                 await user.save();
 
                 const embed = new EmbedBuilder()
-                    .setTitle(`<a:Verified:1406631971509243974> Thành Phố Của ${interaction.member.displayName}`)
+                    .setTitle(`**<a:Verified:1406631971509243974> Một Công Trình Đang Xây Ở ${interaction.member.displayName}**`)
                     .setDescription(`**${interaction.member.displayName}** đã xây **${buildingData.name}**!`)
                     .addFields(
                         { name: 'Chi phí', value: `\`${level1.cost.toLocaleString()}\`<a:diamondgem:1402590496647413811>`, inline: true },
-                        { name: 'Số dư mới', value: `\`${(await getBalance(userId)).toLocaleString()}\`<a:diamondgem:1402590496647413811>`, inline: true },
                     )
                     .setColor('#2ecc71');
 
@@ -256,7 +255,6 @@ module.exports = {
                     .setDescription(`Công trình **${buildingData.name}** đã được nâng cấp lên cấp độ **${nextLevel + 1}**!`)
                     .addFields(
                         { name: 'Chi phí', value: `\`${upgradeCost.toLocaleString()}\`<a:diamondgem:1402590496647413811>`, inline: true },
-                        { name: 'Số dư mới', value: `\`${(await getBalance(userId)).toLocaleString()}\`<a:diamondgem:1402590496647413811>`, inline: true },
                     )
                     .setColor('#9b59b6');
 
@@ -277,7 +275,7 @@ module.exports = {
                 const estimatedWealth = (finalIncome * (24 * 7)) + (await getBalance(userId));
 
                 const embed = new EmbedBuilder()
-                    .setTitle(`<a:Verified:1406631971509243974> ${interaction.member.displayName}'s City`)
+                    .setTitle(`**<a:Verified:1406631971509243974> Thành Phố Của ${interaction.member.displayName}**`)
                     .setDescription(
                         `Chào mừng đến với thành phố của bạn, nơi mọi công trình đều mang lại thu nhập và hạnh phúc!\n\n` +
                         `**💵 Thu nhập**\n` +
@@ -327,7 +325,7 @@ module.exports = {
                 const { happiness } = calculateStats(user.city);
 
                 const embed = new EmbedBuilder()
-                    .setTitle(`<a:Verified:1406631971509243974> Thu Hoạch Thành Công!`)
+                    .setTitle(`**<a:Verified:1406631971509243974> Thu Hoạch Thành Công!**`)
                     .setDescription(`Bạn đã thu hoạch thành công **${totalClaim.toLocaleString()}**<a:diamondgem:1402590496647413811> từ thành phố của mình!`)
                     .addFields(
                         { name: 'Số dư mới', value: `\`${(await getBalance(userId)).toLocaleString()}\`<a:diamondgem:1402590496647413811>`, inline: true },
@@ -341,3 +339,4 @@ module.exports = {
         }
     }
 };
+
