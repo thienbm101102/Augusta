@@ -243,11 +243,16 @@ module.exports = {
         const folderPath = itemType === 'banner' ? bannersFolder : badgesFolder;
         let attachment;
         try {
+            // ✅ Đảm bảo file tồn tại trước khi tạo attachment
+            if (!fs.existsSync(path.join(folderPath, itemName))) {
+                throw new Error(`File ảnh không tồn tại: ${path.join(folderPath, itemName)}`);
+            }
             attachment = new AttachmentBuilder(path.join(folderPath, itemName), { name: itemName });
             updatedEmbed.setImage(`attachment://${itemName}`);
         } catch (error) {
             console.error("Lỗi tạo AttachmentBuilder:", error);
-            return interaction.editReply({ content: 'Đã mua thành công nhưng không thể hiển thị hình ảnh. Vui lòng kiểm tra lại file ảnh của bạn.' });
+            // ✅ Phản hồi lại ngay nếu lỗi, không để tương tác bị timeout
+            return interaction.editReply({ content: `Đã mua thành công nhưng không thể hiển thị hình ảnh. Lỗi: **${error.message}**. Vui lòng kiểm tra lại tên file ảnh và đường dẫn.` });
         }
         
         await interaction.editReply({ embeds: [updatedEmbed], files: [attachment] });
@@ -279,4 +284,3 @@ module.exports = {
         await interaction.editReply({ embeds: [embed] });
     }
 };
-
