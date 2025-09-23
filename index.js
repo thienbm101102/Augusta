@@ -1,6 +1,6 @@
 // File: index.js
 
-const { Client, Collection, GatewayIntentBits } = require('discord.js');
+const { Client, Collection, GatewayIntentBits, DiscordAPIError } = require('discord.js');
 const fs = require('fs');
 const path = require('path');
 const mongoose = require('mongoose');
@@ -70,10 +70,18 @@ client.on('interactionCreate', async interaction => {
     }
   } catch (error) {
     console.error(error);
-    if (interaction.replied || interaction.deferred) {
-      await interaction.followUp({ content: '❌ Có lỗi xảy ra khi thực thi tương tác này!', ephemeral: true });
+
+    // Xử lý lỗi "Unknown interaction" một cách đặc biệt
+    if (error instanceof DiscordAPIError && error.code === 10062) {
+      console.log("❌ Tương tác đã hết hạn, không thể phản hồi.");
+      // Không cần làm gì thêm, chỉ log lỗi và thoát
     } else {
-      await interaction.reply({ content: '❌ Có lỗi xảy ra khi thực thi tương tác này!', ephemeral: true });
+      // Xử lý các lỗi khác
+      if (interaction.replied || interaction.deferred) {
+        await interaction.followUp({ content: '❌ Có lỗi xảy ra khi thực thi tương tác này!', ephemeral: true });
+      } else {
+        await interaction.reply({ content: '❌ Có lỗi xảy ra khi thực thi tương tác này!', ephemeral: true });
+      }
     }
   }
 });
