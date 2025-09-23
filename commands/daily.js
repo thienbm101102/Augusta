@@ -27,7 +27,7 @@ module.exports = {
     const embed = new EmbedBuilder()
       .setColor('Blue')
       .setTitle('**Điểm Danh**')
-      .setDescription(`<a:PenguRich:1402589007683407943> **|** Bạn đã điểm danh thành công và nhận được **10,000**<a:diamondgem:1402590496647413811>!`)
+      .setDescription(`<a:AbbyPeek:1393909356625657876> **|** Bạn đã điểm danh thành công và nhận được **10,000**<a:diamondgem:1402590496647413811>!`)
       .setTimestamp();
     return interaction.reply({ embeds: [embed] });
   }
