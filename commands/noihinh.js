@@ -8,7 +8,7 @@ const emojis = [
 ];
 
 const BOARD_SIZE = 4; // Kích thước bàn cờ (BOARD_SIZE x BOARD_SIZE)
-const TIME_LIMIT_MINUTES = 2; // Thời gian tối đa để hoàn thành game (phút)
+const TIME_LIMIT_MINUTES = 1; // Thời gian tối đa để hoàn thành game (phút)
 const activeGames = new Map();
 
 function createBoard() {
@@ -27,7 +27,7 @@ function createButtons(board, revealedCards) {
         const row = new ActionRowBuilder();
         for (let j = 0; j < BOARD_SIZE; j++) {
             const isRevealed = revealedCards.some(card => card.row === i && card.col === j);
-            const emoji = isRevealed ? board[i][j] : '❔';
+            const emoji = isRevealed ? board[i][j] : '🍬';
             
             // Chọn màu nút
             let buttonStyle = ButtonStyle.Primary;
@@ -199,4 +199,5 @@ module.exports = {
         }
     }
 };
+
 
