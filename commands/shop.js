@@ -1,15 +1,15 @@
-const { SlashCommandBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, AttachmentBuilder, EmbedBuilder, MessageFlags, StringSelectMenuBuilder } = require("discord.js");
+const { SlashCommandBuilder, ActionRowBuilder, StringSelectMenuBuilder, ButtonBuilder, ButtonStyle, AttachmentBuilder } = require("discord.js");
 const fs = require("fs");
 const path = require("path");
-const { addBalance, getBalance, getUser } = require("../db");
+const db = require("../db"); // Import module db.js để sử dụng Mongoose
 
-// ✅ ĐƯỜNG DẪN MỚI: Nếu bạn để banners và badges trong thư mục 'assets'
 const shopPath = path.join(__dirname, "../shop.json");
-const bannersFolder = path.join(__dirname, "../assets/banners");
-const badgesFolder = path.join(__dirname, "../assets/badges");
 
+// Hàm này sẽ lấy tên hiển thị từ tên file
 const getItemName = (filename) => {
+    // Tùy chỉnh tên tại đây
     const customNames = {
+        "banner.png": "Tập Sự",
         "banner1.png": "Hoa Đào",
         "banner2.png": "Bước Vào Giấc Mơ",
         "banner3.png": "Công Viên Mộng Mơ",
@@ -24,263 +24,276 @@ const getItemName = (filename) => {
         "tinhanh.png": "Danh hiệu: Tinh Anh Tộc Bom",
         "quocvuong.png": "Danh hiệu: Quốc Vương Tộc Bom",
     };
-    return customNames[filename] || filename.split('.')[0];
+    return customNames[filename] || filename.replace(/\.(png|jpg|jpeg)$/i, "");
 };
 
 module.exports = {
     data: new SlashCommandBuilder()
-        .setName('shop')
-        .setDescription('Mua các vật phẩm đặc biệt như banner và huy hiệu')
+        .setName("shop")
+        .setDescription("Mở cửa hàng, xem và mua vật phẩm hoặc chọn danh hiệu/background")
         .addSubcommand(subcommand =>
             subcommand
-                .setName('xem')
-                .setDescription('Xem và mua các vật phẩm trong cửa hàng')
+                .setName("banners")
+                .setDescription("Xem và mua banner để trang trí hồ sơ")
         )
         .addSubcommand(subcommand =>
             subcommand
-                .setName('trangbi')
-                .setDescription('Trang bị một banner hoặc huy hiệu bạn đã mua')
+                .setName("badges")
+                .setDescription("Xem và mua danh hiệu để trang trí hồ sơ")
+        )
+        .addSubcommand(subcommand =>
+            subcommand
+                .setName("setbanner")
+                .setDescription("Chọn background bạn muốn sử dụng")
+        )
+        .addSubcommand(subcommand =>
+            subcommand
+                .setName("setbadge")
+                .setDescription("Chọn danh hiệu bạn muốn sử dụng")
         ),
+
     async execute(interaction) {
         const subcommand = interaction.options.getSubcommand();
-        const userId = interaction.user.id;
-        const user = await getUser(userId);
-
-        if (!user.ownedBanners) user.ownedBanners = [];
-        if (!user.ownedBadges) user.ownedBadges = [];
-
-        switch (subcommand) {
-            case 'xem': {
-                await interaction.deferReply({ ephemeral: true });
-                
-                let shopData;
-                try {
-                    shopData = JSON.parse(fs.readFileSync(shopPath, 'utf8'));
-                } catch (error) {
-                    console.error("Lỗi đọc shop.json:", error);
-                    return interaction.editReply({ content: 'Đã xảy ra lỗi khi đọc dữ liệu cửa hàng. Vui lòng kiểm tra file `shop.json` của bạn.' });
-                }
-
-                const bannersEmbed = new EmbedBuilder()
-                    .setTitle('🖼️ Banners trong Cửa Hàng')
-                    .setDescription(`Sử dụng các nút bên dưới để mua banner.`)
-                    .setColor('#F7DC6F');
-
-                const bannersRow = new ActionRowBuilder();
-                if (shopData.banners.length > 0) {
-                    shopData.banners.forEach(b => {
-                        const button = new ButtonBuilder()
-                            .setCustomId(`buy_banner_${b.file}`)
-                            .setLabel(`${getItemName(b.file)} (${b.cost.toLocaleString()})`)
-                            .setStyle(ButtonStyle.Success);
-                        bannersRow.addComponents(button);
-                    });
-                } else {
-                    bannersRow.addComponents(
-                        new ButtonBuilder()
-                            .setCustomId('no_banners')
-                            .setLabel('Không có banner')
-                            .setStyle(ButtonStyle.Secondary)
-                            .setDisabled(true)
-                    );
-                }
-
-                const badgesEmbed = new EmbedBuilder()
-                    .setTitle('🏅 Huy Hiệu trong Cửa Hàng')
-                    .setDescription(`Sử dụng các nút bên dưới để mua huy hiệu.`)
-                    .setColor('#9b59b6');
-
-                const badgesRow = new ActionRowBuilder();
-                if (shopData.badges.length > 0) {
-                    shopData.badges.forEach(b => {
-                        const button = new ButtonBuilder()
-                            .setCustomId(`buy_badge_${b.file}`)
-                            .setLabel(`${getItemName(b.file)} (${b.cost.toLocaleString()})`)
-                            .setStyle(ButtonStyle.Success);
-                        badgesRow.addComponents(button);
-                    });
-                } else {
-                    badgesRow.addComponents(
-                        new ButtonBuilder()
-                            .setCustomId('no_badges')
-                            .setLabel('Không có huy hiệu')
-                            .setStyle(ButtonStyle.Secondary)
-                            .setDisabled(true)
-                    );
-                }
-                
-                const ownedBannersList = user.ownedBanners.length > 0
-                    ? user.ownedBanners.map(b => `\`${b}\``).join(', ')
-                    : 'Không có';
-                
-                const ownedBadgesList = user.ownedBadges.length > 0
-                    ? user.ownedBadges.map(b => `\`${b}\``).join(', ')
-                    : 'Không có';
-
-                const ownedEmbed = new EmbedBuilder()
-                    .setTitle('🎒 Vật Phẩm Của Bạn')
-                    .setDescription(`Bạn có **${user.balance.toLocaleString()}**<a:diamondgem:1402590496647413811>.\nBạn có thể trang bị các vật phẩm này bằng lệnh \`/shop trangbi\``)
-                    .addFields(
-                        { name: '🖼️ Banners', value: ownedBannersList, inline: false },
-                        { name: '🏅 Huy Hiệu', value: ownedBadgesList, inline: false }
-                    )
-                    .setColor('#9b59b6');
-
-                await interaction.editReply({ 
-                    embeds: [bannersEmbed, badgesEmbed, ownedEmbed], 
-                    components: [bannersRow, badgesRow]
-                });
-
-                break;
-            }
-
-            case 'trangbi': {
-                await interaction.deferReply({ ephemeral: true });
-                
-                const bannersOwned = user.ownedBanners.map(b => ({
-                    label: getItemName(b),
-                    value: `equip_banner_${b}`,
-                }));
-
-                const badgesOwned = user.ownedBadges.map(b => ({
-                    label: getItemName(b),
-                    value: `equip_badge_${b}`,
-                }));
-
-                if (bannersOwned.length === 0 && badgesOwned.length === 0) {
-                    return interaction.editReply({ content: 'Bạn không có bất kỳ banner hoặc huy hiệu nào để trang bị. Vui lòng mua chúng từ cửa hàng.' });
-                }
-
-                const rows = [];
-                if (bannersOwned.length > 0) {
-                    const bannerSelectMenu = new StringSelectMenuBuilder()
-                        .setCustomId('equip_banner_select')
-                        .setPlaceholder('Chọn một Banner để trang bị...')
-                        .addOptions(bannersOwned);
-                    rows.push(new ActionRowBuilder().addComponents(bannerSelectMenu));
-                }
-
-                if (badgesOwned.length > 0) {
-                    const badgeSelectMenu = new StringSelectMenuBuilder()
-                        .setCustomId('equip_badge_select')
-                        .setPlaceholder('Chọn một Huy hiệu để trang bị...')
-                        .addOptions(badgesOwned);
-                    rows.push(new ActionRowBuilder().addComponents(badgeSelectMenu));
-                }
-
-                const embed = new EmbedBuilder()
-                    .setTitle('Trang Bị Vật Phẩm')
-                    .setDescription('Vui lòng chọn banner hoặc huy hiệu bạn muốn trang bị từ menu bên dưới.')
-                    .setColor('#3498db');
-
-                await interaction.editReply({
-                    embeds: [embed],
-                    components: rows,
-                });
-
-                break;
-            }
-        }
-    },
-    async handleButton(interaction) {
         await interaction.deferReply({ ephemeral: true });
-        const [action, itemType, itemName] = interaction.customId.split('_');
-        const userId = interaction.user.id;
-        const user = await getUser(userId);
 
-        if (action !== 'buy') {
-            return;
-        }
+        const userDoc = await db.getUser(interaction.user.id);
+        const ownedBanners = userDoc.ownedBanners || [];
+        const ownedBadges = userDoc.ownedBadges || [];
 
-        let shopData;
-        try {
-            shopData = JSON.parse(fs.readFileSync(shopPath, 'utf8'));
-        } catch (error) {
-            console.error("Lỗi đọc shop.json:", error);
-            return interaction.editReply({ content: 'Đã xảy ra lỗi khi đọc dữ liệu cửa hàng. Vui lòng kiểm tra file `shop.json` của bạn.' });
-        }
-        
-        const allItems = [...shopData.banners, ...shopData.badges];
-        const itemToBuy = allItems.find(item => item.file === itemName);
+        // Xử lý các subcommand mới
+        if (subcommand === "setbanner") {
+            const availableBanners = [...new Set(["banner.png", ...ownedBanners])];
+            if (availableBanners.length === 0) {
+                return interaction.editReply({ content: "Bạn chưa sở hữu banner nào!" });
+            }
 
-        if (!itemToBuy) {
-            return interaction.editReply({ content: 'Vật phẩm bạn chọn không tồn tại trong cửa hàng.' });
-        }
+            const options = availableBanners.map(f => ({
+                label: getItemName(f),
+                value: f,
+                default: f === userDoc.banner
+            }));
 
-        const userBalance = await getBalance(userId);
-        const itemPrice = itemToBuy.cost;
+            const selectMenu = new StringSelectMenuBuilder()
+                .setCustomId(`set-banner-${interaction.user.id}`)
+                .setPlaceholder("Chọn banner bạn muốn sử dụng")
+                .addOptions(options.slice(0, 25));
 
-        if (userBalance < itemPrice) {
-            return interaction.editReply({ 
-                content: `Bạn không đủ tiền để mua vật phẩm này. Vật phẩm cần **${itemPrice.toLocaleString()}**<a:diamondgem:1402590496647413811> nhưng bạn chỉ có **${userBalance.toLocaleString()}**<a:diamondgem:1402590496647413811>.`
+            const row = new ActionRowBuilder().addComponents(selectMenu);
+
+            await interaction.editReply({
+                content: "<a:AbbyCheers:1393909248076943380> Chọn background bạn muốn sử dụng:",
+                components: [row]
             });
-        }
 
-        if (user.ownedBanners.includes(itemName) || user.ownedBadges.includes(itemName)) {
-            return interaction.editReply({ content: `Bạn đã sở hữu vật phẩm này rồi.` });
-        }
+            const collector = interaction.channel.createMessageComponentCollector({
+                filter: i => i.customId === `set-banner-${interaction.user.id}` && i.user.id === interaction.user.id,
+                time: 60_000,
+            });
 
-        await addBalance(userId, -itemPrice);
+            collector.on("collect", async (i) => {
+                await i.deferUpdate();
+                const bannerName = i.values[0];
+                userDoc.banner = bannerName;
+                await userDoc.save();
+                await i.editReply({
+                    content: `<a:AbbyHappy:1393909327848538122> Hồ sơ của bạn đã được đổi thành **${getItemName(bannerName)}**`,
+                    components: []
+                });
+                collector.stop();
+            });
 
-        if (itemType === 'banner') {
-            user.ownedBanners.push(itemName);
-            user.banner = itemName;
-        } else if (itemType === 'badge') {
-            user.ownedBadges.push(itemName);
-            user.badge = itemName;
-        }
-
-        await user.save();
-
-        const updatedEmbed = new EmbedBuilder()
-            .setColor('#2ecc71')
-            .setTitle('**<a:Verified:1406631971509243974> Mua Thành Công!**')
-            .setDescription(`Bạn đã mua thành công **${getItemName(itemName)}** với giá **${itemPrice.toLocaleString()}**<a:diamondgem:1402590496647413811>.`)
-            .addFields(
-                { name: 'Số dư hiện tại', value: `${(await getBalance(userId)).toLocaleString()}<a:diamondgem:1402590496647413811>`, inline: true }
-            );
-
-        const folderPath = itemType === 'banner' ? bannersFolder : badgesFolder;
-        let attachment;
-        try {
-            // ✅ Đảm bảo file tồn tại trước khi tạo attachment
-            if (!fs.existsSync(path.join(folderPath, itemName))) {
-                throw new Error(`File ảnh không tồn tại: ${path.join(folderPath, itemName)}`);
-            }
-            attachment = new AttachmentBuilder(path.join(folderPath, itemName), { name: itemName });
-            updatedEmbed.setImage(`attachment://${itemName}`);
-        } catch (error) {
-            console.error("Lỗi tạo AttachmentBuilder:", error);
-            // ✅ Phản hồi lại ngay nếu lỗi, không để tương tác bị timeout
-            return interaction.editReply({ content: `Đã mua thành công nhưng không thể hiển thị hình ảnh. Lỗi: **${error.message}**. Vui lòng kiểm tra lại tên file ảnh và đường dẫn.` });
-        }
-        
-        await interaction.editReply({ embeds: [updatedEmbed], files: [attachment] });
-    },
-    // ✅ THÊM HÀM XỬ LÝ MENU LỰA CHỌN
-    async handleSelectMenu(interaction) {
-        await interaction.deferReply({ ephemeral: true });
-        const [action, itemType, itemName] = interaction.values[0].split('_');
-        const userId = interaction.user.id;
-        const user = await getUser(userId);
-
-        if (action !== 'equip') {
+            collector.on("end", async (_, reason) => {
+                if (reason === "time") {
+                    await interaction.editReply({
+                        content: "Hết thời gian chọn!",
+                        components: []
+                    });
+                }
+            });
             return;
         }
 
-        if (itemType === 'banner') {
-            user.banner = itemName;
-        } else if (itemType === 'badge') {
-            user.badge = itemName;
+        if (subcommand === "setbadge") {
+            const userOwnedBadges = ownedBadges || [];
+            if (userOwnedBadges.length === 0) {
+                return interaction.editReply({ content: "Bạn chưa sở hữu danh hiệu nào! Bạn có thể mua chúng trong `/shop badges`." });
+            }
+
+            const options = userOwnedBadges.map(f => ({
+                label: getItemName(f),
+                value: f,
+                default: f === userDoc.badge
+            }));
+
+            const selectMenu = new StringSelectMenuBuilder()
+                .setCustomId(`set-badge-${interaction.user.id}`)
+                .setPlaceholder("Chọn danh hiệu bạn muốn sử dụng")
+                .addOptions(options.slice(0, 25));
+
+            const row = new ActionRowBuilder().addComponents(selectMenu);
+
+            await interaction.editReply({
+                content: "<a:AbbyCheers:1393909248076943380> Chọn danh hiệu bạn muốn sử dụng:",
+                components: [row]
+            });
+
+            const collector = interaction.channel.createMessageComponentCollector({
+                filter: i => i.customId === `set-badge-${interaction.user.id}` && i.user.id === interaction.user.id,
+                time: 60_000,
+            });
+
+            collector.on("collect", async (i) => {
+                await i.deferUpdate();
+                const badgeName = i.values[0];
+                userDoc.badge = badgeName;
+                await userDoc.save();
+                await i.editReply({
+                    content: `<a:AbbyHappy:1393909327848538122> Hồ sơ của bạn đã được đổi thành **${getItemName(badgeName)}**`,
+                    components: []
+                });
+                collector.stop();
+            });
+
+            collector.on("end", async (_, reason) => {
+                if (reason === "time") {
+                    await interaction.editReply({
+                        content: "Hết thời gian chọn!",
+                        components: []
+                    });
+                }
+            });
+            return;
         }
 
-        await user.save();
+        // Phần code còn lại của lệnh shop (banners, badges)
+        if (!fs.existsSync(shopPath)) {
+            return interaction.editReply({ content: "Cửa hàng đang đóng, không có vật phẩm nào để bán." });
+        }
 
-        const embed = new EmbedBuilder()
-            .setTitle('✨ Trang Bị Thành Công!')
-            .setDescription(`Bạn đã trang bị **${getItemName(itemName)}** thành công!`)
-            .setColor('#2ecc71');
-        
-        await interaction.editReply({ embeds: [embed] });
-    }
+        const shopItems = JSON.parse(fs.readFileSync(shopPath, "utf8"));
+        const items = subcommand === "banners" ? shopItems.banners : shopItems.badges;
+        const itemType = subcommand === "banners" ? "banner" : "khung";
+        const ownedItems = subcommand === "banners" ? ownedBanners : ownedBadges;
+
+        const availableItems = Object.keys(items).filter(item => !ownedItems.includes(item));
+
+        if (availableItems.length === 0) {
+            return interaction.editReply({ content: `Bạn đã mua hết các ${itemType} trong cửa hàng rồi! 🎉` });
+        }
+
+        const options = availableItems.map(item => ({
+            label: `${getItemName(item)} (${items[item].toLocaleString()} xu)`,
+            value: item
+        }));
+
+        const selectMenu = new StringSelectMenuBuilder()
+            .setCustomId(`shop-select-${interaction.user.id}`)
+            .setPlaceholder(`Chọn vật phẩm bạn muốn mua`)
+            .addOptions(options.slice(0, 25));
+
+        const row = new ActionRowBuilder().addComponents(selectMenu);
+
+        await interaction.editReply({
+            content: `<a:AbbyCheers:1393909248076943380> Chọn vật phẩm bạn muốn xem hoặc mua:`,
+            components: [row]
+        });
+
+        const collector = interaction.channel.createMessageComponentCollector({
+            filter: i => i.customId.startsWith(`shop-select-${interaction.user.id}`),
+            time: 60_000,
+        });
+
+        collector.on("collect", async (i) => {
+            const selectedItem = i.values[0];
+            const itemPrice = items[selectedItem];
+            const userBalance = userDoc.balance;
+
+            const itemDir = subcommand === "banners" ? "../assets/banners" : "../assets/badges";
+            const imagePath = path.join(__dirname, itemDir, selectedItem);
+            const attachment = new AttachmentBuilder(imagePath, { name: selectedItem });
+
+            const buyButton = new ButtonBuilder()
+                .setCustomId(`buy-${i.user.id}-${selectedItem}-${subcommand}`)
+                .setLabel(`Mua với ${itemPrice.toLocaleString()}`)
+                .setStyle(ButtonStyle.Success)
+                .setDisabled(userBalance < itemPrice);
+
+            const cancelButton = new ButtonBuilder()
+                .setCustomId(`cancel-${i.user.id}`)
+                .setLabel("Hủy bỏ")
+                .setStyle(ButtonStyle.Secondary);
+
+            const buttonRow = new ActionRowBuilder().addComponents(buyButton, cancelButton);
+
+            await i.update({
+                content: `Bạn có muốn mua **${getItemName(selectedItem)}** không?`,
+                files: [attachment],
+                components: [buttonRow]
+            });
+        });
+
+        const buttonCollector = interaction.channel.createMessageComponentCollector({
+            filter: i => i.customId.startsWith(`buy-${interaction.user.id}`) || i.customId.startsWith(`cancel-${interaction.user.id}`),
+            time: 60_000,
+            max: 1
+        });
+
+        buttonCollector.on("collect", async (i) => {
+            await i.deferUpdate({ ephemeral: true });
+
+            const [type, userId, selectedItem, itemType] = i.customId.split('-');
+            const currentUserDoc = await db.getUser(i.user.id);
+
+            if (type === "buy") {
+                const itemPrice = shopItems[itemType === 'banners' ? 'banners' : 'badges'][selectedItem];
+                
+                if (currentUserDoc.balance < itemPrice) {
+                     return i.editReply({
+                        content: "Bạn không đủ tiền để mua vật phẩm này!",
+                        components: [],
+                        files: []
+                    });
+                }
+
+                await db.deductBalance(i.user.id, itemPrice);
+
+                if (itemType === 'banners') {
+                    if (!currentUserDoc.ownedBanners.includes(selectedItem)) {
+                        currentUserDoc.ownedBanners.push(selectedItem);
+                    }
+                    currentUserDoc.banner = selectedItem;
+                } else if (itemType === 'badges') {
+                    if (!currentUserDoc.ownedBadges.includes(selectedItem)) {
+                        currentUserDoc.ownedBadges.push(selectedItem);
+                    }
+                    currentUserDoc.badge = selectedItem;
+                }
+
+                await currentUserDoc.save();
+
+                await i.editReply({
+                    content: `<a:AbbyHappy:1393909327848538122> Bạn đã mua thành công **${getItemName(selectedItem)}** với giá ${itemPrice.toLocaleString()} xu!`,
+                    components: [],
+                    files: []
+                });
+
+            } else {
+                await i.editReply({
+                    content: "Đã hủy giao dịch.",
+                    components: [],
+                    files: []
+                });
+            }
+        });
+
+        buttonCollector.on("end", async (_, reason) => {
+            if (reason === "time") {
+                await interaction.editReply({
+                    content: "Hết thời gian giao dịch!",
+                    components: [],
+                    files: []
+                });
+            }
+        });
+    },
 };
