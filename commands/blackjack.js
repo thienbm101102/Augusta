@@ -20,18 +20,17 @@ function calcHand(hand) {
   let total = hand.reduce((s, c) => s + getValue(c), 0);
   let aces = hand.filter(c => c.rank === 'A').length;
 
-  // Logic mới: Át có thể là 1, 10 hoặc 11
-  // Nếu có Át và tổng điểm > 21, chuyển Át từ 11 sang 1
   while (total > 21 && aces > 0) {
     total -= 10;
     aces--;
   }
-
-  // Nếu có Át và tổng điểm là 11 (A + một lá khác), có thể coi Át là 10 để đạt 21
-  if (aces > 0 && total === 11) {
+  
+  // Logic mới: Át có thể là 1, 10 hoặc 11
+  // Điều chỉnh giá trị của Át để đạt 21 nếu có thể (ví dụ: A+9 -> 20, nhưng A+10 -> 21)
+  if (hand.length === 2 && aces > 0 && total === 11) {
     total = 21;
   }
-
+  
   return total;
 }
 
@@ -56,12 +55,40 @@ module.exports = {
 
     const playerHand = [drawCard(), drawCard()];
     const dealerHand = [drawCard()];
-    activeGames[interaction.user.id] = { bet, playerHand, dealerHand };
+    const playerVal = calcHand(playerHand);
 
+    // Kiểm tra Xì Dách hoặc 2 Át ngay sau khi chia bài
+    const isPlayerTwoAces = playerHand.length === 2 && playerHand.every(card => card.rank === 'A');
+    const isPlayerXidach = playerHand.length === 2 && playerVal === 21;
+    
+    if (isPlayerTwoAces) {
+      await addBalance(interaction.user.id, bet * 2);
+      return interaction.reply({
+        embeds: [new EmbedBuilder()
+          .setTitle(`**<a:Verified:1406631971509243974> Xì Zách Cùng Augusta | Số <a:diamondgem:1402590496647413811> Đặt ${bet}**`)
+          .setDescription(`* **Bài Của Bạn:** ${playerHand.map(c => c.rank + c.suit).join(' ')} (2 Át)\n\n<a:AbbyWOW:1393909383884439602> Bạn đã thắng **2 ÁT**! Nhận được **${bet}**<a:diamondgem:1402590496647413811>`)
+          .setColor('Gold')],
+        components: []
+      });
+    }
+
+    if (isPlayerXidach) {
+      await addBalance(interaction.user.id, bet * 2);
+      return interaction.reply({
+        embeds: [new EmbedBuilder()
+          .setTitle(`**<a:Verified:1406631971509243974> Xì Zách Cùng Augusta | Số <a:diamondgem:1402590496647413811> Đặt ${bet}**`)
+          .setDescription(`* **Bài Của Bạn:** ${playerHand.map(c => c.rank + c.suit).join(' ')} (${playerVal})\n\n<a:AbbyWOW:1393909383884439602> Bạn đã thắng **XÌ DÁCH**! Nhận được **${bet}**<a:diamondgem:1402590496647413811>`)
+          .setColor('Gold')],
+        components: []
+      });
+    }
+
+    // Nếu không có trường hợp đặc biệt, tiếp tục game
+    activeGames[interaction.user.id] = { bet, playerHand, dealerHand };
     const embed = new EmbedBuilder()
       .setTitle(`**<a:Verified:1406631971509243974> Xì Zách Cùng Augusta | Số <a:diamondgem:1402590496647413811> Đặt ${bet}**`)
       .setDescription(
-        `* **Bài Của Bạn:** ${playerHand.map(c => c.rank + c.suit).join(' ')} (**Tổng:** ${calcHand(playerHand)})\n` +
+        `* **Bài Của Bạn:** ${playerHand.map(c => c.rank + c.suit).join(' ')} (**Tổng:** ${playerVal})\n` +
         `* **Bài Của BOT:** ${dealerHand[0].rank + dealerHand[0].suit} ???`
       )
       .setColor('Blue');
@@ -84,8 +111,6 @@ module.exports = {
       game.playerHand.push(drawCard());
       const playerVal = calcHand(game.playerHand);
       
-      const isPlayerTwoAces = game.playerHand.length === 2 && game.playerHand.every(card => card.rank === 'A');
-      const isPlayerXidach = game.playerHand.length === 2 && playerVal === 21;
       const isPlayerNguLinh = game.playerHand.length === 5 && playerVal <= 21;
       
       if (playerVal > 21) {
@@ -96,21 +121,7 @@ module.exports = {
         });
       }
 
-      if (isPlayerTwoAces) {
-        await addBalance(interaction.user.id, bet * 2);
-        delete activeGames[interaction.user.id];
-        return interaction.update({
-          embeds: [new EmbedBuilder().setTitle(`**<a:Verified:1406631971509243974> Xì Zách Cùng Augusta | Số <a:diamondgem:1402590496647413811> Đặt ${bet}**`).setDescription(`* **Bài Của Bạn:** ${game.playerHand.map(c => c.rank + c.suit).join(' ')} (2 Át)\n\n<a:AbbyWOW:1393909383884439602> Bạn đã thắng **2 ÁT**! Nhận được **${bet}**<a:diamondgem:1402590496647413811>`).setColor('Gold')],
-          components: []
-        });
-      } else if (isPlayerXidach) {
-        await addBalance(interaction.user.id, bet * 2);
-        delete activeGames[interaction.user.id];
-        return interaction.update({
-          embeds: [new EmbedBuilder().setTitle(`**<a:Verified:1406631971509243974> Xì Zách Cùng Augusta | Số <a:diamondgem:1402590496647413811> Đặt ${bet}**`).setDescription(`* **Bài Của Bạn:** ${game.playerHand.map(c => c.rank + c.suit).join(' ')} (${playerVal})\n\n<a:AbbyWOW:1393909383884439602> Bạn đã thắng **XÌ DÁCH**! Nhận được **${bet}**<a:diamondgem:1402590496647413811>`).setColor('Gold')],
-          components: []
-        });
-      } else if (isPlayerNguLinh) {
+      if (isPlayerNguLinh) {
         await addBalance(interaction.user.id, bet * 2);
         delete activeGames[interaction.user.id];
         return interaction.update({
