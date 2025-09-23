@@ -19,7 +19,19 @@ function getValue(card) {
 function calcHand(hand) {
   let total = hand.reduce((s, c) => s + getValue(c), 0);
   let aces = hand.filter(c => c.rank === 'A').length;
-  while (total > 21 && aces > 0) { total -= 10; aces--; }
+
+  // Logic mới: Át có thể là 1, 10 hoặc 11
+  // Nếu có Át và tổng điểm > 21, chuyển Át từ 11 sang 1
+  while (total > 21 && aces > 0) {
+    total -= 10;
+    aces--;
+  }
+
+  // Nếu có Át và tổng điểm là 11 (A + một lá khác), có thể coi Át là 10 để đạt 21
+  if (aces > 0 && total === 11) {
+    total = 21;
+  }
+
   return total;
 }
 
