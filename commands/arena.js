@@ -310,11 +310,19 @@ module.exports = {
                 return interaction.editReply({ content: 'Không tìm thấy dữ liệu người dùng. Vui lòng thử lại sau.', ephemeral: true });
             }
 
+            // Đảm bảo các mảng luôn được khởi tạo
+            if (!user.monsters) {
+                user.monsters = [];
+            }
+            if (!user.ownedEquipment) {
+                user.ownedEquipment = [];
+            }
+
             const subcommand = interaction.options.getSubcommand();
 
             switch (subcommand) {
                 case 'xem': {
-                    if (!user.monsters || user.monsters.length === 0) {
+                    if (user.monsters.length === 0) {
                         return interaction.editReply({ content: 'Bạn chưa có quái vật nào. Hãy dùng `/arena mua` để bắt đầu!', ephemeral: true });
                     }
 
