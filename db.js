@@ -21,7 +21,19 @@ const cardSchema = new mongoose.Schema({
     rarity: { type: String, required: true }
 });
 
-// 2. Schema User đã được cập nhật
+// Định nghĩa schema cho một đối tượng quái vật
+const monsterSchema = new mongoose.Schema({
+    id: { type: String, required: true },
+    type: { type: String, required: true },
+    name: { type: String, required: true },
+    level: { type: Number, required: true, default: 1 },
+    exp: { type: Number, required: true, default: 0 },
+    hp: { type: Number, required: true, default: 100 },
+    maxHp: { type: Number, required: true, default: 100 },
+    equippedEquipment: { type: [String], default: [null, null, null] },
+});
+
+// Schema User đã được cập nhật
 const userSchema = new mongoose.Schema({
     userId: { type: String, required: true, unique: true },
     balance: { type: Number, default: 100000 },
@@ -36,7 +48,8 @@ const userSchema = new mongoose.Schema({
     cards: [cardSchema], 
     banners: { type: [String], default: [] },
     badges: { type: [String], default: [] },
-    monsters: { type: [String], default: [] },
+    // Thay đổi kiểu dữ liệu của monsters thành một mảng các đối tượng monsterSchema
+    monsters: [monsterSchema], 
 }, { timestamps: true });
 
 const User = mongoose.model("User", userSchema);
