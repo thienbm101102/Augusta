@@ -1,5 +1,5 @@
 const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
-const { addBalance, getBalance } = require('./db'); // Update import path
+const { addBalance, getBalance } = require('../db'); // Update import path
 
 // Danh sách các cặp emoji
 const emojis = [
@@ -166,3 +166,4 @@ module.exports = {
         }
     }
 };
+
