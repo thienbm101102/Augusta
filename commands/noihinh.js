@@ -1,13 +1,14 @@
 const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
-const { addBalance } = require('../db');
+const { addBalance, getBalance } = require('../db');
 
+// Danh sách các cặp emoji
 const emojis = [
     '🍎', '🍌', '🍇', '🍉', '🍊', '🍍', '🍓', '🍒',
     '🍋', '🥝', '🥥', '🥭', '🍐', '🍑', '🌶️', '🌽',
 ];
 
-const BOARD_SIZE = 4;
-const TIME_LIMIT_MINUTES = 1;
+const BOARD_SIZE = 5; // Kích thước bàn cờ (BOARD_SIZE x BOARD_SIZE)
+const TIME_LIMIT_MINUTES = 2; // Thời gian tối đa để hoàn thành game (phút)
 const activeGames = new Map();
 
 function createBoard() {
@@ -26,10 +27,19 @@ function createButtons(board, revealedCards) {
         const row = new ActionRowBuilder();
         for (let j = 0; j < BOARD_SIZE; j++) {
             const isRevealed = revealedCards.some(card => card.row === i && card.col === j);
+            const emoji = isRevealed ? board[i][j] : '❔';
+            
+            // Chọn màu nút
+            let buttonStyle = ButtonStyle.Primary;
+            if (isRevealed) {
+                // Nếu thẻ đã lật, sử dụng màu xanh lá cây
+                buttonStyle = ButtonStyle.Secondary; 
+            }
+
             const button = new ButtonBuilder()
-                .setCustomId(`noihinh-flip-${i}-${j}`)
-                .setLabel(isRevealed ? board[i][j] : '\u200B')
-                .setStyle(isRevealed ? ButtonStyle.Secondary : ButtonStyle.Primary)
+                .setCustomId(`ghepcap-flip-${i}-${j}`)
+                .setLabel(emoji)
+                .setStyle(buttonStyle)
                 .setDisabled(isRevealed);
             row.addComponents(button);
         }
@@ -39,156 +49,153 @@ function createButtons(board, revealedCards) {
 }
 
 function updateEmbed(game) {
-    const remainingTime = Math.floor((game.endTime - Date.now()) / 1000);
     const embed = new EmbedBuilder()
-        .setColor('#3498db')
-        .setTitle('<a:Verified:1406631971509243974> **Nối Hình**')
-        .setDescription(`Tìm tất cả các cặp emoji trong **${TIME_LIMIT_MINUTES}** phút!`)
+        .setColor('#2ecc71')
+        .setTitle('**<a:Verified:1406631971509243974> Nối Hình Cùng Augusta**')
+        .setDescription(
+            `Người chơi: **<@${game.originalPlayerId}>**\n` + 
+            `Số tiền cược: **${game.bet.toLocaleString()}**<a:diamondgem:1402590496647413811>\n\n` +
+            `Bạn có **${TIME_LIMIT_MINUTES} phút** để hoàn thành game!\n\n`
+        )
         .addFields(
-            { name: 'Thời gian còn lại:', value: `${remainingTime > 0 ? remainingTime : 0} giây` },
-            { name: 'Số cặp đã tìm:', value: `${game.pairsFound} / ${(BOARD_SIZE * BOARD_SIZE) / 2}` }
-        );
+            { name: 'Số cặp đã tìm thấy:', value: `${game.pairsFound}/${(BOARD_SIZE * BOARD_SIZE) / 2}`, inline: true }
+        )
+        .setFooter({ text: 'Hãy lật hai tấm thẻ để tìm cặp giống nhau!' });
+
     return embed;
 }
 
 module.exports = {
     data: new SlashCommandBuilder()
-        .setName('noihinh')
-        .setDescription('Chơi game Nối Hình'),
+        .setName('ghepcap')
+        .setDescription('Bắt đầu một game Nối Hình')
+        .addIntegerOption(option =>
+            option.setName('bet')
+                .setDescription('Số tiền bạn muốn đặt cược')
+                .setRequired(true)
+                .setMinValue(1000)
+                .setMaxValue(50000)
+            ),
+
     async execute(interaction) {
+        // Khắc phục lỗi: Báo hiệu bot đang xử lý để tránh hết thời gian chờ
         await interaction.deferReply();
+
+        const bet = interaction.options.getInteger('bet');
         const userId = interaction.user.id;
+        const userBalance = getBalance(userId);
 
-        if (activeGames.has(userId)) {
-            return interaction.editReply({ content: 'Bạn đã có một game đang diễn ra. Hãy hoàn thành nó trước!', ephemeral: true });
+        if (userBalance < bet) {
+            return interaction.editReply({
+                content: `Bạn không đủ tiền! Bạn cần **${bet}**<a:diamondgem:1402590496647413811> nhưng chỉ có **${userBalance}**<a:diamondgem:1402590496647413811>.`,
+                ephemeral: true
+            });
         }
-
+        
+        addBalance(userId, -bet);
         const board = createBoard();
         const game = {
-            board,
+            board: board,
             revealed: [],
-            firstFlip: null,
             pairsFound: 0,
+            firstFlip: null,
+            player: interaction.user.username,
+            bet: bet,
+            winnings: bet * 1, // Thưởng gấp đôi tiền cược
             originalPlayerId: userId,
-            messageId: null,
-            endTime: Date.now() + TIME_LIMIT_MINUTES * 60 * 1000,
-            timer: null,
-            updateInterval: null,
-            winnings: 10000
         };
 
         const embed = updateEmbed(game);
         const components = createButtons(game.board, game.revealed);
-        
-        const reply = await interaction.editReply({ embeds: [embed], components, fetchReply: true });
-        game.messageId = reply.id;
-        activeGames.set(userId, game);
 
+        // Sau khi đã defer, dùng editReply để gửi tin nhắn
+        const reply = await interaction.editReply({ embeds: [embed], components, fetchReply: true });
+        activeGames.set(reply.id, game);
+
+        // Đặt hẹn giờ
         game.timer = setTimeout(async () => {
-            if (activeGames.has(userId)) {
-                activeGames.delete(userId);
-                clearInterval(game.updateInterval);
+            if (activeGames.has(reply.id)) {
+                activeGames.delete(reply.id);
                 const timeoutEmbed = new EmbedBuilder()
-                    .setTitle('Hết Giờ!')
-                    .setDescription('Bạn đã hết thời gian để hoàn thành trò chơi.')
-                    .setColor('#e74c3c');
+                    .setColor('#c0392b')
+                    .setTitle('**Hết Giờ!**')
+                    .setDescription(
+                        `Đáng tiếc, **<@${game.originalPlayerId}>** không thể hoàn thành game trong **${TIME_LIMIT_MINUTES} phút**!` +
+                        `\n\nBạn đã mất **${game.bet.toLocaleString()}**<a:diamondgem:1402590496647413811>.`
+                    );
                 await interaction.editReply({ embeds: [timeoutEmbed], components: [] });
             }
         }, TIME_LIMIT_MINUTES * 60 * 1000);
-        
-        game.updateInterval = setInterval(async () => {
-            if (activeGames.has(userId)) {
-                const updatedGame = activeGames.get(userId);
-                const newEmbed = updateEmbed(updatedGame);
-                try {
-                    await interaction.editReply({ embeds: [newEmbed] });
-                } catch (e) {
-                    console.error('Lỗi khi cập nhật đồng hồ:', e);
-                    clearInterval(game.updateInterval);
-                    clearTimeout(game.timer);
-                    activeGames.delete(userId);
-                }
-            }
-        }, 1000);
     },
 
     async handleButton(interaction) {
+        await interaction.deferUpdate();
         const userId = interaction.user.id;
-        const game = activeGames.get(userId);
+        const game = activeGames.get(interaction.message.id);
 
-        if (!game || interaction.message.id !== game.messageId) {
-            return interaction.reply({ content: 'Không có game nào của bạn đang diễn ra', ephemeral: true });
+        if (!game) {
+            return interaction.editReply({ content: 'Không có game nào đang diễn ra', components: [] });
         }
-
-        if (game.originalPlayerId !== userId) {
-            return interaction.reply({ content: 'Đây không phải game của bạn!', ephemeral: true });
+        if (userId !== game.originalPlayerId) {
+            return interaction.followUp({ content: 'Bạn không phải người bắt đầu game này!', ephemeral: true });
         }
 
         const [command, action, row, col] = interaction.customId.split('-');
         const card = { row: parseInt(row), col: parseInt(col) };
 
         if (game.revealed.some(c => c.row === card.row && c.col === card.col)) {
-            return interaction.deferUpdate();
+            return;
         }
 
-        game.revealed.push(card);
-
+        // Lật lá bài thứ nhất
         if (!game.firstFlip) {
             game.firstFlip = card;
-            const newEmbed = updateEmbed(game);
+            game.revealed.push(card);
             const updatedComponents = createButtons(game.board, game.revealed);
-            await interaction.update({ embeds: [newEmbed], components: updatedComponents });
-        } else {
-            // Đây là thẻ thứ hai, kiểm tra xem có khớp không
-            const firstCard = game.firstFlip;
-            const card1Emoji = game.board[firstCard.row][firstCard.col];
-            const card2Emoji = game.board[card.row][card.col];
-            
-            // Phản hồi ngay lập tức để tránh lỗi
-            await interaction.deferUpdate();
-            
+            await interaction.editReply({ components: updatedComponents });
+            return;
+        }
+
+        // Lật lá bài thứ hai
+        game.revealed.push(card);
+        const updatedComponents = createButtons(game.board, game.revealed);
+        await interaction.editReply({ components: updatedComponents });
+
+        const firstCardEmoji = game.board[game.firstFlip.row][game.firstFlip.col];
+        const secondCardEmoji = game.board[card.row][card.col];
+
+        // Nếu là một cặp
+        if (firstCardEmoji === secondCardEmoji) {
+            game.pairsFound++;
             game.firstFlip = null;
 
-            if (card1Emoji === card2Emoji) {
-                game.pairsFound++;
-                const newEmbed = updateEmbed(game);
-                const updatedComponents = createButtons(game.board, game.revealed);
-                await interaction.editReply({ embeds: [newEmbed], components: updatedComponents });
-
-                if (game.pairsFound === (BOARD_SIZE * BOARD_SIZE) / 2) {
-                    clearTimeout(game.timer);
-                    clearInterval(game.updateInterval);
-                    activeGames.delete(userId);
-                    await addBalance(userId, game.winnings);
-                    const finalEmbed = updateEmbed(game)
-                        .setDescription(`<a:AbbyHappy:1393909327848538122> Chúc mừng, **<@${game.originalPlayerId}>** đã thắng!\\nBạn đã tìm được tất cả các cặp và nhận được **${game.winnings.toLocaleString()}**<a:diamondgem:1402590496647413811>!`)
-                        .setColor('#2ecc71');
-                    await interaction.editReply({ embeds: [finalEmbed], components: [] });
-                }
+            if (game.pairsFound === (BOARD_SIZE * BOARD_SIZE) / 2) {
+                // Thắng game
+                clearTimeout(game.timer); // Dừng bộ đếm thời gian
+                activeGames.delete(interaction.message.id);
+                addBalance(userId, game.winnings);
+                const finalEmbed = updateEmbed(game)
+                    .setDescription(`<a:AbbyHappy:1393909327848538122> Chúc mừng, **<@${game.originalPlayerId}>** đã thắng!\nBạn đã tìm được tất cả các cặp và nhận được **${game.winnings.toLocaleString()}**<a:diamondgem:1402590496647413811>!`)
+                    .setColor('#2ecc71');
+                await interaction.editReply({ embeds: [finalEmbed], components: [] });
             } else {
-                // Không phải cặp, lật lại sau 2 giây
-                const currentRevealed = [...game.revealed];
-                const newRevealed = game.revealed.filter(c =>
+                // Tiếp tục
+                const newEmbed = updateEmbed(game);
+                await interaction.editReply({ embeds: [newEmbed], components: updatedComponents });
+            }
+        } else {
+            // Không phải cặp, lật lại sau 2 giây
+            const firstCard = game.firstFlip;
+            game.firstFlip = null;
+            setTimeout(async () => {
+                const newRevealed = game.revealed.filter(c => 
                     !(c.row === card.row && c.col === card.col) &&
                     !(c.row === firstCard.row && c.col === firstCard.col)
                 );
-
-                const embedShowing = updateEmbed(game);
-                embedShowing.setDescription('Không khớp! Vui lòng thử lại.');
-                const componentsShowing = createButtons(game.board, currentRevealed);
-                await interaction.editReply({ embeds: [embedShowing], components: componentsShowing });
-                
-                setTimeout(async () => {
-                    game.revealed = newRevealed;
-                    const finalComponents = createButtons(game.board, game.revealed);
-                    const finalEmbed = updateEmbed(game);
-                    try {
-                        await interaction.editReply({ embeds: [finalEmbed], components: finalComponents });
-                    } catch (e) {
-                        console.error('Lỗi khi cập nhật tin nhắn sau timeout:', e);
-                    }
-                }, 2000);
-            }
+                game.revealed = newRevealed;
+                const finalComponents = createButtons(game.board, game.revealed);
+                await interaction.editReply({ components: finalComponents });
+            }, 2000);
         }
     }
 };
