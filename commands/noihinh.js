@@ -29,7 +29,7 @@ function createButtons(board, revealedCards) {
             const isRevealed = revealedCards.some(card => card.row === i && card.col === j);
             const button = new ButtonBuilder()
                 .setCustomId(`noihinh-flip-${i}-${j}`)
-                .setLabel(isRevealed ? board[i][j] : '\u200B') // Hiển thị emoji khi đã lật
+                .setLabel(isRevealed ? board[i][j] : '\u200B')
                 .setStyle(isRevealed ? ButtonStyle.Secondary : ButtonStyle.Primary)
                 .setDisabled(isRevealed);
             row.addComponents(button);
@@ -40,12 +40,13 @@ function createButtons(board, revealedCards) {
 }
 
 function updateEmbed(game) {
+    const timeRemaining = Math.floor((game.endTime - Date.now()) / 1000);
     const embed = new EmbedBuilder()
         .setColor('#3498db')
         .setTitle('<a:Verified:1406631971509243974> **Nối Hình**')
         .setDescription(`Tìm tất cả các cặp emoji trong **${TIME_LIMIT_MINUTES}** phút!`)
         .addFields(
-            { name: 'Thời gian còn lại:', value: `${Math.floor((game.endTime - Date.now()) / 1000)} giây` },
+            { name: 'Thời gian còn lại:', value: `${Math.max(0, timeRemaining)} giây` },
             { name: 'Số cặp đã tìm:', value: `${game.pairsFound} / ${(BOARD_SIZE * BOARD_SIZE) / 2}` }
         );
     return embed;
@@ -78,7 +79,7 @@ module.exports = {
 
         const embed = updateEmbed(game);
         const components = createButtons(game.board, game.revealed);
-        
+
         const reply = await interaction.editReply({ embeds: [embed], components, fetchReply: true });
         game.messageId = reply.id;
         activeGames.set(userId, game);
@@ -95,7 +96,6 @@ module.exports = {
             }
         }, TIME_LIMIT_MINUTES * 60 * 1000);
     },
-
     async handleButton(interaction) {
         const userId = interaction.user.id;
         const game = activeGames.get(userId);
@@ -108,22 +108,20 @@ module.exports = {
             return interaction.reply({ content: 'Đây không phải game của bạn!', ephemeral: true });
         }
 
-        const [command, action, row, col] = interaction.customId.split('-');
+        const [_, __, row, col] = interaction.customId.split('-');
         const card = { row: parseInt(row), col: parseInt(col) };
 
+        // Kiểm tra xem thẻ đã được lật chưa
         if (game.revealed.some(c => c.row === card.row && c.col === card.col)) {
-            return interaction.deferUpdate();
+            return interaction.reply({ content: 'Thẻ này đã được lật rồi!', ephemeral: true });
         }
-
-        // Thêm thẻ đã lật vào mảng
-        game.revealed.push(card);
-
-        const updatedComponents = createButtons(game.board, game.revealed);
 
         if (!game.firstFlip) {
             // Đây là thẻ đầu tiên được lật
             game.firstFlip = card;
+            game.revealed.push(card);
             const newEmbed = updateEmbed(game);
+            const updatedComponents = createButtons(game.board, game.revealed);
             await interaction.update({ embeds: [newEmbed], components: updatedComponents });
         } else {
             // Đây là thẻ thứ hai, kiểm tra xem có khớp không
@@ -131,28 +129,36 @@ module.exports = {
             const card1Emoji = game.board[firstCard.row][firstCard.col];
             const card2Emoji = game.board[card.row][card.col];
 
+            // Thêm thẻ thứ hai vào mảng revealed để hiển thị nó
+            game.revealed.push(card);
+            const updatedButtonsForSecondFlip = createButtons(game.board, game.revealed);
+
             if (card1Emoji === card2Emoji) {
                 // Là một cặp!
                 game.firstFlip = null;
                 game.pairsFound++;
 
+                const newEmbed = updateEmbed(game).setDescription('**Là một cặp!** Tiếp tục tìm nhé.');
+
+                // Kiểm tra điều kiện thắng
                 if (game.pairsFound === (BOARD_SIZE * BOARD_SIZE) / 2) {
-                    clearTimeout(game.timer); // Dừng bộ đếm thời gian
+                    clearTimeout(game.timer);
                     activeGames.delete(userId);
-                    await addBalance(userId, game.winnings);
-                    const finalEmbed = updateEmbed(game)
-                        .setDescription(`<a:AbbyHappy:1393909327848538122> Chúc mừng, **<@${game.originalPlayerId}>** đã thắng!\\nBạn đã tìm được tất cả các cặp và nhận được **${game.winnings.toLocaleString()}**<a:diamondgem:1402590496647413811>!`)
+                    const finalEmbed = new EmbedBuilder()
+                        .setTitle('<a:AbbyHappy:1393909327848538122> **Chúc mừng! Bạn đã thắng!**')
+                        .setDescription(`Bạn đã hoàn thành trò chơi và nhận được **${game.winnings.toLocaleString()}**<a:diamondgem:1402590496647413811>!`)
                         .setColor('#2ecc71');
+                    await addBalance(userId, game.winnings);
                     await interaction.update({ embeds: [finalEmbed], components: [] });
                 } else {
                     // Tiếp tục
-                    const newEmbed = updateEmbed(game);
-                    await interaction.update({ embeds: [newEmbed], components: updatedComponents });
+                    await interaction.update({ embeds: [newEmbed], components: updatedButtonsForSecondFlip });
                 }
             } else {
                 // Không phải cặp, lật lại sau 2 giây
-                const firstCard = game.firstFlip;
                 game.firstFlip = null;
+                await interaction.update({ embeds: [updateEmbed(game).setDescription('**Không khớp! Vui lòng thử lại nhé**.'), components: updatedButtonsForSecondFlip });
+
                 setTimeout(async () => {
                     const newRevealed = game.revealed.filter(c =>
                         !(c.row === card.row && c.col === card.col) &&
@@ -161,14 +167,13 @@ module.exports = {
                     game.revealed = newRevealed;
                     const finalComponents = createButtons(game.board, game.revealed);
                     const newEmbed = updateEmbed(game)
-                        .setDescription('Không khớp! Vui lòng thử lại.');
+                        .setDescription('Không khớp! Vui lòng thử lại nhé.');
                     try {
                         await interaction.editReply({ embeds: [newEmbed], components: finalComponents });
                     } catch (e) {
                         console.error('Lỗi khi cập nhật tin nhắn:', e);
                     }
                 }, 2000);
-                await interaction.deferUpdate();
             }
         }
     }
