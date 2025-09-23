@@ -1,5 +1,5 @@
 const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
-const { addBalance, getBalance } = require('../db');
+const { addBalance } = require('../db');
 
 const emojis = [
     '🍎', '🍌', '🍇', '🍉', '🍊', '🍍', '🍓', '🍒',
@@ -84,7 +84,6 @@ module.exports = {
         game.messageId = reply.id;
         activeGames.set(userId, game);
 
-        // Thiết lập bộ đếm thời gian hết giờ
         game.timer = setTimeout(async () => {
             if (activeGames.has(userId)) {
                 activeGames.delete(userId);
@@ -97,7 +96,6 @@ module.exports = {
             }
         }, TIME_LIMIT_MINUTES * 60 * 1000);
         
-        // Thiết lập cập nhật đồng hồ mỗi giây
         game.updateInterval = setInterval(async () => {
             if (activeGames.has(userId)) {
                 const updatedGame = activeGames.get(userId);
@@ -141,14 +139,12 @@ module.exports = {
             const updatedComponents = createButtons(game.board, game.revealed);
             await interaction.update({ embeds: [newEmbed], components: updatedComponents });
         } else {
-            // Đã có tương tác lần 2
-            await interaction.deferUpdate(); // Defer để đảm bảo phản hồi trong 3 giây
+            await interaction.deferUpdate();
             
             const firstCard = game.firstFlip;
             const card1Emoji = game.board[firstCard.row][firstCard.col];
             const card2Emoji = game.board[card.row][card.col];
             
-            // Cập nhật lại game state
             game.firstFlip = null;
 
             if (card1Emoji === card2Emoji) {
@@ -168,7 +164,6 @@ module.exports = {
                     await interaction.editReply({ embeds: [finalEmbed], components: [] });
                 }
             } else {
-                // Không khớp, lật lại sau 2 giây
                 const currentRevealed = [...game.revealed];
                 const newRevealed = game.revealed.filter(c =>
                     !(c.row === card.row && c.col === card.col) &&
@@ -176,20 +171,18 @@ module.exports = {
                 );
                 game.revealed = newRevealed;
                 
-                // Hiển thị hai hình trong 2 giây
                 const embedShowing = updateEmbed(game);
                 embedShowing.setDescription("Không khớp! Vui lòng thử lại.");
                 const componentsShowing = createButtons(game.board, currentRevealed);
                 await interaction.editReply({ embeds: [embedShowing], components: componentsShowing });
                 
-                // Lật lại sau 2 giây
                 setTimeout(async () => {
                     const finalComponents = createButtons(game.board, game.revealed);
                     const finalEmbed = updateEmbed(game);
                     try {
                         await interaction.editReply({ embeds: [finalEmbed], components: finalComponents });
                     } catch (e) {
-                        console.error('Lỗi khi cập nhật tin nhắn:', e);
+                        console.error('Lỗi khi cập nhật tin nhắn sau timeout:', e);
                     }
                 }, 2000);
             }
