@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, AttachmentBuilder, EmbedBuilder, MessageFlags } = require("discord.js");
+const { SlashCommandBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, AttachmentBuilder, EmbedBuilder, MessageFlags, StringSelectMenuBuilder } = require("discord.js");
 const fs = require("fs");
 const path = require("path");
 const { addBalance, getBalance, getUser } = require("../db");
@@ -42,20 +42,6 @@ module.exports = {
             subcommand
                 .setName('trangbi')
                 .setDescription('Trang bị một banner hoặc huy hiệu bạn đã mua')
-                .addStringOption(option =>
-                    option.setName('loại')
-                        .setDescription('Chọn loại vật phẩm bạn muốn trang bị')
-                        .setRequired(true)
-                        .addChoices(
-                            { name: 'Banner', value: 'banner' },
-                            { name: 'Huy hiệu', value: 'badge' },
-                        )
-                )
-                .addStringOption(option =>
-                    option.setName('tên')
-                        .setDescription('Tên file của vật phẩm (ví dụ: banner1.png)')
-                        .setRequired(true)
-                )
         ),
     async execute(interaction) {
         const subcommand = interaction.options.getSubcommand();
@@ -133,24 +119,48 @@ module.exports = {
 
             case 'trangbi': {
                 await interaction.deferReply({ flags: MessageFlags.Ephemeral });
-                const itemType = interaction.options.getString('loại');
-                const itemName = interaction.options.getString('tên');
                 
-                let isOwned = false;
-                if (itemType === 'banner' && user.ownedBanners.includes(itemName)) {
-                    user.banner = itemName;
-                    isOwned = true;
-                } else if (itemType === 'badge' && user.ownedBadges.includes(itemName)) {
-                    user.badge = itemName;
-                    isOwned = true;
+                const bannersOwned = user.ownedBanners.map(b => ({
+                    label: getItemName(b),
+                    value: `equip_banner_${b}`,
+                }));
+
+                const badgesOwned = user.ownedBadges.map(b => ({
+                    label: getItemName(b),
+                    value: `equip_badge_${b}`,
+                }));
+
+                if (bannersOwned.length === 0 && badgesOwned.length === 0) {
+                    return interaction.editReply({ content: 'Bạn không có bất kỳ banner hoặc huy hiệu nào để trang bị. Vui lòng mua chúng từ cửa hàng.' });
                 }
 
-                if (!isOwned) {
-                    return interaction.editReply({ content: `Bạn không sở hữu vật phẩm \`${itemName}\`. Vui lòng kiểm tra lại.` });
+                const rows = [];
+                if (bannersOwned.length > 0) {
+                    const bannerSelectMenu = new StringSelectMenuBuilder()
+                        .setCustomId('equip_banner_select')
+                        .setPlaceholder('Chọn một Banner để trang bị...')
+                        .addOptions(bannersOwned);
+                    rows.push(new ActionRowBuilder().addComponents(bannerSelectMenu));
                 }
 
-                await user.save();
-                await interaction.editReply({ content: `Đã trang bị **${getItemName(itemName)}** thành công.` });
+                if (badgesOwned.length > 0) {
+                    const badgeSelectMenu = new StringSelectMenuBuilder()
+                        .setCustomId('equip_badge_select')
+                        .setPlaceholder('Chọn một Huy hiệu để trang bị...')
+                        .addOptions(badgesOwned);
+                    rows.push(new ActionRowBuilder().addComponents(badgeSelectMenu));
+                }
+
+                const embed = new EmbedBuilder()
+                    .setTitle('Trang Bị Vật Phẩm')
+                    .setDescription('Vui lòng chọn banner hoặc huy hiệu bạn muốn trang bị từ menu bên dưới.')
+                    .setColor('#3498db');
+
+                await interaction.editReply({
+                    embeds: [embed],
+                    components: rows,
+                });
+
                 break;
             }
         }
@@ -208,20 +218,40 @@ module.exports = {
                     { name: 'Số dư hiện tại', value: `${(await getBalance(userId)).toLocaleString()}<a:diamondgem:1402590496647413811>`, inline: true }
                 );
 
-            // Gửi kèm hình ảnh của item đã mua
-            let attachment;
-            if (itemType === 'banner') {
-                attachment = new AttachmentBuilder(path.join(bannersFolder, itemName));
-                updatedEmbed.setImage(`attachment://${itemName}`);
-            } else if (itemType === 'badge') {
-                attachment = new AttachmentBuilder(path.join(badgesFolder, itemName));
-                updatedEmbed.setImage(`attachment://${itemName}`);
-            }
+            const folderPath = itemType === 'banner' ? bannersFolder : badgesFolder;
+            const attachment = new AttachmentBuilder(path.join(folderPath, itemName), { name: itemName });
+            updatedEmbed.setImage(`attachment://${itemName}`);
             
             await interaction.editReply({ embeds: [updatedEmbed], files: [attachment] });
         } catch (error) {
             console.error(error);
             await interaction.editReply({ content: 'Đã xảy ra lỗi khi mua vật phẩm. Vui lòng thử lại sau.' });
         }
+    },
+    // ✅ THÊM HÀM XỬ LÝ MENU LỰA CHỌN
+    async handleSelectMenu(interaction) {
+        await interaction.deferReply({ flags: MessageFlags.Ephemeral });
+        const [action, itemType, itemName] = interaction.values[0].split('_');
+        const userId = interaction.user.id;
+        const user = await getUser(userId);
+
+        if (action !== 'equip') {
+            return;
+        }
+
+        if (itemType === 'banner') {
+            user.banner = itemName;
+        } else if (itemType === 'badge') {
+            user.badge = itemName;
+        }
+
+        await user.save();
+
+        const embed = new EmbedBuilder()
+            .setTitle('✨ Trang Bị Thành Công!')
+            .setDescription(`Bạn đã trang bị **${getItemName(itemName)}** thành công!`)
+            .setColor('#2ecc71');
+        
+        await interaction.editReply({ embeds: [embed] });
     }
 };
