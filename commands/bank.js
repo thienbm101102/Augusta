@@ -68,7 +68,7 @@ module.exports = {
                 const newBalance = await getBalance(userId);
 
                 const embed = new EmbedBuilder()
-                    .setTitle('<a:Verified:1406631971509243974> Vay Tiền Thành Công!')
+                    .setTitle('**<a:Verified:1406631971509243974> Vay Tiền Thành Công**')
                     .setDescription(`Bạn đã vay thành công **${amount.toLocaleString()}**<a:diamondgem:1402590496647413811>.`)
                     .addFields(
                         { name: 'Số dư mới', value: `\`${newBalance.toLocaleString()}\`<a:diamondgem:1402590496647413811>`, inline: true },
@@ -99,7 +99,7 @@ module.exports = {
 
 
                 const embed = new EmbedBuilder()
-                    .setTitle('<a:Verified:1406631971509243974> Trả Nợ Thành Công!')
+                    .setTitle('**<a:Verified:1406631971509243974> Trả Nợ Thành Công**')
                     .setDescription(`Bạn đã trả thành công **${amount.toLocaleString()}**<a:diamondgem:1402590496647413811>.`)
                     .addFields(
                         { name: 'Số dư mới', value: `\`${newBalance.toLocaleString()}\`<a:diamondgem:1402590496647413811>`, inline: true },
@@ -118,12 +118,12 @@ module.exports = {
                 const remainingHours = remainingTime > 0 ? Math.ceil(remainingTime / (1000 * 60 * 60)) : 0;
 
                 const embed = new EmbedBuilder()
-                    .setTitle('<a:Verified:1406631971509243974> Thông Tin Ngân Hàng')
-                    .setDescription('Thông tin về nợ và khả năng vay của bạn.')
+                    .setTitle('**<a:Verified:1406631971509243974> Thông Tin Ngân Hàng**')
+                    .setDescription('Thông tin về nợ và khả năng vay của bạn')
                     .addFields(
                         { name: 'Nợ hiện tại', value: `\`${debt.toLocaleString()}\`<a:diamondgem:1402590496647413811>`, inline: false },
                         { name: 'Số tiền vay tối đa', value: `\`${MAX_LOAN_AMOUNT.toLocaleString()}\`<a:diamondgem:1402590496647413811>`, inline: false },
-                        { name: 'Thời gian có thể vay tiếp', value: remainingHours > 0 ? `\`${remainingHours}\` giờ nữa` : 'Bạn có thể vay ngay bây giờ!', inline: false }
+                        { name: 'Thời gian có thể vay tiếp', value: remainingHours > 0 ? `\`${remainingHours}\` giờ nữa` : 'Bạn có thể vay ngay bây giờ', inline: false }
                     )
                     .setColor('#3498db');
                 return interaction.reply({ embeds: [embed] });
@@ -131,3 +131,4 @@ module.exports = {
         }
     }
 };
+
