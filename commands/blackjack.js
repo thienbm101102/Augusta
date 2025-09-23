@@ -116,6 +116,14 @@ module.exports = {
     if (interaction.customId === 'xizach_stand') {
       const playerVal = calcHand(game.playerHand);
       
+      // Thêm logic: Không thể dằn nếu điểm dưới 16
+      if (playerVal < 16) {
+        return interaction.reply({
+          content: 'Bạn phải rút bài khi tổng điểm nhỏ hơn 16!',
+          ephemeral: true
+        });
+      }
+      
       let dealerVal = calcHand(game.dealerHand);
       while (dealerVal < 17) {
         game.dealerHand.push(drawCard());
