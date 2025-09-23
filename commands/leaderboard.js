@@ -40,7 +40,7 @@ const lines = await Promise.all(
 );
 
       const embed = new EmbedBuilder()
-        .setTitle('🌿 Bảng Xếp Hạng Tài Sản 🌿')
+        .setTitle('**🌿 Bảng Xếp Hạng Tài Sản**')
         .setDescription(lines.join('\n'))
         .setColor('#FFD700')
         .setThumbnail(interaction.client.user.displayAvatarURL())
