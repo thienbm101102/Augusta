@@ -3,7 +3,7 @@ const { addBalance, getBalance } = require('../db');
 
 // Danh sách các vật phẩm có thể câu được và hệ số nhân của chúng
 const lootTable = [
-    { name: 'Rác thải', multiplier: -1, weight: 50, emoji: '<:4661_trash:1412876576475054241>' },
+    { name: 'Vỏ ốc', multiplier: -1, weight: 50, emoji: '🐚' },
     { name: 'Giày rách', multiplier: -1, weight: 40, emoji: '👞' },
     { name: 'Cá Trích', multiplier: 0.5, weight: 60, emoji: '🐟' },
     { name: 'Mực Biển', multiplier: 1, weight: 25, emoji: '<a:93381squidswims:1412879487686938794>' },
@@ -101,4 +101,5 @@ module.exports = {
         await interaction.editReply({ embeds: [finalEmbed] });
     },
 };
+
 
