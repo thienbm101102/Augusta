@@ -10,10 +10,10 @@ const lootTable = [
     { name: 'Cá Ngựa', multiplier: 1.5, weight: 20, emoji: '<a:36680seahorse:1412879490744451103>' },
     { name: 'Cá Hồi', multiplier: 2, weight: 15, emoji: '🍣' },
     { name: 'Sứa Biển', multiplier: 2, weight: 10, emoji: '<a:1707jellyfish:1412877825178079252>' },
-    { name: 'Cá Vàng', multiplier: 3, weight: 10, emoji: '<:57551goldenkoi:1412510566517309470>' },
+    { name: 'Cá Nóc', multiplier: 3, weight: 10, emoji: '🐡' },
     { name: 'Ngọc Trai', multiplier: 5, weight: 5, emoji: '<a:95202clamwithpearl:1412881368526098635>' },
     { name: 'Kho Báu Biển Sâu', multiplier: 10, weight: 4, emoji: '<a:treasure_chest:1412753651855921162>' },
-    { name: 'Cá Heo', multiplier: 10, weight: 3, emoji: '<:57720dolphin:1412879493353308200>' },
+    { name: 'Cá Heo', multiplier: 10, weight: 3, emoji: '🐬' },
     { name: 'Cá Voi', multiplier: 20, weight: 2, emoji: '🐳' },
     { name: 'Thủy Quái Kraken', multiplier: 30, weight: 1, emoji: '🦑' },
 ];
@@ -101,5 +101,6 @@ module.exports = {
         await interaction.editReply({ embeds: [finalEmbed] });
     },
 };
+
 
 
