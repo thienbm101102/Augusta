@@ -59,6 +59,8 @@ const userSchema = new mongoose.Schema({
     monsters: [monsterSchema],
     // Thêm trường mới cho trang bị của người dùng
     ownedEquipment: [equipmentSchema],
+    ownedBanners: { type: [String], default: [] },
+    ownedBadges: { type: [String], default: [] },
 }, { timestamps: true });
 
 const User = mongoose.model("User", userSchema);
