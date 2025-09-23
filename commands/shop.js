@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, ActionRowBuilder, StringSelectMenuBuilder, ButtonBuilder, ButtonStyle, AttachmentBuilder, MessageFlags } = require("discord.js");
+const { SlashCommandBuilder, ActionRowBuilder, StringSelectMenuBuilder, ButtonBuilder, ButtonStyle, AttachmentBuilder, MessageFlags, EmbedBuilder } = require("discord.js");
 const fs = require("fs");
 const path = require("path");
 const { addBalance, getBalance, getUser, updateUser } = require("../db");
@@ -87,15 +87,15 @@ module.exports = {
 
                 try {
                     const shopData = JSON.parse(fs.readFileSync(shopPath, 'utf8'));
-                    
+
                     const banners = shopData.banners.map(b => 
                         `**${getItemName(b.file)}**\n> Giá: \`${b.cost.toLocaleString()}\`<a:diamondgem:1402590496647413811>\n> Tên file: \`${b.file}\``
                     ).join('\n\n');
-                    
+
                     const badges = shopData.badges.map(b => 
                         `**${getItemName(b.file)}**\n> Giá: \`${b.cost.toLocaleString()}\`<a:diamondgem:1402590496647413811>\n> Tên file: \`${b.file}\``
                     ).join('\n\n');
-                    
+
                     const embed = new EmbedBuilder()
                         .setTitle('🛒 Cửa Hàng')
                         .setDescription(`Chào mừng đến với cửa hàng! Bạn có thể mua các vật phẩm độc đáo để tùy chỉnh hồ sơ của mình.\n\nSố dư của bạn: \`${user.balance.toLocaleString()}\`<a:diamondgem:1402590496647413811>`)
@@ -108,7 +108,7 @@ module.exports = {
                     const ownedBannersList = user.ownedBanners.length > 0
                         ? user.ownedBanners.map(b => `\`${b}\``).join(', ')
                         : 'Không có';
-                    
+
                     const ownedBadgesList = user.ownedBadges.length > 0
                         ? user.ownedBadges.map(b => `\`${b}\``).join(', ')
                         : 'Không có';
@@ -123,7 +123,7 @@ module.exports = {
                         .setColor('#9b59b6');
 
                     await interaction.editReply({ embeds: [embed, ownedEmbed] });
-                    
+
                 } catch (error) {
                     console.error(error);
                     await interaction.editReply({ content: 'Đã xảy ra lỗi khi đọc dữ liệu cửa hàng. Vui lòng thử lại sau.' });
@@ -135,7 +135,13 @@ module.exports = {
                 await interaction.deferReply({ flags: MessageFlags.Ephemeral });
                 const selectedItem = interaction.options.getString('vật-phẩm');
 
-                const shopData = JSON.parse(fs.readFileSync(shopPath, 'utf8'));
+                let shopData;
+                try {
+                    shopData = JSON.parse(fs.readFileSync(shopPath, 'utf8'));
+                } catch (error) {
+                    return interaction.editReply({ content: 'Đã xảy ra lỗi khi đọc dữ liệu cửa hàng. Vui lòng thử lại sau.' });
+                }
+
                 const allItems = [...shopData.banners, ...shopData.badges];
                 const itemToBuy = allItems.find(item => item.file === selectedItem);
 
@@ -191,7 +197,7 @@ module.exports = {
                 await interaction.deferReply({ flags: MessageFlags.Ephemeral });
                 const itemType = interaction.options.getString('loại');
                 const itemName = interaction.options.getString('tên');
-                
+
                 let isOwned = false;
                 if (itemType === 'banner' && user.ownedBanners.includes(itemName)) {
                     user.banner = itemName;
