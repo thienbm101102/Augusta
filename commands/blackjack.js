@@ -116,7 +116,6 @@ module.exports = {
     if (interaction.customId === 'xizach_stand') {
       const playerVal = calcHand(game.playerHand);
       
-      // Thêm logic: Không thể dằn nếu điểm dưới 16
       if (playerVal < 16) {
         return interaction.reply({
           content: 'Bạn phải rút bài khi tổng điểm nhỏ hơn 16!',
@@ -142,28 +141,24 @@ module.exports = {
       const isDealerXidach = dealerHand.length === 2 && dealerVal === 21;
       const isDealerNguLinh = dealerHand.length === 5 && dealerVal <= 21;
 
-      // Ưu tiên 2 Át
       if (isPlayerTwoAces && isDealerTwoAces) {
         isDraw = true;
       } else if (isPlayerTwoAces) {
         isWin = true;
       } else if (isDealerTwoAces) {
         isWin = false;
-      // Tiếp theo là Xì Dách
       } else if (isPlayerXidach && isDealerXidach) {
         isDraw = true;
       } else if (isPlayerXidach) {
         isWin = true;
       } else if (isDealerXidach) {
         isWin = false;
-      // Tiếp theo là Ngũ Linh
       } else if (isPlayerNguLinh && isDealerNguLinh) {
         isDraw = true;
       } else if (isPlayerNguLinh) {
         isWin = true;
       } else if (isDealerNguLinh) {
         isWin = false;
-      // Cuối cùng là so điểm thông thường
       } else if (dealerVal > 21 || playerVal > dealerVal) {
         isWin = true;
       } else if (playerVal === dealerVal) {
@@ -172,7 +167,6 @@ module.exports = {
         isWin = false;
       }
       
-      // Cập nhật kết quả và tiền
       if (isDraw) {
         await addBalance(interaction.user.id, bet);
         result = `<a:AbbyFlower:1393909312761364541> Hòa, bạn được hoàn lại **${bet}**<a:diamondgem:1402590496647413811>`;
