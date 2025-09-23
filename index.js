@@ -54,7 +54,6 @@ client.on('ready', async () => {
    client.user.setPresence({
     activities: [{ name: "Đến đây và chơi nàooo", type: 0 }],
     status: "idle"
-  });
 });
 
 client.on('interactionCreate', async interaction => {
