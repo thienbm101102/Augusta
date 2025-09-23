@@ -1,5 +1,5 @@
 const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
-const { addBalance } = require('../db');
+const { addBalance, getBalance } = require('../db');
 
 const emojis = [
     '🍎', '🍌', '🍇', '🍉', '🍊', '🍍', '🍓', '🍒',
@@ -135,23 +135,27 @@ module.exports = {
 
         game.revealed.push(card);
 
-        const updatedComponents = createButtons(game.board, game.revealed);
-
         if (!game.firstFlip) {
             game.firstFlip = card;
             const newEmbed = updateEmbed(game);
+            const updatedComponents = createButtons(game.board, game.revealed);
             await interaction.update({ embeds: [newEmbed], components: updatedComponents });
         } else {
-            // Hiển thị hình thứ hai ngay lập tức
-            await interaction.update({ embeds: [updateEmbed(game)], components: updatedComponents });
+            // Đã có tương tác lần 2
+            await interaction.deferUpdate(); // Defer để đảm bảo phản hồi trong 3 giây
             
             const firstCard = game.firstFlip;
             const card1Emoji = game.board[firstCard.row][firstCard.col];
             const card2Emoji = game.board[card.row][card.col];
+            
+            // Cập nhật lại game state
+            game.firstFlip = null;
 
             if (card1Emoji === card2Emoji) {
-                game.firstFlip = null;
                 game.pairsFound++;
+                const newEmbed = updateEmbed(game);
+                const updatedComponents = createButtons(game.board, game.revealed);
+                await interaction.editReply({ embeds: [newEmbed], components: updatedComponents });
 
                 if (game.pairsFound === (BOARD_SIZE * BOARD_SIZE) / 2) {
                     clearTimeout(game.timer);
@@ -164,18 +168,26 @@ module.exports = {
                     await interaction.editReply({ embeds: [finalEmbed], components: [] });
                 }
             } else {
-                game.firstFlip = null;
+                // Không khớp, lật lại sau 2 giây
+                const currentRevealed = [...game.revealed];
+                const newRevealed = game.revealed.filter(c =>
+                    !(c.row === card.row && c.col === card.col) &&
+                    !(c.row === firstCard.row && c.col === firstCard.col)
+                );
+                game.revealed = newRevealed;
+                
+                // Hiển thị hai hình trong 2 giây
+                const embedShowing = updateEmbed(game);
+                embedShowing.setDescription("Không khớp! Vui lòng thử lại.");
+                const componentsShowing = createButtons(game.board, currentRevealed);
+                await interaction.editReply({ embeds: [embedShowing], components: componentsShowing });
+                
+                // Lật lại sau 2 giây
                 setTimeout(async () => {
-                    const newRevealed = game.revealed.filter(c =>
-                        !(c.row === card.row && c.col === card.col) &&
-                        !(c.row === firstCard.row && c.col === firstCard.col)
-                    );
-                    game.revealed = newRevealed;
                     const finalComponents = createButtons(game.board, game.revealed);
-                    const newEmbed = updateEmbed(game)
-                        .setDescription('Không khớp! Vui lòng thử lại.');
+                    const finalEmbed = updateEmbed(game);
                     try {
-                        await interaction.editReply({ embeds: [newEmbed], components: finalComponents });
+                        await interaction.editReply({ embeds: [finalEmbed], components: finalComponents });
                     } catch (e) {
                         console.error('Lỗi khi cập nhật tin nhắn:', e);
                     }
