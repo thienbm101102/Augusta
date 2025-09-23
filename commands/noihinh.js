@@ -1,14 +1,13 @@
 const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
-const { addBalance, getBalance } = require('../db');
+const { addBalance } = require('../db');
 
-// Danh sách các cặp emoji
 const emojis = [
     '🍎', '🍌', '🍇', '🍉', '🍊', '🍍', '🍓', '🍒',
     '🍋', '🥝', '🥥', '🥭', '🍐', '🍑', '🌶️', '🌽',
 ];
 
-const BOARD_SIZE = 4; // Kích thước bàn cờ (BOARD_SIZE x BOARD_SIZE)
-const TIME_LIMIT_MINUTES = 1; // Thời gian tối đa để hoàn thành game (phút)
+const BOARD_SIZE = 4;
+const TIME_LIMIT_MINUTES = 1;
 const activeGames = new Map();
 
 function createBoard() {
@@ -46,19 +45,10 @@ function updateEmbed(game) {
         .setTitle('<a:Verified:1406631971509243974> **Nối Hình**')
         .setDescription(`Tìm tất cả các cặp emoji trong **${TIME_LIMIT_MINUTES}** phút!`)
         .addFields(
-            { name: 'Thời gian còn lại:', value: `${remainingTime} giây` },
+            { name: 'Thời gian còn lại:', value: `${remainingTime > 0 ? remainingTime : 0} giây` },
             { name: 'Số cặp đã tìm:', value: `${game.pairsFound} / ${(BOARD_SIZE * BOARD_SIZE) / 2}` }
         );
     return embed;
-}
-
-async function updateTimer(interaction, game) {
-    const embed = updateEmbed(game);
-    try {
-        await interaction.editReply({ embeds: [embed] });
-    } catch (e) {
-        console.error('Lỗi khi cập nhật đồng hồ:', e);
-    }
 }
 
 module.exports = {
@@ -108,11 +98,18 @@ module.exports = {
         }, TIME_LIMIT_MINUTES * 60 * 1000);
         
         // Thiết lập cập nhật đồng hồ mỗi giây
-        game.updateInterval = setInterval(() => {
+        game.updateInterval = setInterval(async () => {
             if (activeGames.has(userId)) {
-                updateTimer(interaction, activeGames.get(userId));
-            } else {
-                clearInterval(game.updateInterval);
+                const updatedGame = activeGames.get(userId);
+                const newEmbed = updateEmbed(updatedGame);
+                try {
+                    await interaction.editReply({ embeds: [newEmbed] });
+                } catch (e) {
+                    console.error('Lỗi khi cập nhật đồng hồ:', e);
+                    clearInterval(game.updateInterval);
+                    clearTimeout(game.timer);
+                    activeGames.delete(userId);
+                }
             }
         }, 1000);
     },
@@ -147,7 +144,7 @@ module.exports = {
         } else {
             // Hiển thị hình thứ hai ngay lập tức
             await interaction.update({ embeds: [updateEmbed(game)], components: updatedComponents });
-
+            
             const firstCard = game.firstFlip;
             const card1Emoji = game.board[firstCard.row][firstCard.col];
             const card2Emoji = game.board[card.row][card.col];
