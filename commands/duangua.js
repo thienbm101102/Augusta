@@ -2,7 +2,7 @@ const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, Butt
 const { addBalance, getBalance } = require('../db');
 
 // --- Cấu hình trò chơi ---
-const HORSES = ['<:87484pinkhorse:1413162074938277888>', '🐎', '🏇', '<a:51622unicornmagic:1413162071897669652>', '🦄'];
+const HORSES = ['🐴', '🐎', '🏇', '<a:51622unicornmagic:1413162071897669652>', '🦄'];
 const HORSE_NAMES = ['Tia Chớp', 'Ngàn Cân', 'Lửa Đỏ', 'Sao Băng', 'Thần Gió'];
 const activeGames = new Map();
 const BET_OPTIONS = [500, 1000, 2000, 5000, 10000]; // Số tiền cược
@@ -242,3 +242,4 @@ module.exports = {
         await game.handleBet(interaction);
     }
 };
+
