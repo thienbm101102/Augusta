@@ -1,6 +1,6 @@
 // File: index.js
 
-const { Client, Collection, GatewayIntentBits, DiscordAPIError } = require('discord.js');
+const { Client, Collection, GatewayIntentBits, MessageFlags, EmbedBuilder, AttachmentBuilder, DiscordAPIError } = require('discord.js');
 const fs = require('fs');
 const path = require('path');
 const mongoose = require('mongoose');
