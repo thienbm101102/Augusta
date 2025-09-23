@@ -51,16 +51,15 @@ const userSchema = new mongoose.Schema({
         day: { type: Number, default: null },
         month: { type: Number, default: null },
     },
-    // Thay đổi kiểu dữ liệu của cards thành một mảng các đối tượng cardSchema
     cards: [cardSchema], 
-    banners: { type: [String], default: [] },
-    badges: { type: [String], default: [] },
-    // Thay đổi kiểu dữ liệu của monsters thành một mảng các đối tượng monsterSchema
-    monsters: [monsterSchema],
-    // Thêm trường mới cho trang bị của người dùng
-    ownedEquipment: [equipmentSchema],
+    // Các trường lưu danh sách tất cả các item đã mua
     ownedBanners: { type: [String], default: [] },
     ownedBadges: { type: [String], default: [] },
+    // ✅ Các trường mới lưu item hiện tại đang được gắn
+    banner: { type: String, default: null },
+    badge: { type: String, default: null },
+    monsters: [monsterSchema],
+    ownedEquipment: [equipmentSchema],
 }, { timestamps: true });
 
 const User = mongoose.model("User", userSchema);
@@ -158,5 +157,5 @@ module.exports = {
     setLastLoanDate,
     getAllUsers,
     getAllBalances,
-    User
+    User,
 };
