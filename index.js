@@ -47,10 +47,13 @@ async function startBot() {
 startBot();
 
 client.on('ready', async () => {
-  console.log(`✅ Logged in as ${client.user.tag}`);
+  console.log(`🤖 Bot đã đăng nhập với tên ${client.user.tag}`);
   console.log('Bot đang ở các server:');
   client.guilds.cache.forEach(guild => {
     console.log(`${guild.name} — ${guild.id}`);
+   client.user.setPresence({
+    activities: [{ name: "Đến đây và chơi nàooo", type: 0 }],
+    status: "idle"
   });
 });
 
