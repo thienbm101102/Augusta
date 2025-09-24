@@ -7,15 +7,18 @@ module.exports = {
     const userId = interaction.user.id;
     const user = await getUser(userId);
     const now = Date.now();
-    const lastDaily = user.lastDaily;
+    const lastDaily = user.lastDaily ? user.lastDaily.getTime() : null;
 
-    if (now - lastDaily < 24 * 60 * 60 * 1000) {
-      const remaining = lastDaily + (24 * 60 * 60 * 1000) - now;
+    const cooldown = 24 * 60 * 60 * 1000;
+
+    // Kiểm tra xem lastDaily có giá trị hợp lệ không
+    if (lastDaily && now - lastDaily < cooldown) {
+      const remaining = lastDaily + cooldown - now;
       const hours = Math.floor(remaining / (1000 * 60 * 60));
       const minutes = Math.floor((remaining % (1000 * 60 * 60)) / (1000 * 60));
       const embed = new EmbedBuilder()
       .setColor('Blue')
-      .setTitle('**Điểm Danh**')
+      .setTitle('**<a:Verified:1406631971509243974> Điểm Danh Thất Bại**')
       .setDescription(`<a:AbbyHappy:1393909327848538122> **|** Bạn đã điểm danh hôm nay rồi! Thử lại sau **${hours}h ${minutes}m** nhé`)
       .setTimestamp();
     return interaction.reply({ embeds: [embed] });
@@ -26,7 +29,7 @@ module.exports = {
 
     const embed = new EmbedBuilder()
       .setColor('Blue')
-      .setTitle('**Điểm Danh**')
+      .setTitle('**<a:Verified:1406631971509243974> Điểm Danh Thành Công**')
       .setDescription(`<a:AbbyPeek:1393909356625657876> **|** Bạn đã điểm danh thành công và nhận được **10,000**<a:diamondgem:1402590496647413811>!`)
       .setTimestamp();
     return interaction.reply({ embeds: [embed] });
