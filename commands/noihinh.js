@@ -27,7 +27,7 @@ function createButtons(board, revealedCards) {
         const row = new ActionRowBuilder();
         for (let j = 0; j < BOARD_SIZE; j++) {
             const isRevealed = revealedCards.some(card => card.row === i && card.col === j);
-            const emoji = isRevealed ? board[i][j] : '🍬';
+            const emoji = isRevealed ? board[i][j] : '?';
             
             // Chọn màu nút
             let buttonStyle = ButtonStyle.Primary;
@@ -118,7 +118,7 @@ module.exports = {
                 activeGames.delete(reply.id);
                 const timeoutEmbed = new EmbedBuilder()
                     .setColor('#c0392b')
-                    .setTitle('**Hết Giờ!**')
+                    .setTitle('**<a:Verified:1406631971509243974> Hết Giờ!**')
                     .setDescription(
                         `Đáng tiếc, **<@${game.originalPlayerId}>** không thể hoàn thành game trong **${TIME_LIMIT_MINUTES} phút**!` +
                         `\n\nBạn đã mất **${game.bet.toLocaleString()}**<a:diamondgem:1402590496647413811>.`
@@ -199,5 +199,6 @@ module.exports = {
         }
     }
 };
+
 
 
