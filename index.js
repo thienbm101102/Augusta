@@ -53,6 +53,16 @@ client.on('ready', async () => {
   client.guilds.cache.forEach(guild => {
     console.log(`${guild.name} — ${guild.id}`);
   });
+
+  // 🚀 LOGIC THÊM TRẠNG THÁI HOẠT ĐỘNG
+  client.user.setPresence({
+      activities: [{ 
+          name: `/help | ${client.guilds.cache.size} servers`, // Hoạt động hiển thị
+          type: 4, // 0: PLAYING (Đang chơi), 1: STREAMING (Đang phát trực tiếp), 2: LISTENING (Đang nghe), 3: WATCHING (Đang xem), 4: CUSTOM (Tùy chỉnh), 5: COMPETING (Đang cạnh tranh)
+      }],
+      status: 'online', // online, idle, dnd, invisible
+  });
+  console.log('✅ Đã thiết lập trạng thái hoạt động của Bot.');
 });
 
 client.on('interactionCreate', async interaction => {
