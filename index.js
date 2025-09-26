@@ -10,9 +10,13 @@ const app = express();
 const db = require('./db');
 
 // Khởi tạo web server cho Render Healthcheck
-app.get("/", (req, res) => res.send("Bot is running!"));
+app.get("/", (req, res) => {
+  res.set("Content-Type", "text/plain"); // trả về text thuần
+  res.status(200).send("OK");            // chỉ gửi "OK"
+});
+
 app.listen(process.env.PORT || 10000, () => {
-  console.log("🌐 Web server is running on port 10000");
+  console.log(`🌐 Web server is running on port ${process.env.PORT || 10000}`);
 });
 
 const client = new Client({
