@@ -35,24 +35,12 @@ for (const file of commandFiles) {
 }
 
 // Hàm khởi động bot
-async function startBot() {
-    try {
-        console.log("🚀 Đang kết nối tới MongoDB...");
-        await mongoose.connect(process.env.MONGODB_URI);
-        console.log("✅ Đã kết nối thành công tới MongoDB.");
-    } catch (err) {
-        console.error("❌ Failed to connect to MongoDB:", err);
-    }
-}
-
-startBot();
-
-client.on('ready', async () => {
-  console.log(`✅ Logged in as ${client.user.tag}`);
-  console.log('Bot đang ở các server:');
-  client.guilds.cache.forEach(guild => {
-    console.log(`${guild.name} — ${guild.id}`);
+async function startBot() {3 | ${client.guilds.cache.size} servers`, // Hoạt động hiển thị
+          type: 4, // 0: PLAYING (Đang chơi), 1: STREAMING (Đang phát trực tiếp), 2: LISTENING (Đang nghe), 3: WATCHING (Đang xem), 4: CUSTOM (Tùy chỉnh), 5: COMPETING (Đang cạnh tranh)
+      }],
+      status: 'online', // online, idle, dnd, invisible
   });
+  console.log('✅ Đã thiết lập trạng thái hoạt động của Bot.');
 });
 
 client.on('interactionCreate', async interaction => {
