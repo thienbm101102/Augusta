@@ -90,9 +90,10 @@ async function deductBalance(userId, amount) {
 
 async function setBalance(userId, amount) {
     const user = await getUser(userId);
-    user.balance = amount;
+    if (user.balance < amount) return false; // Thêm logic này
+    user.balance -= amount;
     await user.save();
-    return user.balance;
+    return true; // Trả về true khi thành công
 }
 
 async function getBalance(userId) {
