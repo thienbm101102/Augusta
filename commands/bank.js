@@ -89,7 +89,7 @@ module.exports = {
                 }
 
                 if (amount <= 0 || amount > debt || amount > userBalance) {
-                    return interaction.reply({ content: `<a:AbbyAnnoyed:1393909340914845706> Số tiền trả không hợp lệ. Bạn cần trả từ **1** đến **${Math.min(debt, userBalance).toLocaleString()}**<a:diamondgem:1402590496647413811>.`, ephemeral: true });
+                    return interaction.reply({ content: `<a:AbbyNom:1393909345514815589> Số tiền trả không hợp lệ. Bạn cần trả từ **1** đến **${Math.min(debt, userBalance).toLocaleString()}**<a:diamondgem:1402590496647413811>.`, ephemeral: true });
                 }
                 
                 await addBalance(userId, -amount);
@@ -131,5 +131,6 @@ module.exports = {
         }
     }
 };
+
 
 
