@@ -4,7 +4,7 @@ const { addBalance, getBalance, getDebt, setDebt, getLastLoanDate, setLastLoanDa
 // --- Cấu hình ngân hàng ---
 const LOAN_COOLDOWN = 24 * 60 * 60 * 1000; // 24 giờ
 const MAX_LOAN_AMOUNT = 50000;
-const INTEREST_RATE = 0.15; // 15% lãi suất
+const INTEREST_RATE = 0.10; // 15% lãi suất
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -131,4 +131,5 @@ module.exports = {
         }
     }
 };
+
 
