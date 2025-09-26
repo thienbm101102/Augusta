@@ -57,7 +57,7 @@ client.on('ready', async () => {
   // 🚀 LOGIC THÊM TRẠNG THÁI HOẠT ĐỘNG
   client.user.setPresence({
       activities: [{ 
-          name: `/help | ${client.guilds.cache.size} servers`, // Hoạt động hiển thị
+          name: `/help để biết lệnh của BOT nhé ^^ | ${client.guilds.cache.size} servers`, // Hoạt động hiển thị
           type: 4, // 0: PLAYING (Đang chơi), 1: STREAMING (Đang phát trực tiếp), 2: LISTENING (Đang nghe), 3: WATCHING (Đang xem), 4: CUSTOM (Tùy chỉnh), 5: COMPETING (Đang cạnh tranh)
       }],
       status: 'online', // online, idle, dnd, invisible
