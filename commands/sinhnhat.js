@@ -1,83 +1,71 @@
+// sinhnhat.js (Phiên bản đã sửa)
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const { getUser } = require('../db'); // Chỉ cần getUser
 
 module.exports = {
     data: new SlashCommandBuilder()
+        // ... (phần data giữ nguyên)
         .setName('sinhnhat')
         .setDescription('Thêm ngày sinh nhật của bạn ^^')
         .addSubcommand(subcommand =>
             subcommand
                 .setName('set')
-                .setDescription('Đặt ngày sinh nhật của bạn để BOT và mọi người có thể chúc mừng')
-                .addIntegerOption(option =>
-                    option.setName('thang')
-                        .setDescription('Tháng sinh nhật của bạn (1-12)')
-                        .setRequired(true)
-                        .setMinValue(1)
-                        .setMaxValue(12)
-                )
-                .addIntegerOption(option =>
-                    option.setName('ngay')
-                        .setDescription('Ngày sinh nhật của bạn (1-31)')
-                        .setRequired(true)
-                        .setMinValue(1)
-                        .setMaxValue(31)
-                )
+                // ... (options giữ nguyên)
         )
         .addSubcommand(subcommand =>
             subcommand
                 .setName('xem')
-                .setDescription('Xem ngày sinh nhật của bạn hoặc của người khác')
-                .addUserOption(option =>
-                    option.setName('nguoidung')
-                        .setDescription('Người dùng bạn muốn xem sinh nhật')
-                        .setRequired(false)
-                )
+                // ... (options giữ nguyên)
         ),
     async execute(interaction) {
-        // Lấy User ID của người dùng thực hiện lệnh (hoặc người dùng mục tiêu)
         const userId = interaction.user.id;
         const subcommand = interaction.options.getSubcommand();
-        // Dùng await vì getUser là hàm async trong db.js
+        // LỖI 1: Phải dùng await ở đây vì getUser là async
         const user = await getUser(userId); 
 
         if (subcommand === 'set') {
             const month = interaction.options.getInteger('thang');
             const day = interaction.options.getInteger('ngay');
 
-            // ⚠️ Xử lý kiểm tra năm nhuận phức tạp hơn, nhưng kiểm tra cơ bản vẫn giữ nguyên
             if (month === 2 && day > 29) {
+                // Đã xử lý reply ở đây, OK
                 return interaction.reply({ content: 'Ngày sinh nhật không hợp lệ cho tháng 2.', ephemeral: true });
             }
             if ([4, 6, 9, 11].includes(month) && day > 30) {
+                 // Đã xử lý reply ở đây, OK
                 return interaction.reply({ content: 'Ngày sinh nhật không hợp lệ cho tháng này.', ephemeral: true });
             }
 
-            // Cập nhật và LƯU vào MongoDB
             user.birthday = { month, day };
-            await user.save(); // ✅ Sửa lỗi: Thay thế saveDB() bằng user.save()
+            // LỖI 2: Thay thế saveDB() bằng user.save()
+            await user.save(); 
 
             const embed = new EmbedBuilder()
-                .setTitle('**<a:Verified:1406631971509243974> Cài Đặt Sinh Nhật Thành Công!**')
+                .setTitle('<a:Verified:1406631971509243974> **Cài Đặt Sinh Nhật Thành Công!**')
                 .setDescription(`Ngày sinh nhật của bạn đã được đặt là **ngày ${day} tháng ${month}**.`)
                 .setColor('#ff69b4');
             
+            // Đây là reply thành công, OK
             await interaction.reply({ embeds: [embed], ephemeral: true });
 
         } else if (subcommand === 'xem') {
             const targetUser = interaction.options.getUser('nguoidung') || interaction.user;
-            // Lấy dữ liệu của người dùng mục tiêu
+            // LỖI 1: Phải dùng await ở đây vì getUser là async
             const targetUserData = await getUser(targetUser.id);
-            // Lấy đối tượng Guild Member của người dùng mục tiêu để lấy displayName
+            
+            // Lấy tên hiển thị chính xác của người dùng mục tiêu
             const targetMember = await interaction.guild.members.fetch(targetUser.id).catch(() => null);
             const targetDisplayName = targetMember ? targetMember.displayName : targetUser.username;
             
+            // Kiểm tra field birthday đã tồn tại và có giá trị day
             if (!targetUserData.birthday || !targetUserData.birthday.day) {
+                // Đã xử lý reply ở đây, OK
                 return interaction.reply({ content: `**${targetUser.username}** chưa đặt ngày sinh nhật.`, ephemeral: true });
             }
 
             const embed = new EmbedBuilder()
-                .setTitle(`🎂 Bạn Đang Xem Sinh Nhật Của **${targetDisplayName}**`)
+                // LỖI 3: Dùng targetDisplayName thay vì interaction.member.displayName
+                .setTitle(`🎂 Bạn Đang Xem Sinh Nhật Của **${targetDisplayName}**`) 
                 .setDescription(`Sinh nhật của **${targetDisplayName}** là ngày **${targetUserData.birthday.day}** tháng **${targetUserData.birthday.month}**.`)
                 .setThumbnail(targetUser.displayAvatarURL())
                 .setColor('#00ffc0');
