@@ -4,18 +4,36 @@ const { getUser } = require('../db'); // Chỉ cần getUser
 
 module.exports = {
     data: new SlashCommandBuilder()
-        // ... (phần data giữ nguyên)
         .setName('sinhnhat')
         .setDescription('Thêm ngày sinh nhật của bạn ^^')
         .addSubcommand(subcommand =>
             subcommand
                 .setName('set')
-                // ... (options giữ nguyên)
+                .setDescription('Đặt ngày sinh nhật của bạn để BOT và mọi người có thể chúc mừng')
+                .addIntegerOption(option =>
+                    option.setName('thang')
+                        .setDescription('Tháng sinh nhật của bạn (1-12)')
+                        .setRequired(true)
+                        .setMinValue(1)
+                        .setMaxValue(12)
+                )
+                .addIntegerOption(option =>
+                    option.setName('ngay')
+                        .setDescription('Ngày sinh nhật của bạn (1-31)')
+                        .setRequired(true)
+                        .setMinValue(1)
+                        .setMaxValue(31)
+                )
         )
         .addSubcommand(subcommand =>
             subcommand
                 .setName('xem')
-                // ... (options giữ nguyên)
+                .setDescription('Xem ngày sinh nhật của bạn hoặc của người khác')
+                .addUserOption(option =>
+                    option.setName('nguoidung')
+                        .setDescription('Người dùng bạn muốn xem sinh nhật')
+                        .setRequired(false)
+                )
         ),
     async execute(interaction) {
         const userId = interaction.user.id;
@@ -74,3 +92,4 @@ module.exports = {
         }
     }
 };
+
