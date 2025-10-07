@@ -12,7 +12,10 @@ function removeDiacritics(str) {
 const words = [
     "CHÈ", "BÀO", "CÂY", "ĐÀO", "GẠO", "HÁT", "HOA", "KEM", "LÁI", "LÚA",
     "MỆT", "NẤU", "QUẦN", "SƠN", "THÂN", "TAY", "TẾT", "THU", "XE", "VUI",
-    "GIAO THÔNG", "CÔNG VIỆC", "HỘI NGHỊ", "GIA ĐÌNH", "TRƯỜNG HỌC", "MÁY TÍNH"
+    "GIAO THÔNG", "CÔNG VIỆC", "HỘI NGHỊ", "GIA ĐÌNH", "TRƯỜNG HỌC", "MÁY TÍNH",
+    "ĐỌC SÁCH", "CHƠI GAME", "HỌC TẬP", "NGHỈ NGƠI", "VUI VẺ", "BUỒN BÃ", "HẠNH PHÚC",
+    "TẬP THỂ DỤC", "ĐI BỘ", "ĂN TỐI", "MẶT TRỜI", "MẶT TRĂNG", "NGÔI SAO", "MƯA", "GIÓ",
+    "SÔNG", "NÚI", "CÂY XANH", "HOA HỒNG", "ĐẤT"
 ];
 
 // Số lần đoán sai TỐI ĐA
@@ -186,5 +189,6 @@ module.exports = {
         }
     }
 };
+
 
 
