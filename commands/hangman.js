@@ -67,7 +67,7 @@ function updateEmbed(game) {
     const wrongGuessesDisplay = '<a:AbbyCry:1393909295665643540> '.repeat(game.incorrectGuesses) + '<a:AbbyCheer:1393909243840827432> '.repeat(MAX_INCORRECT_GUESSES - game.incorrectGuesses);
     const embed = new EmbedBuilder()
         .setColor('#e74c3c')
-        .setTitle('<a:Verified:1406631971509243974> **Đoán Từ Cùng Augusta**')
+        .setTitle('<a:Verified:1406631971509243974> **Đoán Từ**')
         .setDescription(
             `**Tiền cược:** **${game.bet.toLocaleString()}**<a:diamondgem:1402590496647413811>\n` +
             `**Trạng thái:** ${wrongGuessesDisplay}\n\n` +
@@ -200,3 +200,4 @@ module.exports = {
         }
     }
 };
+
