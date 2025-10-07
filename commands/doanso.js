@@ -93,7 +93,7 @@ module.exports = {
 
         const embed = new EmbedBuilder()
             .setColor('#f39c12')
-            .setTitle('**<a:Verified:1406631971509243974> Đoán Số May Mắn Cùng Augusta**')
+            .setTitle('**<a:Verified:1406631971509243974> Đoán Số May Mắn**')
             .setDescription(`Một số đã được chọn ngẫu nhiên từ **1 đến ${MAX_NUMBER}**.\n\nHãy nhắn tin số mà bạn nghĩ là đúng!`)
             .addFields(
                 { name: 'Tiền thưởng:', value: `**${game.pot.toLocaleString()}**<a:diamondgem:1402590496647413811>`, inline: true },
@@ -152,3 +152,4 @@ module.exports = {
         }
     }
 };
+
