@@ -1,72 +1,22 @@
+// hangman.js (Phiên bản mới hỗ trợ tiếng Việt có dấu)
 const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
-const { addBalance, getBalance } = require('../db');
+const { addBalance, getBalance, deductBalance } = require('../db');
 
-// Danh sách các từ để đoán (tiếng Việt không dấu)
+// ✅ Hàm loại bỏ dấu (chuẩn hóa Unicode)
+// Dùng để so sánh chữ cái đoán với từ bí mật mà không cần nút bấm cho chữ có dấu
+function removeDiacritics(str) {
+    return str.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/g, 'd').replace(/Đ/g, 'D');
+}
+
+// ✅ Danh sách các từ có dấu
 const words = [
-    "CHIM", "BAO", "CAY", "DAO", "GAO", "HAT", "HOA", "KEM", "LAI", "LUA",
-    "MEP", "NAU", "QUAN", "SON", "THAN", "TAY", "TET", "THU", "XE", "VUI",
-    "GIAO THONG", "CONG VIEC", "HOI NGHI", "GIA DINH", "TRUONG HOC", "MAY TINH"
+    "CHÈ", "BÀO", "CÂY", "ĐÀO", "GẠO", "HÁT", "HOA", "KEM", "LÁI", "LÚA",
+    "MỆT", "NẤU", "QUẦN", "SƠN", "THÂN", "TAY", "TẾT", "THU", "XE", "VUI",
+    "GIAO THÔNG", "CÔNG VIỆC", "HỘI NGHỊ", "GIA ĐÌNH", "TRƯỜNG HỌC", "MÁY TÍNH"
 ];
 
-// Hình ảnh người treo cổ, mỗi phần tử là một trạng thái
-const hangmanStages = [
-    `\`\`\`
-  +---+
-  |   |
-  |   
-  |   
-  |   
-  |   
-=========\`\`\``,
-    `\`\`\`
-  +---+
-  |   |
-  |   O
-  |  
-  |   
-  |   
-=========\`\`\``,
-    `\`\`\`
-  +---+
-  |   |
-  |   O
-  |   |
-  |   
-  |   
-=========\`\`\``,
-    `\`\`\`
-  +---+
-  |   |
-  |   O
-  |  /|
-  |   
-  |   
-=========\`\`\``,
-    `\`\`\`
-  +---+
-  |   |
-  |   O
-  |  /|\\
-  |   
-  |   
-=========\`\`\``,
-    `\`\`\`
-  +---+
-  |   |
-  |   O
-  |  /|\\
-  |  / 
-  |   
-=========\`\`\``,
-    `\`\`\`
-  +---+
-  |   |
-  |   O
-  |  /|\\
-  |  / \\
-  |   
-=========\`\`\``
-];
+// Số lần đoán sai TỐI ĐA
+const MAX_INCORRECT_GUESSES = 6;
 
 // Trạng thái các game đang diễn ra (sử dụng message.id làm key)
 const activeGames = new Map();
@@ -94,43 +44,42 @@ function createButtons(guessedLetters) {
         }
     }
     
-    // Đẩy hàng cuối cùng
     if (currentRow.components.length > 0) {
         rows.push(currentRow);
     }
     
-    // Giới hạn tổng số hàng là 5
-    if (rows.length > 5) {
-        return rows.slice(0, 5);
-    }
-
-    return rows;
+    return rows.slice(0, 5);
 }
 
 function updateEmbed(game) {
+    // Hiển thị từ bí mật: Nếu chữ cái không dấu đã được đoán, thì hiện chữ cái CÓ DẤU tương ứng
     const hiddenWord = game.word.split('').map(char => {
         if (char === ' ') return '  ';
-        return game.guessedLetters.includes(char) ? char : '`_`';
+        const charNoDiacritics = removeDiacritics(char).toUpperCase();
+
+        // Kiểm tra xem chữ cái không dấu đã được đoán chưa
+        return game.guessedLetters.includes(charNoDiacritics) ? char : '`_`';
     }).join(' ');
 
+    const wrongGuessesDisplay = '❌ '.repeat(game.incorrectGuesses) + '✅ '.repeat(MAX_INCORRECT_GUESSES - game.incorrectGuesses);
     const embed = new EmbedBuilder()
         .setColor('#e74c3c')
         .setTitle('<a:Verified:1406631971509243974> **Đoán Từ Cùng Augusta**')
         .setDescription(
-            `${hangmanStages[game.incorrectGuesses]}\n\n` +
+            `**Tiền cược:** **${game.bet.toLocaleString()}**<a:diamondgem:1402590496647413811>\n` +
+            `**Trạng thái:** ${wrongGuessesDisplay}\n\n` +
             `**Từ bí mật:** ${hiddenWord}\n\n` +
-            `**Các chữ đã đoán:** ${game.guessedLetters.join(', ')}\n\n` +
-            `**Số lần đoán sai còn lại:** ${6 - game.incorrectGuesses}\n`
-        )
-    
-    if (game.incorrectGuesses >= 6) {
-        embed.setDescription(
-            `${hangmanStages[game.incorrectGuesses]}\n\n` +
-            `Bạn đã thua! Từ đúng là: **${game.word}**`
+            `**Các chữ đã đoán:** ${game.guessedLetters.join(', ') || 'Chưa đoán chữ nào'}\n\n` +
+            `**Số lần đoán sai còn lại:** ${MAX_INCORRECT_GUESSES - game.incorrectGuesses}\n`
         );
+    
+    // Xử lý khi Game Over
+    if (game.incorrectGuesses >= MAX_INCORRECT_GUESSES) {
+        embed.setDescription(`Bạn đã thua! Từ đúng là: **${game.word}**\n\nBạn đã mất **${game.bet.toLocaleString()}**<a:diamondgem:1402590496647413811> đã đặt cược.`);
         embed.setColor('#c0392b');
     } else if (!hiddenWord.includes('_')) {
-        embed.setDescription(`Chúc mừng! Bạn đã đoán đúng từ: **${game.word}**`);
+        const reward = game.bet * 2;
+        embed.setDescription(`Chúc mừng! Bạn đã đoán đúng từ: **${game.word}**\n\nBạn đã thắng **${reward.toLocaleString()}**<a:diamondgem:1402590496647413811>! (Lợi nhuận **${game.bet.toLocaleString()}**<a:diamondgem:1402590496647413811>)`);
         embed.setColor('#2ecc71');
     }
     
@@ -140,18 +89,36 @@ function updateEmbed(game) {
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('doanchu')
-        .setDescription('Bắt đầu chơi game Đoán Từ'),
+        .setDescription('Bắt đầu chơi game Đoán Từ với tiền cược')
+        .addIntegerOption(option =>
+            option.setName('bet')
+                .setDescription('Số tiền bạn muốn đặt cược (Tối thiểu 1000)')
+                .setRequired(true)
+                .setMinValue(1000)
+        ),
 
     async execute(interaction) {
         const userId = interaction.user.id;
+        const bet = interaction.options.getInteger('bet');
+
+        // Kiểm tra số dư và trừ tiền cược
+        const balance = await getBalance(userId);
+        if (balance < bet) {
+            return interaction.reply({ 
+                content: `❌ Bạn không đủ **${bet.toLocaleString()}**<a:diamondgem:1402590496647413811> để đặt cược. Số dư hiện tại: **${balance.toLocaleString()}**<a:diamondgem:1402590496647413811>`, 
+                ephemeral: true 
+            });
+        }
+        await deductBalance(userId, bet);
+
         const randomWord = words[Math.floor(Math.random() * words.length)];
         
-        // Khởi tạo trạng thái game
         const game = {
             word: randomWord.toUpperCase(),
-            guessedLetters: [],
+            guessedLetters: [], // Luôn lưu trữ chữ cái KHÔNG DẤU đã đoán
             incorrectGuesses: 0,
             player: interaction.user.username,
+            bet: bet,
         };
 
         const embed = updateEmbed(game);
@@ -159,12 +126,11 @@ module.exports = {
         
         const reply = await interaction.reply({ embeds: [embed], components, fetchReply: true });
         
-        // Lưu game vào bản đồ bằng ID tin nhắn
         activeGames.set(reply.id, game);
     },
 
     async handleButton(interaction) {
-        await interaction.deferUpdate();
+        await interaction.deferUpdate(); 
         const userId = interaction.user.id;
         const game = activeGames.get(interaction.message.id);
 
@@ -172,52 +138,49 @@ module.exports = {
             return interaction.editReply({ content: 'Không có game nào đang diễn ra cho tin nhắn này', components: [] });
         }
         
-        const letter = interaction.customId.split('-')[2];
+        // Chữ cái đoán luôn là KHÔNG DẤU (A-Z)
+        const letter = interaction.customId.split('-')[2]; 
         
         if (game.guessedLetters.includes(letter)) {
-            return; // Đã đoán chữ này rồi
+            return; 
         }
         
         game.guessedLetters.push(letter);
         
         let won = false;
-        if (!game.word.includes(letter)) {
+        
+        // ✅ Logic kiểm tra mới: Chuẩn hóa từ bí mật sang không dấu để kiểm tra
+        const wordNoDiacritics = removeDiacritics(game.word).toUpperCase();
+        
+        if (!wordNoDiacritics.includes(letter)) {
             game.incorrectGuesses++;
         } else {
-            // Kiểm tra xem từ đã được đoán hết chưa
-            const hiddenWord = game.word.split('').map(char => {
-                if (char === ' ') return '  ';
-                return game.guessedLetters.includes(char) ? char : '`_`';
-            }).join(' ');
-            if (!hiddenWord.includes('_')) {
+            // Kiểm tra chiến thắng (so sánh tất cả các chữ cái KHÔNG DẤU trong từ)
+            const allLettersGuessed = wordNoDiacritics.split('').every(char => {
+                if (char === ' ') return true;
+                return game.guessedLetters.includes(char);
+            });
+
+            if (allLettersGuessed) {
                 won = true;
             }
         }
         
         const embed = updateEmbed(game);
         
-        if (game.incorrectGuesses >= 6) {
-            // Game over, thua
+        if (game.incorrectGuesses >= MAX_INCORRECT_GUESSES) {
             activeGames.delete(interaction.message.id);
-            embed.setDescription(
-                `${hangmanStages[game.incorrectGuesses]}\n\n` +
-                `Không có ai đoán được từ. Từ đúng là: **${game.word}**`
-            );
-            embed.setColor('#c0392b');
             await interaction.editReply({ embeds: [embed], components: [] });
         } else if (won) {
-            // Game over, thắng
             activeGames.delete(interaction.message.id);
-            const reward = 1000;
-            await addBalance(userId, reward); // Đã sửa: Thêm await
+            const reward = game.bet * 2; 
+            await addBalance(userId, reward);
             embed.setDescription(
                 `<a:AbbyHappy:1393909327848538122> Chúc mừng ${interaction.member.displayName} đã đoán đúng từ: **${game.word}**! <a:AbbyHappy:1393909327848538122>\n\n` +
-                `Bạn đã nhận được **${reward.toLocaleString()}**<a:diamondgem:1402590496647413811>`
+                `Bạn đã thắng **${reward.toLocaleString()}**<a:diamondgem:1402590496647413811> (bao gồm cả tiền cược **${game.bet.toLocaleString()}**). Lợi nhuận: **${game.bet.toLocaleString()}**<a:diamondgem:1402590496647413811>`
             );
-            embed.setColor('#2ecc71');
             await interaction.editReply({ embeds: [embed], components: [] });
         } else {
-            // Tiếp tục game
             const components = createButtons(game.guessedLetters);
             await interaction.editReply({ embeds: [embed], components });
         }
