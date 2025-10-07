@@ -51,7 +51,7 @@ function createButtons(board, revealedCards) {
 function updateEmbed(game) {
     const embed = new EmbedBuilder()
         .setColor('#2ecc71')
-        .setTitle('**<a:Verified:1406631971509243974> Nối Hình Cùng Augusta**')
+        .setTitle('**<a:Verified:1406631971509243974> Nối Hình**')
         .setDescription(
             `Người chơi: **<@${game.originalPlayerId}>**\n` + 
             `Số tiền cược: **${game.bet.toLocaleString()}**<a:diamondgem:1402590496647413811>\n\n` +
@@ -199,6 +199,7 @@ module.exports = {
         }
     }
 };
+
 
 
 
