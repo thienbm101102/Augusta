@@ -61,7 +61,7 @@ function updateEmbed(game) {
         return game.guessedLetters.includes(charNoDiacritics) ? char : '`_`';
     }).join(' ');
 
-    const wrongGuessesDisplay = '❌ '.repeat(game.incorrectGuesses) + '✅ '.repeat(MAX_INCORRECT_GUESSES - game.incorrectGuesses);
+    const wrongGuessesDisplay = '<a:AbbyCry:1393909295665643540> '.repeat(game.incorrectGuesses) + '<a:AbbyCheer:1393909243840827432> '.repeat(MAX_INCORRECT_GUESSES - game.incorrectGuesses);
     const embed = new EmbedBuilder()
         .setColor('#e74c3c')
         .setTitle('<a:Verified:1406631971509243974> **Đoán Từ Cùng Augusta**')
@@ -176,7 +176,7 @@ module.exports = {
             const reward = game.bet * 2; 
             await addBalance(userId, reward);
             embed.setDescription(
-                `<a:AbbyHappy:1393909327848538122> Chúc mừng **${interaction.member.displayName}** đã đoán đúng từ: **${game.word}**! <a:AbbyHappy:1393909327848538122>\n\n` +
+                `<a:AbbyHappy:1393909327848538122> Chúc mừng **${interaction.member.displayName}** đã đoán đúng từ: **${game.word}**!\n\n` +
                 `Bạn đã thắng **${reward.toLocaleString()}**<a:diamondgem:1402590496647413811> (bao gồm cả tiền cược **${game.bet.toLocaleString()}**). Lợi nhuận: **${game.bet.toLocaleString()}**<a:diamondgem:1402590496647413811>`
             );
             await interaction.editReply({ embeds: [embed], components: [] });
@@ -186,4 +186,5 @@ module.exports = {
         }
     }
 };
+
 
