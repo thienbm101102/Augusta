@@ -132,33 +132,25 @@ module.exports = {
         activeGames.set(reply.id, game);
     },
 
-    async handleButton(interaction) {
-    // Nếu tương tác chưa được hoãn (deferred) hoặc trả lời (replied), mới gọi deferUpdate().
-    // Điều này ngăn chặn lỗi "Interaction has already been acknowledged."
-    if (!interaction.deferred && !interaction.replied) {
-        await interaction.deferUpdate().catch(e => {
-            // Log lỗi nếu deferUpdate thất bại nhưng không làm crash bot
-            console.error("Lỗi khi deferUpdate trong handleButton:", e);
-        });
-    }
-
-    const userId = interaction.user.id;
-    const game = activeGames.get(interaction.message.id);
-
-    if (!game) {
-        // Sử dụng followUp thay vì editReply nếu deferUpdate chưa chạy (trường hợp hiếm)
-        if (interaction.deferred || interaction.replied) {
-            return interaction.editReply({ content: 'Không có game nào đang diễn ra cho tin nhắn này', components: [] });
-        } else {
-            return interaction.reply({ content: 'Không có game nào đang diễn ra cho tin nhắn này', components: [], ephemeral: true });
+   async handleButton(interaction) {
+        // ✅ Sửa lỗi DiscordAPIError 40060: Chỉ deferUpdate nếu chưa được acknowledge
+        if (!interaction.deferred && !interaction.replied) {
+            await interaction.deferUpdate().catch(e => {
+                console.error("Lỗi khi deferUpdate trong handleButton:", e);
+            });
         }
-    }
-    
-    // ... Tiếp tục các logic còn lại của game (kiểm tra letter, guessedLetters, updateEmbed, etc.) ...
-    
-    // Lưu ý: Các lệnh editReply() sau này trong hàm sẽ hoạt động bình thường
-    // vì tương tác đã được acknowledged (hoãn) ở bước trên.
-}
+        
+        const userId = interaction.user.id;
+        const game = activeGames.get(interaction.message.id);
+
+        if (!game) {
+            // Dùng editReply nếu đã acknowledge, nếu không thì dùng followUp hoặc reply
+            if (interaction.deferred || interaction.replied) {
+                return interaction.editReply({ content: 'Không có game nào đang diễn ra cho tin nhắn này', components: [] });
+            } else {
+                return interaction.reply({ content: 'Không có game nào đang diễn ra cho tin nhắn này', components: [], ephemeral: true });
+            }
+        }
         
         // Chữ cái đoán luôn là KHÔNG DẤU (A-Z)
         const letter = interaction.customId.split('-')[2]; 
@@ -171,7 +163,7 @@ module.exports = {
         
         let won = false;
         
-        // ✅ Logic kiểm tra mới: Chuẩn hóa từ bí mật sang không dấu để kiểm tra
+        // Logic kiểm tra: Chuẩn hóa từ bí mật sang không dấu để kiểm tra
         const wordNoDiacritics = removeDiacritics(game.word).toUpperCase();
         
         if (!wordNoDiacritics.includes(letter)) {
@@ -208,6 +200,7 @@ module.exports = {
         }
     }
 };
+
 
 
 
