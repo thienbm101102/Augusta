@@ -9,14 +9,14 @@ const express = require("express");
 const app = express();
 const db = require('./db');
 
-// Khởi tạo web server cho Render Healthcheck
 app.get("/", (req, res) => {
-  res.set("Content-Type", "text/plain"); // trả về text thuần
-  res.status(200).send("OK");            // chỉ gửi "OK"
+  res.setHeader("Content-Type", "text/plain; charset=utf-8");
+  res.status(200).send("✅ Qiuyuan Bot đang hoạt động!");
 });
 
-app.listen(process.env.PORT || 10000, () => {
-  console.log(`🌐 Web server is running on port ${process.env.PORT || 10000}`);
+const PORT = process.env.PORT || 10000;
+app.listen(PORT, () => {
+  console.log(`🌐 Web server đã khởi động tại cổng ${PORT}`);
 });
 
 const client = new Client({
