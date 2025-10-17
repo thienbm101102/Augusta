@@ -72,7 +72,7 @@ module.exports = {
             const answerEmbed = new EmbedBuilder()
                 .setColor(0x0099FF)
                 .setTitle(`**<a:Verified:1406631971509243974> Trợ Lý Ảo Qiuyuan From 「 ✦ Áp Lực Chơi Game ✦ 」**`)
-                .setDescription(`**<a:AbbyFlower:1393909312761364541> Câu hỏi:** ${userQuestion}\n---------------------\n**🤖 Phản hồi:**\n${replyText}`)
+                .setDescription(`**<a:AbbyFlower:1393909312761364541> Câu hỏi:** ${userQuestion}\n---------------------\n**<a:AbbyHappy:1393909327848538122> Phản hồi:**\n${replyText}`)
                 .setFooter({ text: 'Phản hồi được tạo bởi Qiuyuan, có thể đúng hoặc sai nên hãy kiểm tra lại nhé !!!' });
 
             await interaction.editReply({ embeds: [answerEmbed] });
@@ -88,4 +88,5 @@ module.exports = {
         }
     },
 }; // <-- Dấu đóng cuối cùng đảm bảo không bị lỗi SyntaxError
+
 
