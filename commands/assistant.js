@@ -56,11 +56,15 @@ module.exports = {
 
 
             // 4. GỌI API GEMINI VỚI CÚ PHÁP ĐÚNG
+            const systemInstruction = "Bạn là trợ lý AI thông minh và chính xác. Luôn trả lời bằng tiếng Việt. Câu trả lời của bạn phải ngắn gọn, chỉ tập trung vào thông tin được hỏi, và tránh cung cấp thông tin mơ hồ hoặc không liên quan. Nếu bạn không chắc chắn, hãy trả lời 'Tôi không có đủ thông tin để trả lời chính xác.'";
+            
             const response = await ai.models.generateContent({
                 model: 'gemini-2.5-flash',
                 config: {
                     // Đặt nhiệt độ thấp để tăng độ chính xác của câu trả lời
-                    temperature: 0.2
+                    temperature: 0.1,
+                    topP: 0.8,
+                    systemInstruction: systemInstruction,
                 },
                 // SỬA LỖI CÚ PHÁP: Cấu trúc contents phải là array of objects
                 contents: [{ role: "user", parts: [{ text: fullPrompt }] }],
@@ -88,5 +92,6 @@ module.exports = {
         }
     },
 }; // <-- Dấu đóng cuối cùng đảm bảo không bị lỗi SyntaxError
+
 
 
