@@ -24,16 +24,17 @@ async function getAIResponse(prompt) {
 
     // Sử dụng mô hình gemini-2.5-flash cho phản hồi nhanh và hiệu quả
     const response = await ai.models.generateContent({
-    model: 'gemini-2.5-flash',
-    config: {
-        // Đặt nhiệt độ thấp để tăng độ chính xác, giảm sự sáng tạo
-        temperature: 0.2
-    },
-    // SỬA: Chỉ định contents một lần duy nhất với cấu trúc đối tượng
-    // Chúng ta sử dụng fullPrompt (đã chứa ngữ cảnh ngày/giờ)
-    contents: [{ role: "user", parts: [{ text: fullPrompt }] }], 
-});
+                model: 'gemini-2.5-flash',
+                config: {
+                    // Đặt nhiệt độ thấp để tăng độ chính xác của câu trả lời
+                    temperature: 0.2
+                },
+                // SỬA LỖI CÚ PHÁP: Cấu trúc contents phải là array of objects
+                contents: [{ role: "user", parts: [{ text: fullPrompt }] }],
+            });
 
+            const replyText = response.text;
+    
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('ask')
@@ -71,6 +72,7 @@ module.exports = {
         }
     },
 };
+
 
 
 
