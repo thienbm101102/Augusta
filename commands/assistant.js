@@ -24,7 +24,12 @@ async function getAIResponse(prompt) {
 
     // Sử dụng mô hình gemini-2.5-flash cho phản hồi nhanh và hiệu quả
     const response = await ai.models.generateContent({
-        model: 'gemini-2.5-flash', 
+        model: 'gemini-2.5-flash',
+        contents: fullPrompt,
+        config: {
+        // Đặt nhiệt độ thấp để tăng độ chính xác, giảm sự sáng tạo
+        temperature: 0.2
+        }
         // Gửi prompt dưới dạng nội dung người dùng
         contents: [{ role: "user", parts: [{ text: prompt }] }],
     });
@@ -71,6 +76,7 @@ module.exports = {
         }
     },
 };
+
 
 
 
