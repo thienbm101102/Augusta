@@ -7,7 +7,7 @@ const { GoogleGenAI } = require('@google/genai');
 // Khởi tạo client AI
 // CHÚ Ý: Đảm bảo bạn đã đặt biến môi trường process.env.GEMINI_API_KEY
 // Bot sẽ sử dụng khóa API từ biến môi trường này.
-const ai = new GoogleGenAI(process.env.GEMINI_API_KEY); 
+const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
 // ----------------------------------------------------------------
 // HÀM GỌI API GEMINI THỰC TẾ
@@ -71,3 +71,4 @@ module.exports = {
         }
     },
 };
+
