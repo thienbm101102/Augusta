@@ -94,8 +94,8 @@ module.exports = {
       .setColor('Blue');
 
     const row = new ActionRowBuilder().addComponents(
-      new ButtonBuilder().setCustomId('xizach_hit').setLabel('Rút 🃏').setStyle(ButtonStyle.Primary),
-      new ButtonBuilder().setCustomId('xizach_stand').setLabel('Dằn ✋').setStyle(ButtonStyle.Danger)
+      new ButtonBuilder().setCustomId('xizach_hit').setLabel('Rút Thêm 🃏').setStyle(ButtonStyle.Primary),
+      new ButtonBuilder().setCustomId('xizach_stand').setLabel('Dằn Bài ✋').setStyle(ButtonStyle.Danger)
     );
 
     await interaction.reply({ embeds: [embed], components: [row] });
@@ -218,4 +218,5 @@ module.exports = {
     }
   }
 };
+
 
