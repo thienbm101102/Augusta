@@ -11,6 +11,7 @@
     "canvas": "^3.2.0",
     "date-fns": "^4.1.0",
     "discord.js": "^14.15.3",
+    "@google/genai": "^0.15.0",
     "dotenv": "^17.2.1",
     "fs-extra": "^11.2.0",
     "node-cron": "^4.2.1",
