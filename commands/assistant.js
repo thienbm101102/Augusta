@@ -18,6 +18,10 @@ const ai = new GoogleGenAI({
 });
 // --- KẾT THÚC KHỞI TẠO ---
 
+// --- LỜI NHẮC HỆ THỐNG TỐI ƯU ĐỘ CHÍNH XÁC ---
+const systemInstruction = "Bạn là trợ lý AI thông minh và chính xác. Luôn trả lời bằng tiếng Việt. Câu trả lời của bạn phải ngắn gọn, chỉ tập trung vào thông tin được hỏi, và tránh cung cấp thông tin mơ hồ hoặc không liên quan. Nếu bạn không chắc chắn về thông tin, hãy sử dụng tính năng tra cứu thông tin (Google Search).";
+// --- KẾT THÚC LỜI NHẮC ---
+
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -56,8 +60,6 @@ module.exports = {
 
 
             // 4. GỌI API GEMINI VỚI CÚ PHÁP ĐÚNG
-            const systemInstruction = "Bạn là trợ lý AI thông minh và chính xác. Luôn trả lời bằng tiếng Việt. Câu trả lời của bạn phải ngắn gọn, chỉ tập trung vào thông tin được hỏi, và tránh cung cấp thông tin mơ hồ hoặc không liên quan. Nếu bạn không chắc chắn, hãy trả lời 'Tôi không có đủ thông tin để trả lời chính xác.'";
-            
             const response = await ai.models.generateContent({
                 model: 'gemini-2.5-flash',
                 config: {
@@ -66,6 +68,7 @@ module.exports = {
                     topP: 0.8,
                     systemInstruction: systemInstruction,
                 },
+                tools: [{ googleSearch: {} }],
                 // SỬA LỖI CÚ PHÁP: Cấu trúc contents phải là array of objects
                 contents: [{ role: "user", parts: [{ text: fullPrompt }] }],
             });
@@ -92,6 +95,7 @@ module.exports = {
         }
     },
 }; // <-- Dấu đóng cuối cùng đảm bảo không bị lỗi SyntaxError
+
 
 
 
