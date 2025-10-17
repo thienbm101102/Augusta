@@ -4,8 +4,8 @@
   "main": "index.js",
   "type": "commonjs",
   "scripts": {
-    "deploy": "node deploy-commands.js",
-    "start": "node index.js"
+    "deploy": "node deploy-commands.cjs",
+    "start": "node index.cjs"
   },
   "dependencies": {
     "canvas": "^3.2.0",
