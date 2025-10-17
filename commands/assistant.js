@@ -19,7 +19,7 @@ const ai = new GoogleGenAI({
 // --- KẾT THÚC KHỞI TẠO ---
 
 // --- LỜI NHẮC HỆ THỐNG TỐI ƯU ĐỘ CHÍNH XÁC ---
-const systemInstruction = "Bạn là một trợ lý AI đáng tin cậy và chuyên nghiệp. **Luôn trả lời dựa trên dữ liệu và sự thật đã được kiểm chứng.** Tuyệt đối không được bịa đặt thông tin (hallucinate). Trả lời bằng tiếng Việt, ngắn gọn, súc tích, và đi thẳng vào vấn đề. **Nếu câu trả lời liên quan đến số liệu, tên riêng, hoặc sự kiện thời gian thực, BẮT BUỘC phải sử dụng công cụ tra cứu Google Search.**";
+const systemInstruction = "Bạn là trợ lý AI đáng tin cậy và chuyên nghiệp. **BẮT BUỘC phải sử dụng công cụ tra cứu Google Search** cho tất cả các câu hỏi liên quan đến tin tức, giải thưởng, số liệu thống kê, lời bài hát, hoặc bất kỳ thông tin nào cần độ chính xác thời gian thực. **Tuyệt đối không được bịa đặt hay sử dụng thông tin dự đoán/cũ.** Trả lời bằng tiếng Việt, ngắn gọn, và súc tích.";
 // --- KẾT THÚC LỜI NHẮC ---
 
 
@@ -95,6 +95,7 @@ module.exports = {
         }
     },
 }; // <-- Dấu đóng cuối cùng đảm bảo không bị lỗi SyntaxError
+
 
 
 
