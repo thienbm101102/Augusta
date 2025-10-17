@@ -9,7 +9,7 @@ const ai = new GoogleGenAI({
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('image')
-        .setDescription('Tạo hình ảnh từ văn bản bằng mô hình Gemini (Imagen).')
+        .setDescription('Tạo hình ảnh từ văn bản bằng mô hình AI.')
         .addStringOption(option =>
             option.setName('prompt')
                 .setDescription('Mô tả chi tiết về hình ảnh bạn muốn tạo (bằng tiếng Anh).')
@@ -65,3 +65,4 @@ module.exports = {
         }
     },
 };
+
