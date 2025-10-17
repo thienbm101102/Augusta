@@ -1,29 +1,62 @@
-// commands/assistant.js
-
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
-// Thêm thư viện GoogleGenAI
 const { GoogleGenAI } = require('@google/genai');
 
-// Khởi tạo client AI
-// CHÚ Ý: Đảm bảo bạn đã đặt biến môi trường process.env.GEMINI_API_KEY
-// Bot sẽ sử dụng khóa API từ biến môi trường này.
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+// --- CÀI ĐẶT DAYJS VÀ MÚI GIỜ ---
+const dayjs = require('dayjs');
+const utc = require('dayjs/plugin/utc');
+const timezone = require('dayjs/plugin/timezone');
 
-// ----------------------------------------------------------------
-// HÀM GỌI API GEMINI THỰC TẾ
-// ----------------------------------------------------------------
-/**
- * Gọi API Gemini để lấy câu trả lời chi tiết.
- * @param {string} prompt Câu hỏi của người dùng.
- * @returns {Promise<string>} Câu trả lời từ AI.
- */
-async function getAIResponse(prompt) {
-    if (!process.env.GEMINI_API_KEY) {
-        return "❌ Lỗi cấu hình: Không tìm thấy khóa API Gemini (GEMINI_API_KEY). Vui lòng thiết lập khóa API để Trợ Lý Ảo hoạt động.";
-    }
+dayjs.extend(utc);
+dayjs.extend(timezone);
+// --- KẾT THÚC CÀI ĐẶT DAYJS ---
 
-    // Sử dụng mô hình gemini-2.5-flash cho phản hồi nhanh và hiệu quả
-    const response = await ai.models.generateContent({
+
+// --- KHỞI TẠO GOOGLE GENAI ---
+// Đảm bảo GEMINI_API_KEY đã được thiết lập trong biến môi trường Render
+const ai = new GoogleGenAI({ 
+    apiKey: process.env.GEMINI_API_KEY 
+});
+// --- KẾT THÚC KHỞI TẠO ---
+
+
+module.exports = {
+    data: new SlashCommandBuilder()
+        .setName('ask') // Hoặc /assistant, tùy thuộc bạn muốn gọi lệnh là gì
+        .setDescription('Hỏi trợ lý AI bất kỳ câu hỏi nào.')
+        .addStringOption(option =>
+            option.setName('question')
+                .setDescription('Nội dung câu hỏi của bạn')
+                .setRequired(true)),
+
+    async execute(interaction) {
+        // Trả lời ngay lập tức để tránh lỗi timeout
+        await interaction.deferReply();
+
+        // 1. Kiểm tra Khóa API
+        if (!process.env.GEMINI_API_KEY) {
+            const errorEmbed = new EmbedBuilder()
+                .setColor(0xFF0000)
+                .setTitle('❌ Lỗi Cấu hình')
+                .setDescription('Không tìm thấy khóa API Gemini (GEMINI_API_KEY). Vui lòng thiết lập khóa API để Trợ Lý Ảo hoạt động.');
+            
+            return interaction.editReply({ embeds: [errorEmbed] });
+        }
+
+
+        try {
+            const userQuestion = interaction.options.getString('question');
+
+            // 2. Lấy ngày hiện tại theo giờ Việt Nam
+            // Lệnh này đảm bảo bot luôn biết ngày/giờ chính xác theo múi giờ bạn muốn.
+            const vnTime = dayjs().tz('Asia/Ho_Chi_Minh').format('dddd, D [tháng] M [năm] YYYY');
+            
+            // 3. Xây dựng Full Prompt bằng cách chèn ngữ cảnh thời gian
+            const dateContext = `Dựa trên thông tin thời gian thực: Hiện tại là ${vnTime} theo múi giờ Việt Nam (UTC+7).`;
+            const fullPrompt = `${dateContext}\n\nCâu hỏi của người dùng là: ${userQuestion}`;
+
+
+            // 4. GỌI API GEMINI VỚI CÚ PHÁP ĐÚNG
+            const response = await ai.models.generateContent({
                 model: 'gemini-2.5-flash',
                 config: {
                     // Đặt nhiệt độ thấp để tăng độ chính xác của câu trả lời
@@ -34,47 +67,24 @@ async function getAIResponse(prompt) {
             });
 
             const replyText = response.text;
-    
-module.exports = {
-    data: new SlashCommandBuilder()
-        .setName('ask')
-        .setDescription('Hỏi Trợ Lý Ảo bất cứ điều gì bạn muốn!')
-        .addStringOption(option =>
-            option.setName('prompt')
-                .setDescription('Nội dung câu hỏi của bạn dành cho Trợ Lý Ảo.')
-                .setRequired(true)),
-    
-    async execute(interaction, client) {
-        const prompt = interaction.options.getString('prompt');
-        
-        // Hoãn trả lời vì gọi API AI mất thời gian
-        await interaction.deferReply(); 
-
-        try {
-            const aiResponse = await getAIResponse(prompt);
-
-            const embed = new EmbedBuilder()
-                .setTitle(`<a:Verified:1406631971509243974> **Trợ Lý Qiuyuan From「 ✦ Áp Lực Chơi Game ✦ 」**`)
-                .setDescription(`**<a:AbbyGive:1393909321263222856> Câu hỏi của bạn:** *${prompt}*\n------------\n**<a:AbbyHappy:1393909327848538122> Phản hồi:**\n${aiResponse}`)
-                .setColor('#FF5733') 
-                .setFooter({ text: `Hỏi bởi ${interaction.member.displayName}` })
-                .setTimestamp();
             
-            await interaction.editReply({ embeds: [embed] });
+            // Tạo Embed và phản hồi
+            const answerEmbed = new EmbedBuilder()
+                .setColor(0x0099FF)
+                .setTitle(`🤖 Trợ Lý Ảo Gemini`)
+                .setDescription(`**❓ Câu hỏi:** ${userQuestion}\n\n---\n\n${replyText}`)
+                .setFooter({ text: 'Phản hồi được tạo bởi Google Gemini' });
+
+            await interaction.editReply({ embeds: [answerEmbed] });
 
         } catch (error) {
-            // Ghi lỗi chi tiết ra console để dễ dàng debug
-            console.error("Lỗi khi gọi API AI (Gemini):", error);
-            await interaction.editReply({ 
-                content: '❌ Rất tiếc, đã xảy ra lỗi khi cố gắng kết nối với dịch vụ AI. Vui lòng kiểm tra console log để xem chi tiết lỗi.', 
-                ephemeral: true 
-            });
+            console.error("Lỗi khi gọi API Gemini:", error);
+            const errorEmbed = new EmbedBuilder()
+                .setColor(0xFF0000)
+                .setTitle('❌ Lỗi Xử lý API')
+                .setDescription('Trợ Lý Ảo đang gặp lỗi nội bộ khi xử lý câu hỏi của bạn. Vui lòng kiểm tra log hoặc thử lại sau.');
+            
+            await interaction.editReply({ embeds: [errorEmbed] });
         }
     },
-};
-
-
-
-
-
-
+}; // <-- Dấu đóng cuối cùng đảm bảo không bị lỗi SyntaxError
