@@ -37,7 +37,7 @@ async function getAIResponse(prompt) {
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('ask')
-        .setDescription('🧠 Hỏi Trợ Lý Ảo bất cứ điều gì bạn muốn!')
+        .setDescription('Hỏi Trợ Lý Ảo bất cứ điều gì bạn muốn!')
         .addStringOption(option =>
             option.setName('prompt')
                 .setDescription('Nội dung câu hỏi của bạn dành cho Trợ Lý Ảo.')
@@ -71,4 +71,5 @@ module.exports = {
         }
     },
 };
+
 
