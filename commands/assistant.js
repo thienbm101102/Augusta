@@ -80,7 +80,7 @@ module.exports = {
                 .setColor(0x0099FF)
                 .setTitle(`**<a:Verified:1406631971509243974> Trợ Lý Ảo Của「 ✦ Áp Lực Chơi Game ✦ 」**`)
                 .setDescription(`**Câu hỏi:** *${userQuestion}*\n---\n**Trả lời:**\n*${replyText}*`)
-                .setFooter({ text: 'Câu trả lời được tạo bởi trợ lý Qiuyuan, có thể đúng hoặc có sai sót nên hãy kiểm tra lại nhé !!!' });
+                .setFooter({ text: 'Câu trả lời được tạo bởi AI, có thể đúng hoặc sai sót nên hãy kiểm tra lại nhé !!!' });
 
             await interaction.editReply({ embeds: [answerEmbed] });
 
@@ -95,6 +95,7 @@ module.exports = {
         }
     },
 }; // <-- Dấu đóng cuối cùng đảm bảo không bị lỗi SyntaxError
+
 
 
 
