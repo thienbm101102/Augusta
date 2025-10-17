@@ -71,9 +71,9 @@ module.exports = {
             // Tạo Embed và phản hồi
             const answerEmbed = new EmbedBuilder()
                 .setColor(0x0099FF)
-                .setTitle(`🤖 Trợ Lý Ảo Gemini`)
-                .setDescription(`**❓ Câu hỏi:** ${userQuestion}\n\n---\n\n${replyText}`)
-                .setFooter({ text: 'Phản hồi được tạo bởi Google Gemini' });
+                .setTitle(`**<a:Verified:1406631971509243974> Trợ Lý Ảo Qiuyuan From 「 ✦ Áp Lực Chơi Game ✦ 」**`)
+                .setDescription(`**<a:AbbyFlower:1393909312761364541> Câu hỏi:** ${userQuestion}\n---------------------\n**🤖 Phản hồi:**\n${replyText}`)
+                .setFooter({ text: 'Phản hồi được tạo bởi Qiuyuan, có thể đúng hoặc sai nên hãy kiểm tra lại nhé !!!' });
 
             await interaction.editReply({ embeds: [answerEmbed] });
 
@@ -88,3 +88,4 @@ module.exports = {
         }
     },
 }; // <-- Dấu đóng cuối cùng đảm bảo không bị lỗi SyntaxError
+
