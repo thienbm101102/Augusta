@@ -1,11 +1,11 @@
 {
   "name": "blackjack-bot",
   "version": "1.0.0",
-  "main": "index.cjs",
+  "main": "index.js",
   "type": "commonjs",
   "scripts": {
-    "deploy": "node deploy-commands.cjs",
-    "start": "node index.cjs"
+    "deploy": "node deploy-commands.js",
+    "start": "node index.js"
   },
   "dependencies": {
     "canvas": "^3.2.0",
