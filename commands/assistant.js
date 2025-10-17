@@ -53,8 +53,8 @@ module.exports = {
             const aiResponse = await getAIResponse(prompt);
 
             const embed = new EmbedBuilder()
-                .setTitle(`<a:Verified:1406631971509243974> **Trợ Lý Qiuyuan /「 ✦ Áp Lực Chơi Game ✦ 」**`)
-                .setDescription(`**❓ Câu hỏi của bạn:** *${prompt}*\n\n---\n\n**<a:AbbyHappy:1393909327848538122> Phản hồi:**\n${aiResponse}`)
+                .setTitle(`<a:Verified:1406631971509243974> **Trợ Lý Qiuyuan  /「 ✦ Áp Lực Chơi Game ✦ 」**`)
+                .setDescription(`**❓ Câu hỏi của bạn:** *${prompt}*\n------------\n**<a:AbbyHappy:1393909327848538122> Phản hồi:**\n${aiResponse}`)
                 .setColor('#FF5733') 
                 .setFooter({ text: `Hỏi bởi ${interaction.member.displayName}` })
                 .setTimestamp();
@@ -71,7 +71,3 @@ module.exports = {
         }
     },
 };
-
-
-
-
