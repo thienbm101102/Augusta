@@ -1,7 +1,7 @@
 const { SlashCommandBuilder, EmbedBuilder } require 'discord.js';
 const fs require 'fs';
 
-export default {
+module.default = {
   data: new SlashCommandBuilder()
     .setName('confess')
     .setDescription('Gửi một confession ẩn danh')
