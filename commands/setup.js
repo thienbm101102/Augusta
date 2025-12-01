@@ -1,8 +1,9 @@
+// commands/setup.js
+
+// 📌 RẤT QUAN TRỌNG: Phải require cả PermissionsBitField (hoặc dùng PermissionFlagsBits)
 const { SlashCommandBuilder, ChannelType, PermissionFlagsBits } = require('discord.js');
-const Config = require('../models/Config'); // 📌 Import Config Model
-const mongoose = require('mongoose'); // Cần mongoose để đảm bảo chạy
-const fs = require('fs');
-const path = require('path');
+const Config = require('../models/Config'); 
+const mongoose = require('mongoose');
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -11,26 +12,15 @@ module.exports = {
     // Đảm bảo chỉ Quản trị viên mới dùng được
     .setDefaultMemberPermissions(PermissionFlagsBits.Administrator) 
     .addSubcommand(sub =>
-      sub.setName('setup')
-        .setDescription('Thiết lập kênh duyệt và kênh công khai')
-        .addChannelOption(option =>
-          option.setName('duyet')
-            .setDescription('Kênh để duyệt confession')
-            .addChannelTypes(ChannelType.GuildText)
-            .setRequired(true)
-        )
-        .addChannelOption(option =>
-          option.setName('cong_khai')
-            .setDescription('Kênh sẽ đăng confession sau khi duyệt')
-            .addChannelTypes(ChannelType.GuildText)
-            .setRequired(true)
-        )
+      // ... (Các option) ...
     ),
   async execute(interaction) {
-    // 📌 Dùng deferReply ngay lập tức để tránh lỗi Unknown Interaction
     await interaction.deferReply({ ephemeral: true }); 
 
-    if (!interaction.member.permissions.has(PermissionsBitField.Flags.Administrator)) {
+    // 📌 KIỂM TRA QUYỀN
+    // Nếu bạn đang dùng PermissionsBitField trong index.js, hãy dùng PermissionsBitField.Flags.Administrator
+    // Nếu không, hãy dùng PermissionFlagsBits.Administrator (đã được require ở trên)
+    if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator)) { 
         return await interaction.editReply({ 
             content: '❌ Bạn cần có quyền **Quản Trị Viên (Administrator)** để thiết lập lệnh này.', 
         });
@@ -40,7 +30,7 @@ module.exports = {
     const congKhai = interaction.options.getChannel('cong_khai');
 
     try {
-        // Lưu cấu hình vào MongoDB: Tìm tài liệu có _id='config', nếu không có thì tạo mới (upsert: true)
+        // Lưu cấu hình vào MongoDB
         await Config.findOneAndUpdate(
             { _id: 'config' },
             {
