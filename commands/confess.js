@@ -1,5 +1,5 @@
-import { SlashCommandBuilder, EmbedBuilder } from 'discord.js';
-import fs from 'fs';
+const { SlashCommandBuilder, EmbedBuilder } require 'discord.js';
+const fs require 'fs';
 
 export default {
   data: new SlashCommandBuilder()
