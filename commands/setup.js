@@ -1,11 +1,12 @@
-import { SlashCommandBuilder, ChannelType, PermissionFlagsBits } from 'discord.js';
-import fs from 'fs';
+// setup.js (Chuyển sang CommonJS)
 
-export default {
+const { SlashCommandBuilder, ChannelType, PermissionFlagsBits } = require('discord.js');
+const fs = require('fs');
+
+module.exports = {
   data: new SlashCommandBuilder()
     .setName('confession')
     .setDescription('Thiết lập kênh confession')
-    // 📌 THAY ĐỔI 1: Chỉ người quản trị mới thấy và dùng được lệnh này
     .setDefaultMemberPermissions(PermissionFlagsBits.Administrator) 
     .addSubcommand(sub =>
       sub.setName('setup')
@@ -24,7 +25,6 @@ export default {
         )
     ),
   async execute(interaction) {
-    // 📌 THAY ĐỔI 2: Kiểm tra quyền lần nữa trong hàm execute
     if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
         return interaction.reply({ 
             content: '❌ Bạn cần có quyền **Quản Trị Viên (Administrator)** để thiết lập lệnh này.', 
@@ -40,7 +40,6 @@ export default {
       publicChannel: congKhai.id
     };
     
-    // Đảm bảo file config.json được lưu vào thư mục gốc của bot
     fs.writeFileSync('./config.json', JSON.stringify(config, null, 2));
     
     await interaction.reply({ 
