@@ -1,5 +1,5 @@
 const { SlashCommandBuilder, EmbedBuilder } require 'discord.js';
-const fs require 'fs';
+const fs require('fs');
 
 module.default = {
   data: new SlashCommandBuilder()
