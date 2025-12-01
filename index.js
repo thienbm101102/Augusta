@@ -1,5 +1,3 @@
-// index.js (Đã gộp từ index (1).js và index (2).js, chuyển tất cả sang CommonJS)
-
 const {
     Client,
     Collection,
@@ -25,12 +23,12 @@ const {
 const googleTTS = require("google-tts-api");
 const https = require("https");
 const { Readable } = require("stream");
-// Đảm bảo file db.js (nơi chứa mongoose schema) nằm đúng vị trí
-const db = require('./db'); 
+// 📌 Import Config Model
+const Config = require('./models/Config'); 
 
 // --- Web server giữ cho Render không ngủ ---
 const app = express();
-const PORT = process.env.PORT || 10000; // Dùng cổng từ file (1)
+const PORT = process.env.PORT || 10000;
 
 app.get("/", (req, res) => {
     res.setHeader("Content-Type", "text/plain; charset=utf-8");
@@ -45,14 +43,14 @@ app.listen(PORT, () => {
 const client = new Client({
     intents: [
         GatewayIntentBits.Guilds,
-        GatewayIntentBits.GuildVoiceStates, // Cần cho VoiceStateUpdate
+        GatewayIntentBits.GuildVoiceStates,
         GatewayIntentBits.GuildMessages,
         GatewayIntentBits.MessageContent,
         GatewayIntentBits.GuildMembers,
         GatewayIntentBits.GuildModeration,
         GatewayIntentBits.GuildPresences,
     ],
-    partials: [Partials.Channel], // Cần cho DirectMessages nếu dùng
+    partials: [Partials.Channel],
 });
 
 // --- Tải lệnh ---
@@ -61,10 +59,12 @@ const commandsPath = path.join(__dirname, 'commands');
 const commandFiles = fs.readdirSync(commandsPath).filter(file => file.endsWith('.js'));
 
 for (const file of commandFiles) {
-    // Sử dụng require cho CommonJS
     const command = require(path.join(commandsPath, file));
+    // Dùng .default nếu file lệnh vẫn còn dùng ES module syntax (cần chuyển sang module.exports để đồng bộ)
     if (command.data && command.execute) {
         client.commands.set(command.data.name, command);
+    } else if (command.default && command.default.data && command.default.execute) {
+        client.commands.set(command.default.data.name, command.default);
     }
 }
 
@@ -107,10 +107,9 @@ client.on('ready', async () => {
         console.log(`${guild.name} — ${guild.id}`);
     });
 
-    // 🚀 LOGIC THÊM TRẠNG THÁI HOẠT ĐỘNG
     client.user.setPresence({
         activities: [{
-            name: `/help để biết lệnh của BOT nhé ^^`, // Hoạt động hiển thị
+            name: `/help để biết lệnh của BOT nhé ^^`,
             type: 4, 
         }],
         status: 'online', 
@@ -129,15 +128,23 @@ client.on('interactionCreate', async interaction => {
             if (!command) return;
             await command.execute(interaction, client);
         } else if (interaction.isButton()) {
-            // Logic Confession (file 2) và logic chung (file 1)
             const [commandName, messageId] = interaction.customId.split(/[_-]/);
             const command = client.commands.get(commandName);
 
-            // Xử lý Confession (giả định cần file config.json)
+            // Xử lý Confession
             if (commandName === 'accept' || commandName === 'reject') { 
-                const config = JSON.parse(fs.readFileSync("./config.json", "utf8"));
                 
-                // Giả định logic quyền duyệt Confession từ file (2)
+                // 📌 Đọc cấu hình từ MongoDB thay vì file config.json
+                const config = await Config.findById('config');
+
+                if (!config) {
+                     return await interaction.reply({
+                        content: "❌ Cấu hình Confession chưa được thiết lập. Vui lòng chạy lệnh `/confession setup`.",
+                        ephemeral: true,
+                    });
+                }
+                
+                // Giả định logic quyền duyệt Confession
                 if (!interaction.memberPermissions.has(PermissionsBitField.Flags.ManageMessages)) {
                     return await interaction.reply({ content: "❌ Bạn không có quyền duyệt.", ephemeral: true });
                 }
@@ -160,6 +167,7 @@ client.on('interactionCreate', async interaction => {
                 await targetMsg.edit({ components: [disabledRow] });
 
                 if (commandName === 'accept') {
+                    // 📌 Dùng config.publicChannel từ MongoDB
                     const publicChannel = await client.channels.fetch(config.publicChannel).catch(() => null);
                     if (!publicChannel) return;
 
@@ -181,7 +189,7 @@ client.on('interactionCreate', async interaction => {
                     for (const emoji of emojis) await sent.react(emoji);
                 }
             } else if (command && typeof command.handleButton === 'function') {
-                // Logic xử lý nút bấm chung (file 1)
+                // Logic xử lý nút bấm chung
                 await command.handleButton(interaction);
             }
         } else if (interaction.isStringSelectMenu()) {
@@ -193,10 +201,22 @@ client.on('interactionCreate', async interaction => {
         }
     } catch (error) {
         console.error(error);
-        if (interaction.replied || interaction.deferred) {
-            await interaction.followUp({ content: '❌ Có lỗi xảy ra khi thực thi tương tác này!', ephemeral: true });
-        } else {
-            await interaction.reply({ content: '❌ Có lỗi xảy ra khi thực thi tương tác này!', ephemeral: true });
+        
+        // 📌 Xử lý lỗi Unknown interaction (10062) để ngăn crash và lỗi 503
+        if (error.code === 10062) {
+            console.warn('⚠️ Unknown Interaction (10062) - Đã bỏ qua lỗi tương tác hết hạn để tránh crash.');
+            return; 
+        }
+
+        // Khối catch chung
+        try {
+            if (interaction.replied || interaction.deferred) {
+                await interaction.followUp({ content: '❌ Có lỗi xảy ra khi thực thi tương tác này!', ephemeral: true });
+            } else {
+                await interaction.reply({ content: '❌ Có lỗi xảy ra khi thực thi tương tác này!', ephemeral: true });
+            }
+        } catch (responseError) {
+            console.error('❌ Lỗi thứ cấp khi cố gắng phản hồi lỗi:', responseError);
         }
     }
 });
