@@ -1,108 +1,286 @@
-// index.js
+// index.js (Đã gộp từ index (1).js và index (2).js, chuyển tất cả sang CommonJS)
 
-const { Client, Collection, GatewayIntentBits, MessageFlags, EmbedBuilder, AttachmentBuilder } = require('discord.js');
+const {
+    Client,
+    Collection,
+    GatewayIntentBits,
+    Partials,
+    EmbedBuilder,
+    PermissionsBitField,
+} = require('discord.js');
 const fs = require('fs');
 const path = require('path');
 const mongoose = require('mongoose');
 const cron = require('node-cron');
 const express = require("express");
+const {
+    joinVoiceChannel,
+    createAudioPlayer,
+    createAudioResource,
+    entersState,
+    AudioPlayerStatus,
+    VoiceConnectionStatus,
+    getVoiceConnection,
+} = require("@discordjs/voice");
+const googleTTS = require("google-tts-api");
+const https = require("https");
+const { Readable } = require("stream");
+// Đảm bảo file db.js (nơi chứa mongoose schema) nằm đúng vị trí
+const db = require('./db'); 
+
+// --- Web server giữ cho Render không ngủ ---
 const app = express();
-const db = require('./db');
+const PORT = process.env.PORT || 10000; // Dùng cổng từ file (1)
 
 app.get("/", (req, res) => {
-  res.setHeader("Content-Type", "text/plain; charset=utf-8");
-  res.status(200).send("✅ Qiuyuan Bot đang hoạt động!");
+    res.setHeader("Content-Type", "text/plain; charset=utf-8");
+    res.status(200).send("✅ Bot đang hoạt động!");
 });
 
-const PORT = process.env.PORT || 10000;
 app.listen(PORT, () => {
-  console.log(`🌐 Web server đã khởi động tại cổng ${PORT}`);
+    console.log(`🌐 Web server đã khởi động tại cổng ${PORT}`);
 });
 
+// --- Setup Discord client ---
 const client = new Client({
-  intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent, GatewayIntentBits.GuildMembers, GatewayIntentBits.GuildModeration, GatewayIntentBits.GuildPresences]
+    intents: [
+        GatewayIntentBits.Guilds,
+        GatewayIntentBits.GuildVoiceStates, // Cần cho VoiceStateUpdate
+        GatewayIntentBits.GuildMessages,
+        GatewayIntentBits.MessageContent,
+        GatewayIntentBits.GuildMembers,
+        GatewayIntentBits.GuildModeration,
+        GatewayIntentBits.GuildPresences,
+    ],
+    partials: [Partials.Channel], // Cần cho DirectMessages nếu dùng
 });
 
+// --- Tải lệnh ---
 client.commands = new Collection();
 const commandsPath = path.join(__dirname, 'commands');
 const commandFiles = fs.readdirSync(commandsPath).filter(file => file.endsWith('.js'));
 
 for (const file of commandFiles) {
-  const command = require(path.join(commandsPath, file));
-  if (command.data && command.execute) {
-    client.commands.set(command.data.name, command);
-  }
+    // Sử dụng require cho CommonJS
+    const command = require(path.join(commandsPath, file));
+    if (command.data && command.execute) {
+        client.commands.set(command.data.name, command);
+    }
 }
 
-// Hàm khởi động bot
+// --- Khởi động Bot & DB ---
 async function startBot() {
     try {
         console.log("🚀 Đang kết nối tới MongoDB...");
         await mongoose.connect(process.env.MONGODB_URI);
         console.log("✅ Đã kết nối thành công tới MongoDB.");
+        client.login(process.env.TOKEN);
     } catch (err) {
         console.error("❌ Failed to connect to MongoDB:", err);
     }
 }
 
-startBot();
+// Hàm phụ trợ cho TTS
+function streamFromUrl(url) {
+    return new Promise((resolve, reject) => {
+        https
+            .get(url, (res) => {
+                if (res.statusCode !== 200) {
+                    reject(new Error(`HTTP ${res.statusCode}`));
+                    return;
+                }
+                const stream = new Readable().wrap(res);
+                resolve(stream);
+            })
+            .on("error", reject);
+    });
+}
 
+
+// ------------------------------------------------------------------
+// --- Xử lý Sự kiện READY ---
+// ------------------------------------------------------------------
 client.on('ready', async () => {
-  console.log(`✅ Logged in as ${client.user.tag}`);
-  console.log('Bot đang ở các server:');
-  client.guilds.cache.forEach(guild => {
-    console.log(`${guild.name} — ${guild.id}`);
-  });
+    console.log(`✅ Logged in as ${client.user.tag}`);
+    console.log('Bot đang ở các server:');
+    client.guilds.cache.forEach(guild => {
+        console.log(`${guild.name} — ${guild.id}`);
+    });
 
-  // 🚀 LOGIC THÊM TRẠNG THÁI HOẠT ĐỘNG
-  client.user.setPresence({
-      activities: [{ 
-          name: `/help để biết lệnh của BOT nhé ^^`, // Hoạt động hiển thị
-          type: 4, // 0: PLAYING (Đang chơi), 1: STREAMING (Đang phát trực tiếp), 2: LISTENING (Đang nghe), 3: WATCHING (Đang xem), 4: CUSTOM (Tùy chỉnh), 5: COMPETING (Đang cạnh tranh)
-      }],
-      status: 'online', // online, idle, dnd, invisible
-  });
-  console.log('✅ Đã thiết lập trạng thái hoạt động của Bot.');
+    // 🚀 LOGIC THÊM TRẠNG THÁI HOẠT ĐỘNG
+    client.user.setPresence({
+        activities: [{
+            name: `/help để biết lệnh của BOT nhé ^^`, // Hoạt động hiển thị
+            type: 4, 
+        }],
+        status: 'online', 
+    });
+    console.log('✅ Đã thiết lập trạng thái hoạt động của Bot.');
 });
 
+
+// ------------------------------------------------------------------
+// --- Xử lý Tương tác (Interactions) ---
+// ------------------------------------------------------------------
 client.on('interactionCreate', async interaction => {
-  try {
-    if (interaction.isChatInputCommand()) {
-      const command = client.commands.get(interaction.commandName);
-      if (!command) return;
-      await command.execute(interaction, client);
-    } else if (interaction.isButton()) {
-      const [commandName] = interaction.customId.split(/[_-]/);
-      const command = client.commands.get(commandName);
+    try {
+        if (interaction.isChatInputCommand()) {
+            const command = client.commands.get(interaction.commandName);
+            if (!command) return;
+            await command.execute(interaction, client);
+        } else if (interaction.isButton()) {
+            // Logic Confession (file 2) và logic chung (file 1)
+            const [commandName, messageId] = interaction.customId.split(/[_-]/);
+            const command = client.commands.get(commandName);
 
-      if (command && typeof command.handleButton === 'function') {
-        await command.handleButton(interaction);
-      }
-    } else if (interaction.isStringSelectMenu()) {
-      const [commandName] = interaction.customId.split(/[_-]/);
-      const command = client.commands.get(commandName);
-      if (command && typeof command.handleSelectMenu === 'function') {
-        await command.handleSelectMenu(interaction);
-      }
+            // Xử lý Confession (giả định cần file config.json)
+            if (commandName === 'accept' || commandName === 'reject') { 
+                const config = JSON.parse(fs.readFileSync("./config.json", "utf8"));
+                
+                // Giả định logic quyền duyệt Confession từ file (2)
+                if (!interaction.memberPermissions.has(PermissionsBitField.Flags.ManageMessages)) {
+                    return await interaction.reply({ content: "❌ Bạn không có quyền duyệt.", ephemeral: true });
+                }
+
+                await interaction.deferUpdate();
+
+                const targetMsg = await interaction.channel.messages.fetch(messageId).catch(() => null);
+                if (!targetMsg) return;
+
+                const originalContent = targetMsg.embeds[0]?.description || "Không rõ nội dung";
+
+                // disable nút sau khi bấm
+                const disabledRow = {
+                    type: 1,
+                    components: targetMsg.components[0].components.map((btn) => ({
+                        ...btn.data,
+                        disabled: true,
+                    })),
+                };
+                await targetMsg.edit({ components: [disabledRow] });
+
+                if (commandName === 'accept') {
+                    const publicChannel = await client.channels.fetch(config.publicChannel).catch(() => null);
+                    if (!publicChannel) return;
+
+                    const embed = new EmbedBuilder()
+                        .setTitle("<a:AbbyPeak:1393909356625657876>**Confession Ẩn Danh**")
+                        .setDescription(originalContent)
+                        .setColor("Blue")
+                        .setFooter({ text: "Gửi bởi một ai đó trong máy chủ" })
+                        .setTimestamp();
+
+                    const sent = await publicChannel.send({ embeds: [embed] });
+                    const emojis = [
+                        "<a:AbbyPray:1393909359154696233>",
+                        "<a:AbbyShocked:1393909368138895411>",
+                        "<a:AbbyAngry:1393908721624551434>",
+                        "<a:AbbyExplain:1393909308554739732>",
+                        "<a:AbbyWOW:1393909383884439602>",
+                    ];
+                    for (const emoji of emojis) await sent.react(emoji);
+                }
+            } else if (command && typeof command.handleButton === 'function') {
+                // Logic xử lý nút bấm chung (file 1)
+                await command.handleButton(interaction);
+            }
+        } else if (interaction.isStringSelectMenu()) {
+            const [commandName] = interaction.customId.split(/[_-]/);
+            const command = client.commands.get(commandName);
+            if (command && typeof command.handleSelectMenu === 'function') {
+                await command.handleSelectMenu(interaction);
+            }
+        }
+    } catch (error) {
+        console.error(error);
+        if (interaction.replied || interaction.deferred) {
+            await interaction.followUp({ content: '❌ Có lỗi xảy ra khi thực thi tương tác này!', ephemeral: true });
+        } else {
+            await interaction.reply({ content: '❌ Có lỗi xảy ra khi thực thi tương tác này!', ephemeral: true });
+        }
     }
-  } catch (error) {
-    console.error(error);
-    if (interaction.replied || interaction.deferred) {
-      await interaction.followUp({ content: '❌ Có lỗi xảy ra khi thực thi tương tác này!', ephemeral: true });
-    } else {
-      await interaction.reply({ content: '❌ Có lỗi xảy ra khi thực thi tương tác này!', ephemeral: true });
-    }
-  }
 });
 
+
+// ------------------------------------------------------------------
+// --- Xử lý Tin nhắn (Message) ---
+// ------------------------------------------------------------------
 client.on('messageCreate', async message => {
     // 📌 Xử lý logic đoán số
     if (client.commands.has('doanso')) {
         const doansoCommand = client.commands.get('doanso');
-        if (message.content === 'doanso') {
+        // Chỉ kích hoạt nếu nội dung là 'doanso' (giả định)
+        if (message.content.toLowerCase() === 'doanso') { 
             await doansoCommand.execute(message, client);
         }
     }
 });
 
-client.login(process.env.TOKEN);
+
+// ------------------------------------------------------------------
+// --- Xử lý Voice State Update (TTS) ---
+// ------------------------------------------------------------------
+client.on("voiceStateUpdate", async (oldState, newState) => {
+    // Khi có user mới vào voice
+    if (
+        !oldState.channelId &&
+        newState.channelId &&
+        newState.member &&
+        !newState.member.user.bot
+    ) {
+        const member = newState.member;
+        const channel = newState.channel;
+
+        const text = `Chào mừng ${member.displayName} đã tham gia ${channel.name}!`;
+
+        console.log(`🟢 ${member.displayName} vào voice: ${channel.name} | Bot đọc: ${text}`);
+
+        const url = googleTTS.getAudioUrl(text, {
+            lang: "vi",
+            slow: false,
+            host: "https://translate.google.com",
+        });
+
+        const connection = joinVoiceChannel({
+            channelId: channel.id,
+            guildId: channel.guild.id,
+            adapterCreator: channel.guild.voiceAdapterCreator,
+            selfDeaf: false,
+        });
+
+        try {
+            await entersState(connection, VoiceConnectionStatus.Ready, 5_000);
+        } catch {
+            if (connection && !connection.destroyed) connection.destroy();
+            return;
+        }
+
+        const audioStream = await streamFromUrl(url);
+        const resource = createAudioResource(audioStream);
+        const player = createAudioPlayer();
+
+        connection.subscribe(player);
+        player.play(resource);
+
+        player.on(AudioPlayerStatus.Idle, () => {
+            // Bot sẽ không tự rời ngay sau khi đọc xong
+        });
+    }
+
+    // Nếu voice trống → bot rời
+    if (oldState.channelId && !newState.channelId && oldState.channel) {
+        const channel = oldState.channel;
+        const remaining = channel.members.filter((m) => !m.user.bot);
+
+        if (remaining.size === 0) {
+            const botConnection = getVoiceConnection(channel.guild.id);
+            if (botConnection && botConnection.state.status !== "destroyed") {
+                botConnection.destroy();
+                console.log("👋 Bot đã rời vì voice trống.");
+            }
+        }
+    }
+});
+
+// Khởi động bot (kết nối DB và login)
+startBot();
