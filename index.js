@@ -183,11 +183,11 @@ client.on('interactionCreate', async interaction => {
 
                     const sent = await publicChannel.send({ embeds: [embed] });
                     const emojis = [
-                        "<a:AbbyPray:1393909359154696233>",
-                        "<a:AbbyShocked:1393909368138895411>",
-                        "<a:AbbyAngry:1393908721624551434>",
-                        "<a:AbbyExplain:1393909308554739732>",
-                        "<a:AbbyWOW:1393909383884439602>",
+                        "👍",
+                        "❤️",
+                        "😂",
+                        "😭",
+                        "🔥",
                     ];
                     for (const emoji of emojis) await sent.react(emoji);
                 }
