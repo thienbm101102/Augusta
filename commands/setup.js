@@ -1,25 +1,34 @@
 // commands/setup.js
 
-// 📌 RẤT QUAN TRỌNG: Phải require cả PermissionsBitField (hoặc dùng PermissionFlagsBits)
 const { SlashCommandBuilder, ChannelType, PermissionFlagsBits } = require('discord.js');
+// 📌 Đảm bảo đường dẫn này đúng:
 const Config = require('../models/Config'); 
-const mongoose = require('mongoose');
 
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('confession')
     .setDescription('Thiết lập kênh confession')
-    // Đảm bảo chỉ Quản trị viên mới dùng được
     .setDefaultMemberPermissions(PermissionFlagsBits.Administrator) 
     .addSubcommand(sub =>
-      // ... (Các option) ...
-    ),
+      sub.setName('setup')
+        .setDescription('Thiết lập kênh duyệt và kênh công khai')
+        .addChannelOption(option =>
+          option.setName('duyet')
+            .setDescription('Kênh để duyệt confession')
+            .addChannelTypes(ChannelType.GuildText)
+            .setRequired(true)
+        ) // <-- Dấu đóng ngoặc của addChannelOption
+        .addChannelOption(option =>
+          option.setName('cong_khai')
+            .setDescription('Kênh sẽ đăng confession sau khi duyệt')
+            .addChannelTypes(ChannelType.GuildText)
+            .setRequired(true)
+        ) // <-- Dấu đóng ngoặc của addChannelOption (Dòng này có thể là dòng 16 gây lỗi)
+    ), // <-- Dấu đóng ngoặc của addSubcommand
+  
   async execute(interaction) {
     await interaction.deferReply({ ephemeral: true }); 
 
-    // 📌 KIỂM TRA QUYỀN
-    // Nếu bạn đang dùng PermissionsBitField trong index.js, hãy dùng PermissionsBitField.Flags.Administrator
-    // Nếu không, hãy dùng PermissionFlagsBits.Administrator (đã được require ở trên)
     if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator)) { 
         return await interaction.editReply({ 
             content: '❌ Bạn cần có quyền **Quản Trị Viên (Administrator)** để thiết lập lệnh này.', 
@@ -30,7 +39,7 @@ module.exports = {
     const congKhai = interaction.options.getChannel('cong_khai');
 
     try {
-        // Lưu cấu hình vào MongoDB
+        // LƯU VÀO MONGODB
         await Config.findOneAndUpdate(
             { _id: 'config' },
             {
@@ -41,10 +50,10 @@ module.exports = {
         );
         
         await interaction.editReply({ 
-            content: `✅ Đã thiết lập thành công! Cấu hình kênh đã được **lưu vào MongoDB**.\n- Kênh Duyệt: ${duyet}\n- Kênh Công Khai: ${congKhai}`, 
+            content: `✅ Đã thiết lập thành công! Cấu hình Confession đã được **lưu vào MongoDB**.\n- Kênh Duyệt: ${duyet}\n- Kênh Công Khai: ${congKhai}`, 
         });
     } catch (error) {
-        console.error("❌ Lỗi khi lưu cấu hình vào MongoDB:", error);
+        console.error("❌ Lỗi khi lưu cấu hình Confession vào MongoDB:", error);
         await interaction.editReply({
             content: `❌ Lỗi: Không thể lưu cấu hình vào DB. Chi tiết lỗi: ${error.message}`,
         });
