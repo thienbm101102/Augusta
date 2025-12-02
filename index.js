@@ -1,3 +1,5 @@
+// index.js (Đã sửa lỗi, thêm TTS, và chuẩn bị MongoDB)
+
 const {
     Client,
     Collection,
@@ -5,6 +7,7 @@ const {
     Partials,
     EmbedBuilder,
     PermissionsBitField,
+    ChannelType, // Cần cho TTS
 } = require('discord.js');
 const fs = require('fs');
 const path = require('path');
@@ -23,12 +26,13 @@ const {
 const googleTTS = require("google-tts-api");
 const https = require("https");
 const { Readable } = require("stream");
-// 📌 Import Config Model
+
+// 📌 THAY THẾ require('./db') bằng require('./models/Config')
 const Config = require('./models/Config'); 
 
 // --- Web server giữ cho Render không ngủ ---
 const app = express();
-const PORT = process.env.PORT || 10000;
+const PORT = process.env.PORT || 10000; 
 
 app.get("/", (req, res) => {
     res.setHeader("Content-Type", "text/plain; charset=utf-8");
@@ -43,9 +47,9 @@ app.listen(PORT, () => {
 const client = new Client({
     intents: [
         GatewayIntentBits.Guilds,
-        GatewayIntentBits.GuildVoiceStates,
+        GatewayIntentBits.GuildVoiceStates, // Cần cho VoiceStateUpdate & TTS
         GatewayIntentBits.GuildMessages,
-        GatewayIntentBits.MessageContent,
+        GatewayIntentBits.MessageContent, // Cần cho TTS
         GatewayIntentBits.GuildMembers,
         GatewayIntentBits.GuildModeration,
         GatewayIntentBits.GuildPresences,
@@ -59,12 +63,19 @@ const commandsPath = path.join(__dirname, 'commands');
 const commandFiles = fs.readdirSync(commandsPath).filter(file => file.endsWith('.js'));
 
 for (const file of commandFiles) {
-    const command = require(path.join(commandsPath, file));
-    // Dùng .default nếu file lệnh vẫn còn dùng ES module syntax (cần chuyển sang module.exports để đồng bộ)
-    if (command.data && command.execute) {
-        client.commands.set(command.data.name, command);
-    } else if (command.default && command.default.data && command.default.execute) {
-        client.commands.set(command.default.data.name, command.default);
+    try {
+        // Nếu file dùng ES Module (như setup.js bạn gửi), nó sẽ có .default
+        let command = require(path.join(commandsPath, file));
+        if (command.default) { 
+            command = command.default;
+        }
+
+        // Tải lệnh CommonJS hoặc ES Module đã xử lý
+        if (command.data && command.execute) {
+            client.commands.set(command.data.name, command);
+        }
+    } catch (e) {
+        console.error(`❌ Lỗi khi tải lệnh ${file}. Vui lòng kiểm tra cú pháp:`, e);
     }
 }
 
@@ -98,18 +109,14 @@ function streamFromUrl(url) {
 
 
 // ------------------------------------------------------------------
-// --- Xử lý Sự kiện READY ---
+// --- Xử lý Sự kiện READY (Giữ nguyên) ---
 // ------------------------------------------------------------------
 client.on('ready', async () => {
     console.log(`✅ Logged in as ${client.user.tag}`);
-    console.log('Bot đang ở các server:');
-    client.guilds.cache.forEach(guild => {
-        console.log(`${guild.name} — ${guild.id}`);
-    });
-
+    // ... (logic trạng thái hoạt động giữ nguyên) ...
     client.user.setPresence({
         activities: [{
-            name: `/help để biết lệnh của BOT nhé ^^`,
+            name: `/help để biết lệnh của BOT nhé ^^`, 
             type: 4, 
         }],
         status: 'online', 
@@ -119,32 +126,26 @@ client.on('ready', async () => {
 
 
 // ------------------------------------------------------------------
-// --- Xử lý Tương tác (Interactions) ---
+// --- Xử lý Tương tác (Interactions) (Cần sửa Confession sau) ---
 // ------------------------------------------------------------------
 client.on('interactionCreate', async interaction => {
     try {
         if (interaction.isChatInputCommand()) {
             const command = client.commands.get(interaction.commandName);
             if (!command) return;
+            // Nếu lệnh setup vẫn dùng ES Module, cần gọi .default
             await command.execute(interaction, client);
         } else if (interaction.isButton()) {
             const [commandName, messageId] = interaction.customId.split(/[_-]/);
             const command = client.commands.get(commandName);
 
-            // Xử lý Confession
+            // Xử lý Confession (TẠM THỜI BỎ ĐỌC config.json)
             if (commandName === 'accept' || commandName === 'reject') { 
-                
-                // 📌 Đọc cấu hình từ MongoDB thay vì file config.json
-                const config = await Config.findById('config');
+                // ⚠️ THAY THẾ CONFIG.JSON BẰNG DB:
+                const config = await Config.findById('config'); // 📌 Lấy cấu hình từ DB
+                if (!config) return interaction.reply({ content: '❌ Cấu hình Confession chưa được thiết lập (chạy /confession setup).', ephemeral: true });
 
-                if (!config) {
-                     return await interaction.reply({
-                        content: "❌ Cấu hình Confession chưa được thiết lập. Vui lòng chạy lệnh `/confession setup`.",
-                        ephemeral: true,
-                    });
-                }
                 
-                // Giả định logic quyền duyệt Confession
                 if (!interaction.memberPermissions.has(PermissionsBitField.Flags.ManageMessages)) {
                     return await interaction.reply({ content: "❌ Bạn không có quyền duyệt.", ephemeral: true });
                 }
@@ -167,8 +168,7 @@ client.on('interactionCreate', async interaction => {
                 await targetMsg.edit({ components: [disabledRow] });
 
                 if (commandName === 'accept') {
-                    // 📌 Dùng config.publicChannel từ MongoDB
-                    const publicChannel = await client.channels.fetch(config.publicChannel).catch(() => null);
+                    const publicChannel = await client.channels.fetch(config.publicChannel).catch(() => null); // 📌 Dùng config.publicChannel từ DB
                     if (!publicChannel) return;
 
                     const embed = new EmbedBuilder()
@@ -202,34 +202,87 @@ client.on('interactionCreate', async interaction => {
     } catch (error) {
         console.error(error);
         
-        // 📌 Xử lý lỗi Unknown interaction (10062) để ngăn crash và lỗi 503
+        // Thêm bắt lỗi Unknown interaction (10062)
         if (error.code === 10062) {
             console.warn('⚠️ Unknown Interaction (10062) - Đã bỏ qua lỗi tương tác hết hạn để tránh crash.');
             return; 
         }
 
-        // Khối catch chung
-        try {
-            if (interaction.replied || interaction.deferred) {
-                await interaction.followUp({ content: '❌ Có lỗi xảy ra khi thực thi tương tác này!', ephemeral: true });
-            } else {
-                await interaction.reply({ content: '❌ Có lỗi xảy ra khi thực thi tương tác này!', ephemeral: true });
-            }
-        } catch (responseError) {
-            console.error('❌ Lỗi thứ cấp khi cố gắng phản hồi lỗi:', responseError);
+        if (interaction.replied || interaction.deferred) {
+            await interaction.followUp({ content: '❌ Có lỗi xảy ra khi thực thi tương tác này!', ephemeral: true });
+        } else {
+            await interaction.reply({ content: '❌ Có lỗi xảy ra khi thực thi tương tác này!', ephemeral: true });
         }
     }
 });
 
 
 // ------------------------------------------------------------------
-// --- Xử lý Tin nhắn (Message) ---
+// --- Xử lý Tin nhắn (Message) - THÊM LOGIC ĐỌC TIN NHẮN (TTS) ---
 // ------------------------------------------------------------------
 client.on('messageCreate', async message => {
-    // 📌 Xử lý logic đoán số
+    // Ngăn bot phản hồi chính nó, hệ thống hoặc lệnh slash
+    if (message.author.bot || message.system || message.content.startsWith('/')) return; 
+
+    // --- LOGIC ĐỌC TIN NHẮN (TTS) ---
+    try {
+        const config = await Config.findById('config');
+        
+        // 1. Kiểm tra xem tin nhắn có nằm trong kênh TTS đã cấu hình không
+        if (config && config.ttsTextChannel === message.channel.id) {
+            
+            // 2. TÌM KÊNH THOẠI CỦA NGƯỜI GỬI
+            const memberVoiceChannel = message.member.voice.channel;
+            
+            if (!memberVoiceChannel || memberVoiceChannel.type !== ChannelType.GuildVoice) {
+                // Người gửi không ở trong kênh thoại, bỏ qua TTS
+                return;
+            }
+
+            // 3. Chuẩn bị text
+            let text = message.content;
+            if (text.length > 200) { 
+                text = text.substring(0, 200) + '...';
+            }
+            // Thêm tên người gửi vào text
+            text = `${message.member.displayName} nói: ${text}`;
+            
+            console.log(`TTS: Đọc tin nhắn từ ${message.author.tag} trong kênh ${message.channel.name}`);
+
+            // 4. Kết nối và phát (tham gia kênh của người gửi)
+            const connection = joinVoiceChannel({
+                channelId: memberVoiceChannel.id,
+                guildId: memberVoiceChannel.guild.id,
+                adapterCreator: memberVoiceChannel.guild.voiceAdapterCreator,
+                selfDeaf: false,
+            });
+
+            await entersState(connection, VoiceConnectionStatus.Ready, 5_000);
+
+            const url = googleTTS.getAudioUrl(text, {
+                lang: "vi",
+                slow: false,
+                host: "https://translate.google.com",
+            });
+            
+            const audioStream = await streamFromUrl(url);
+            const resource = createAudioResource(audioStream);
+            const player = createAudioPlayer();
+
+            connection.subscribe(player);
+            player.play(resource);
+
+            // Bot không tự rời ngay sau khi đọc, logic voiceStateUpdate sẽ xử lý
+        }
+    } catch (e) {
+        console.error("❌ Lỗi khi thực thi logic TTS:", e);
+    }
+
+
+    // 📌 Xử lý logic đoán số (Giữ nguyên)
     if (client.commands.has('doanso')) {
         const doansoCommand = client.commands.get('doanso');
-        // Chỉ kích hoạt nếu nội dung là 'doanso' (giả định)
+        // Chỉ kích hoạt nếu nội dung là 'doanso'
         if (message.content.toLowerCase() === 'doanso') { 
             await doansoCommand.execute(message, client);
         }
@@ -238,9 +291,10 @@ client.on('messageCreate', async message => {
 
 
 // ------------------------------------------------------------------
-// --- Xử lý Voice State Update (TTS) ---
+// --- Xử lý Voice State Update (TTS Chào/Rời - Giữ nguyên) ---
 // ------------------------------------------------------------------
 client.on("voiceStateUpdate", async (oldState, newState) => {
+    // ... (logic chào và rời kênh giữ nguyên) ...
     // Khi có user mới vào voice
     if (
         !oldState.channelId &&
