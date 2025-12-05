@@ -101,7 +101,7 @@ module.exports = {
     const framePath = path.join(__dirname, "../assets/frames", frameFile);
     if (fs.existsSync(framePath)) {
       const frame = await Canvas.loadImage(framePath);
-      const frameOffsetY = 95;
+      const frameOffsetY = 85;
       ctx.drawImage(
         frame,
         ax - avatarR - framePadding,
