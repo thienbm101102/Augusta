@@ -183,7 +183,7 @@ module.exports = {
 
     ctx.font = `14px ${FONT_FAMILY}`;
     ctx.fillStyle = "#888888";
-    ctx.fillText("© Copyright © 2025 / ✦ Đơn Giản Là Nơi Để Chơi ✦", 280, 215);
+    ctx.fillText("© Design by neiht9073 / ✦ Đơn Giản Là Nơi Để Chơi ✦", 280, 215);
 
     const attachment = new AttachmentBuilder(canvas.toBuffer("image/png"), {
       name: "taisan.png",
