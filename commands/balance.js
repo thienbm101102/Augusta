@@ -87,7 +87,7 @@ module.exports = {
     const avatarR = 60;
 
     const avatar = await Canvas.loadImage(
-      targetUser.displayAvatarURL({ extension: "png", size: 246 })
+      targetUser.displayAvatarURL({ extension: "png", size: 128 })
     );
     ctx.save();
     ctx.beginPath();
