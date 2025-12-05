@@ -87,7 +87,7 @@ module.exports = {
     const avatarR = 60;
 
     const avatar = await Canvas.loadImage(
-      targetUser.displayAvatarURL({ extension: "png", size: 256 })
+      targetUser.displayAvatarURL({ extension: "png", size: 246 })
     );
     ctx.save();
     ctx.beginPath();
@@ -97,7 +97,7 @@ module.exports = {
     ctx.drawImage(avatar, ax - avatarR, ay - avatarR, avatarR * 2, avatarR * 2);
     ctx.restore();
 
-    const framePadding = 110;
+    const framePadding = 100;
     const framePath = path.join(__dirname, "../assets/frames", frameFile);
     if (fs.existsSync(framePath)) {
       const frame = await Canvas.loadImage(framePath);
@@ -183,7 +183,7 @@ module.exports = {
 
     ctx.font = `14px ${FONT_FAMILY}`;
     ctx.fillStyle = "#888888";
-    ctx.fillText("© Copyright © 2025 / ✦ Áp Lực Chơi Game ✦", 280, 215);
+    ctx.fillText("© Copyright © 2025 / ✦ Đơn Giản Là Nơi Để Chơi ✦", 280, 215);
 
     const attachment = new AttachmentBuilder(canvas.toBuffer("image/png"), {
       name: "taisan.png",
