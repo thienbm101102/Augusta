@@ -97,7 +97,7 @@ module.exports = {
     ctx.drawImage(avatar, ax - avatarR, ay - avatarR, avatarR * 2, avatarR * 2);
     ctx.restore();
 
-    const framePadding = 100;
+    const framePadding = 90;
     const framePath = path.join(__dirname, "../assets/frames", frameFile);
     if (fs.existsSync(framePath)) {
       const frame = await Canvas.loadImage(framePath);
