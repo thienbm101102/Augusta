@@ -302,7 +302,7 @@ client.on("voiceStateUpdate", async (oldState, newState) => {
         const member = newState.member;
         const channel = newState.channel;
 
-        const text = `Chào mừng ${member.displayName} đã tham gia ${channel.name}!`;
+        const text = `${member.displayName} đã tham gia kênh thoại`;
 
         console.log(`🟢 ${member.displayName} vào voice: ${channel.name} | Bot đọc: ${text}`);
 
