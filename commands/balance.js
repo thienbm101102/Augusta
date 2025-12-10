@@ -43,10 +43,10 @@ CanvasRenderingContext2D.prototype.roundRect = function (x, y, w, h, r) {
 const ANIMATED_BANNERS = {
     // Tên banner: [Tên các frame PNG trong thư mục assets/banners]
     galaxy: [
-        "galaxy_1.png",
-        "galaxy_2.png",
-        "galaxy_3.png",
-        "galaxy_4.png",
+        "home_1.jpg",
+        "home_2.jpg",
+        "home_3.jpg",
+        "home_4.jpg",
     ],
     // Nếu bạn có banner động khác, thêm vào đây
 };
