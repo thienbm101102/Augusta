@@ -9,7 +9,7 @@ module.exports = {
         const commandList = commands.map(command => `\`/${command.data.name}\`: ${command.data.description}`).join('\n');
 
         const embed = new EmbedBuilder()
-            .setTitle('<a:Verified:1406631971509243974> **Danh Sách Lệnh của BOT**')
+            .setTitle('<a:VerifiedTwitter:1418649004912148511> **Danh Sách Lệnh của BOT**')
             .setDescription(`Dưới đây là tất cả các lệnh bạn có thể sử dụng. Nếu bạn muốn biết thêm chi tiết về một lệnh cụ thể, hãy nhập lệnh đó và xem các tùy chọn.\n\n${commandList}`)
             .setColor('#3498db')
             .setTimestamp();
@@ -17,4 +17,5 @@ module.exports = {
         await interaction.reply({ embeds: [embed] });
     },
 };
+
 
