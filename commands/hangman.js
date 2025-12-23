@@ -69,7 +69,7 @@ function updateEmbed(game) {
         .setColor('#e74c3c')
         .setTitle('<a:Verified:1406631971509243974> **Đoán Từ**')
         .setDescription(
-            `**Tiền cược:** **${game.bet.toLocaleString()}**<a:diamondgem:1402590496647413811>\n` +
+            `**Tiền cược:** **${game.bet.toLocaleString()}**<a:diamondgem:1418649012289933434>\n` +
             `**Trạng thái:** ${wrongGuessesDisplay}\n\n` +
             `**Từ bí mật:** ${hiddenWord}\n\n` +
             `**Các chữ đã đoán:** ${game.guessedLetters.join(', ') || 'Chưa đoán chữ nào'}\n\n` +
@@ -78,11 +78,11 @@ function updateEmbed(game) {
     
     // Xử lý khi Game Over
     if (game.incorrectGuesses >= MAX_INCORRECT_GUESSES) {
-        embed.setDescription(`Bạn đã thua! Từ đúng là: **${game.word}**\n\nBạn đã mất **${game.bet.toLocaleString()}**<a:diamondgem:1402590496647413811> đã đặt cược.`);
+        embed.setDescription(`Bạn đã thua! Từ đúng là: **${game.word}**\n\nBạn đã mất **${game.bet.toLocaleString()}**<a:diamondgem:1418649012289933434> đã đặt cược.`);
         embed.setColor('#c0392b');
     } else if (!hiddenWord.includes('_')) {
         const reward = game.bet * 2;
-        embed.setDescription(`Chúc mừng! Bạn đã đoán đúng từ: **${game.word}**\n\nBạn đã thắng **${reward.toLocaleString()}**<a:diamondgem:1402590496647413811>! (Lợi nhuận **${game.bet.toLocaleString()}**<a:diamondgem:1402590496647413811>)`);
+        embed.setDescription(`Chúc mừng! Bạn đã đoán đúng từ: **${game.word}**\n\nBạn đã thắng **${reward.toLocaleString()}**<a:diamondgem:1418649012289933434>! (Lợi nhuận **${game.bet.toLocaleString()}**<a:diamondgem:1418649012289933434>)`);
         embed.setColor('#2ecc71');
     }
     
@@ -108,7 +108,7 @@ module.exports = {
         const balance = await getBalance(userId);
         if (balance < bet) {
             return interaction.reply({ 
-                content: `❌ Bạn không đủ **${bet.toLocaleString()}**<a:diamondgem:1402590496647413811> để đặt cược. Số dư hiện tại: **${balance.toLocaleString()}**<a:diamondgem:1402590496647413811>`, 
+                content: `❌ Bạn không đủ **${bet.toLocaleString()}**<a:diamondgem:1418649012289933434> để đặt cược. Số dư hiện tại: **${balance.toLocaleString()}**<a:diamondgem:1418649012289933434>`, 
                 ephemeral: true 
             });
         }
@@ -191,7 +191,7 @@ module.exports = {
             await addBalance(userId, reward);
             embed.setDescription(
                 `<a:AbbyHappy:1393909327848538122> Chúc mừng **${interaction.member.displayName}** đã đoán đúng từ: **${game.word}**\n\n` +
-                `Bạn đã thắng **${reward.toLocaleString()}**<a:diamondgem:1402590496647413811> (bao gồm cả tiền cược **${game.bet.toLocaleString()}**). Lợi nhuận: **${game.bet.toLocaleString()}**<a:diamondgem:1402590496647413811>`
+                `Bạn đã thắng **${reward.toLocaleString()}**<a:diamondgem:1418649012289933434> (bao gồm cả tiền cược **${game.bet.toLocaleString()}**). Lợi nhuận: **${game.bet.toLocaleString()}**<a:diamondgem:1418649012289933434>`
             );
             await interaction.editReply({ embeds: [embed], components: [] });
         } else {
@@ -200,4 +200,5 @@ module.exports = {
         }
     }
 };
+
 
