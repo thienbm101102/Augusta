@@ -68,7 +68,7 @@ module.exports = {
                 const newBalance = await getBalance(userId);
 
                 const embed = new EmbedBuilder()
-                    .setTitle('**<a:Verified:1406631971509243974> Vay Tiền Thành Công**')
+                    .setTitle('**<a:VerifiedTwitter:1418649004912148511> Vay Tiền Thành Công**')
                     .setDescription(`Bạn đã vay thành công **${amount.toLocaleString()}**<a:diamondgem:1418649012289933434>.`)
                     .addFields(
                         { name: 'Số dư mới', value: `\`${newBalance.toLocaleString()}\`<a:diamondgem:1418649012289933434>`, inline: true },
@@ -99,7 +99,7 @@ module.exports = {
 
 
                 const embed = new EmbedBuilder()
-                    .setTitle('**<a:Verified:1406631971509243974> Trả Nợ Thành Công**')
+                    .setTitle('**<a:VerifiedTwitter:1418649004912148511> Trả Nợ Thành Công**')
                     .setDescription(`Bạn đã trả thành công **${amount.toLocaleString()}**<a:diamondgem:1418649012289933434>.`)
                     .addFields(
                         { name: 'Số dư mới', value: `\`${newBalance.toLocaleString()}\`<a:diamondgem:1418649012289933434>`, inline: true },
@@ -118,7 +118,7 @@ module.exports = {
                 const remainingHours = remainingTime > 0 ? Math.ceil(remainingTime / (1000 * 60 * 60)) : 0;
 
                 const embed = new EmbedBuilder()
-                    .setTitle('**<a:Verified:1406631971509243974> Thông Tin Ngân Hàng**')
+                    .setTitle('**<a:VerifiedTwitter:1418649004912148511> Thông Tin Ngân Hàng**')
                     .setDescription('Thông tin về nợ và khả năng vay của bạn')
                     .addFields(
                         { name: 'Nợ hiện tại', value: `\`${debt.toLocaleString()}\`<a:diamondgem:1418649012289933434>`, inline: false },
@@ -131,6 +131,7 @@ module.exports = {
         }
     }
 };
+
 
 
 
