@@ -42,7 +42,7 @@ class HorseRacingGame {
         const pot = Array.from(this.bets.values()).reduce((sum, bet) => sum + (bet.amount || 0), 0);
         const allBets = Array.from(this.bets.entries())
             .filter(([_, bet]) => bet.horseIndex !== null && bet.amount !== null)
-            .map(([userId, bet]) => `<@${userId}> đã cược **${bet.amount.toLocaleString()}**<a:diamondgem:1402590496647413811> vào **${HORSE_NAMES[bet.horseIndex]}**`)
+            .map(([userId, bet]) => `<@${userId}> đã cược **${bet.amount.toLocaleString()}**<a:diamondgem:1418649012289933434> vào **${HORSE_NAMES[bet.horseIndex]}**`)
             .join('\n') || 'Chưa có ai đặt cược';
 
         const embed = new EmbedBuilder()
@@ -57,7 +57,7 @@ class HorseRacingGame {
                 },
                 {
                     name: 'Tổng tiền cược',
-                    value: `\`${pot.toLocaleString()}\`<a:diamondgem:1402590496647413811>`,
+                    value: `\`${pot.toLocaleString()}\`<a:diamondgem:1418649012289933434>`,
                     inline: false
                 },
                 {
@@ -194,7 +194,7 @@ class HorseRacingGame {
             if (bet.horseIndex === winnerIndex) {
                 const winnings = Math.floor(bet.amount * winningOdds);
                 await addBalance(userId, winnings); // Cộng tiền thắng (tiền cược + lãi)
-                winners.push(`<@${userId}> (Thắng: ${winnings.toLocaleString()}<a:diamondgem:1402590496647413811>)`);
+                winners.push(`<@${userId}> (Thắng: ${winnings.toLocaleString()}<a:diamondgem:1418649012289933434>)`);
                 totalWinnings += winnings;
             }
         }
@@ -204,7 +204,7 @@ class HorseRacingGame {
             .setTitle('**<a:Verified:1406631971509243974> Kết Quả Cuộc Đua**')
             .setDescription(`Ngựa chiến thắng là: **${winnerEmoji} ${winnerName}**!`)
             .addFields(
-                { name: 'Tổng tiền thưởng', value: `${totalWinnings.toLocaleString()}<a:diamondgem:1402590496647413811>`, inline: false },
+                { name: 'Tổng tiền thưởng', value: `${totalWinnings.toLocaleString()}<a:diamondgem:1418649012289933434>`, inline: false },
                 { name: 'Người thắng', value: winners.length > 0 ? winners.join('\n') : 'Không có ai cả!', inline: false }
             )
             .setFooter({ text: 'Chúc bạn may mắn lần sau!' });
@@ -242,4 +242,5 @@ module.exports = {
         await game.handleBet(interaction);
     }
 };
+
 
