@@ -51,7 +51,7 @@ function createButtons(board, revealedCards) {
 function updateEmbed(game) {
     const embed = new EmbedBuilder()
         .setColor('#2ecc71')
-        .setTitle('**<a:Verified:1406631971509243974> Nối Hình**')
+        .setTitle('**<a:VerifiedTwitter:1418649004912148511> Nối Hình**')
         .setDescription(
             `Người chơi: **<@${game.originalPlayerId}>**\n` + 
             `Số tiền cược: **${game.bet.toLocaleString()}**<a:diamondgem:1418649012289933434>\n\n` +
@@ -118,7 +118,7 @@ module.exports = {
                 activeGames.delete(reply.id);
                 const timeoutEmbed = new EmbedBuilder()
                     .setColor('#c0392b')
-                    .setTitle('**<a:Verified:1406631971509243974> Hết Giờ!**')
+                    .setTitle('**<a:VerifiedTwitter:1418649004912148511> Hết Giờ!**')
                     .setDescription(
                         `Đáng tiếc, **<@${game.originalPlayerId}>** không thể hoàn thành game trong **${TIME_LIMIT_MINUTES} phút**!` +
                         `\n\nBạn đã mất **${game.bet.toLocaleString()}**<a:diamondgem:1418649012289933434>.`
@@ -199,6 +199,7 @@ module.exports = {
         }
     }
 };
+
 
 
 
