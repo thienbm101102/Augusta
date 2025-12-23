@@ -45,7 +45,7 @@ module.exports = {
     const userBalance = await getBalance(interaction.user.id);
     
     if (bet <= 0 || bet > userBalance) {
-      return interaction.reply('<a:AbbyCheers:1393909248076943380> Số <a:diamondgem:1402590496647413811> cược không hợp lệ hoặc không đủ, vui lòng kiếm thêm tiền!');
+      return interaction.reply('<a:AbbyCheers:1393909248076943380> Số <a:diamondgem:1418649012289933434> cược không hợp lệ hoặc không đủ, vui lòng kiếm thêm tiền!');
     }
 
     const deductionSuccess = await deductBalance(interaction.user.id, bet);
@@ -65,7 +65,7 @@ module.exports = {
       await addBalance(interaction.user.id, bet * 2);
       return interaction.reply({
         embeds: [new EmbedBuilder()
-          .setTitle(`**<a:Verified:1406631971509243974> Xì Zách | Số <a:diamondgem:1402590496647413811> Đặt ${bet}**`)
+          .setTitle(`**<a:VerifiedTwitter:1418649004912148511> Xì Zách | Số <a:diamondgem:1418649012289933434> Đặt ${bet}**`)
           .setDescription(`* **Bài Của Bạn:** ${playerHand.map(c => c.rank + c.suit).join(' ')} (2 Át)\n\n<a:AbbyWOW:1393909383884439602> Bạn đã thắng **2 ÁT**! Nhận được **${bet}**<a:diamondgem:1402590496647413811>`)
           .setColor('Gold')],
         components: []
@@ -76,7 +76,7 @@ module.exports = {
       await addBalance(interaction.user.id, bet * 2);
       return interaction.reply({
         embeds: [new EmbedBuilder()
-          .setTitle(`**<a:Verified:1406631971509243974> Xì Zách | Số <a:diamondgem:1402590496647413811> Đặt ${bet}**`)
+          .setTitle(`**<a:VerifiedTwitter:1418649004912148511> Xì Zách | Số <a:diamondgem:1418649012289933434> Đặt ${bet}**`)
           .setDescription(`* **Bài Của Bạn:** ${playerHand.map(c => c.rank + c.suit).join(' ')} (${playerVal})\n\n<a:AbbyWOW:1393909383884439602> Bạn đã thắng **XÌ DÁCH**! Nhận được **${bet}**<a:diamondgem:1402590496647413811>`)
           .setColor('Gold')],
         components: []
@@ -86,7 +86,7 @@ module.exports = {
     // Nếu không có trường hợp đặc biệt, tiếp tục game
     activeGames[interaction.user.id] = { bet, playerHand, dealerHand };
     const embed = new EmbedBuilder()
-      .setTitle(`**<a:Verified:1406631971509243974> Xì Zách | Số <a:diamondgem:1402590496647413811> Đặt ${bet}**`)
+      .setTitle(`**<a:VerifiedTwitter:1418649004912148511> Xì Zách | Số <a:diamondgem:1418649012289933434> Đặt ${bet}**`)
       .setDescription(
         `* **Bài Của Bạn:** ${playerHand.map(c => c.rank + c.suit).join(' ')} (**Tổng:** ${playerVal})\n` +
         `* **Bài Của BOT:** ${dealerHand[0].rank + dealerHand[0].suit} ???`
@@ -116,7 +116,7 @@ module.exports = {
       if (playerVal > 21) {
         delete activeGames[interaction.user.id];
         return interaction.update({
-          embeds: [new EmbedBuilder().setTitle(`**<a:Verified:1406631971509243974> Xì Zách | Số <a:diamondgem:1402590496647413811> Đặt ${bet}**`).setDescription(`* **Bài Của Bạn:** ${game.playerHand.map(c => c.rank + c.suit).join(' ')}  (${playerVal})\n\n<a:AbbyCry:1393909295665643540> Bạn đã thua ${bet}<a:diamondgem:1402590496647413811> do **QUẮC**`).setColor('Red')],
+          embeds: [new EmbedBuilder().setTitle(`**<a:VerifiedTwitter:1418649004912148511> Xì Zách | Số <a:diamondgem:1418649012289933434> Đặt ${bet}**`).setDescription(`* **Bài Của Bạn:** ${game.playerHand.map(c => c.rank + c.suit).join(' ')}  (${playerVal})\n\n<a:AbbyCry:1393909295665643540> Bạn đã thua ${bet}<a:diamondgem:1402590496647413811> do **QUẮC**`).setColor('Red')],
           components: []
         });
       }
@@ -125,13 +125,13 @@ module.exports = {
         await addBalance(interaction.user.id, bet * 2);
         delete activeGames[interaction.user.id];
         return interaction.update({
-          embeds: [new EmbedBuilder().setTitle(`**<a:Verified:1406631971509243974> Xì Zách | Số <a:diamondgem:1402590496647413811> Đặt ${bet}**`).setDescription(`* **Bài Của Bạn:** ${game.playerHand.map(c => c.rank + c.suit).join(' ')} (${playerVal})\n\n<a:AbbyWOW:1393909383884439602> Bạn đã thắng **NGŨ LINH**! Nhận được **${bet}**<a:diamondgem:1402590496647413811>`).setColor('Gold')],
+          embeds: [new EmbedBuilder().setTitle(`**<a:VerifiedTwitter:1418649004912148511> Xì Zách | Số <a:diamondgem:1418649012289933434> Đặt ${bet}**`).setDescription(`* **Bài Của Bạn:** ${game.playerHand.map(c => c.rank + c.suit).join(' ')} (${playerVal})\n\n<a:AbbyWOW:1393909383884439602> Bạn đã thắng **NGŨ LINH**! Nhận được **${bet}**<a:diamondgem:1402590496647413811>`).setColor('Gold')],
           components: []
         });
       }
       
       return interaction.update({
-        embeds: [new EmbedBuilder().setTitle(`**<a:Verified:1406631971509243974> Xì Zách | Số <a:diamondgem:1402590496647413811> Đặt ${bet}**`).setDescription(`* **Bài Của Bạn:** ${game.playerHand.map(c => c.rank + c.suit).join(' ')} (${playerVal})\n* **Bài Của BOT:** ${game.dealerHand[0].rank + game.dealerHand[0].suit} ???`).setColor('Green')],
+        embeds: [new EmbedBuilder().setTitle(`**<a:VerifiedTwitter:1418649004912148511> Xì Zách | Số <a:diamondgem:1418649012289933434> Đặt ${bet}**`).setDescription(`* **Bài Của Bạn:** ${game.playerHand.map(c => c.rank + c.suit).join(' ')} (${playerVal})\n* **Bài Của BOT:** ${game.dealerHand[0].rank + game.dealerHand[0].suit} ???`).setColor('Green')],
         components: interaction.message.components
       });
     }
@@ -192,12 +192,12 @@ module.exports = {
       
       if (isDraw) {
         await addBalance(interaction.user.id, bet);
-        result = `<a:AbbyFlower:1393909312761364541> Hòa, bạn được hoàn lại **${bet}**<a:diamondgem:1402590496647413811>`;
+        result = `<a:AbbyFlower:1393909312761364541> Hòa, bạn được hoàn lại **${bet}**<a:diamondgem:1418649012289933434>`;
       } else if (isWin) {
         await addBalance(interaction.user.id, bet * 2);
-        result = `<a:AbbyWOW:1393909383884439602> Bạn đã thắng! Nhận được **${bet}**<a:diamondgem:1402590496647413811>`;
+        result = `<a:AbbyWOW:1393909383884439602> Bạn đã thắng! Nhận được **${bet}**<a:diamondgem:1418649012289933434>`;
       } else {
-        result = `<a:AbbyCry:1393909295665643540> BOT đã thắng! Bạn bị mất **${bet}**<a:diamondgem:1402590496647413811>`;
+        result = `<a:AbbyCry:1393909295665643540> BOT đã thắng! Bạn bị mất **${bet}**<a:diamondgem:1418649012289933434>`;
       }
 
       delete activeGames[interaction.user.id];
@@ -207,7 +207,7 @@ module.exports = {
 
       return interaction.update({
         embeds: [new EmbedBuilder()
-          .setTitle(`**<a:Verified:1406631971509243974> Xì Zách | Số <a:diamondgem:1402590496647413811> Đặt ${bet}**`)
+          .setTitle(`**<a:VerifiedTwitter:1418649004912148511> Xì Zách | Số <a:diamondgem:1418649012289933434> Đặt ${bet}**`)
           .setDescription(
             `* **Bài Của Bạn:** ${game.playerHand.map(c => c.rank + c.suit).join(' ')} (${playerVal})\n` +
             `* **Bài Của BOT:** ${game.dealerHand.map(c => c.rank + c.suit).join(' ')} (${dealerVal})\n\n${result}`
@@ -218,5 +218,6 @@ module.exports = {
     }
   }
 };
+
 
 
