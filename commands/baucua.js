@@ -72,7 +72,7 @@ function createGameEmbed(game, time) {
         let totalBet = 0;
         for (const [animalKey, amount] of userBets.entries()) {
             // Sử dụng emoji đúng cách
-            betString += ` <${animals[animalKey].animated ? 'a' : ''}:${animals[animalKey].name}:${animals[animalKey].id}> **${amount.toLocaleString()}**<a:diamondgem:1402590496647413811>`;
+            betString += ` <${animals[animalKey].animated ? 'a' : ''}:${animals[animalKey].name}:${animals[animalKey].id}> **${amount.toLocaleString()}**<a:diamondgem:1418649012289933434>`;
             totalBet += amount;
         }
         betsByPlayer.set(userTag, { string: betString, total: totalBet });
@@ -201,7 +201,7 @@ module.exports = {
                 'may mắn quá trời!',
                 'trúng đậm rồi!'
             ];
-            winnerString += [...winners.entries()].map(([userId, amount]) => `<@${userId}>: Nhận **${amount.toLocaleString()}**<a:diamondgem:1402590496647413811> ${winnerPhrases[Math.floor(Math.random() * winnerPhrases.length)]}`).join('\n');
+            winnerString += [...winners.entries()].map(([userId, amount]) => `<@${userId}>: Nhận **${amount.toLocaleString()}**<a:diamondgem:1418649012289933434> ${winnerPhrases[Math.floor(Math.random() * winnerPhrases.length)]}`).join('\n');
         } else {
             winnerString += 'Không có ai';
         }
@@ -215,7 +215,7 @@ module.exports = {
                 'mất tiền rồi, huhu',
                 'cần buff thêm động lực để gỡ lại'
             ];
-            loserString += [...losers.entries()].map(([userId, amount]) => `<@${userId}>: **${Math.abs(amount).toLocaleString()}**<a:diamondgem:1402590496647413811> ${loserPhrases[Math.floor(Math.random() * loserPhrases.length)]}`).join('\n');
+            loserString += [...losers.entries()].map(([userId, amount]) => `<@${userId}>: **${Math.abs(amount).toLocaleString()}**<a:diamondgem:1418649012289933434> ${loserPhrases[Math.floor(Math.random() * loserPhrases.length)]}`).join('\n');
         } else {
             loserString += 'Không có ai';
         }
@@ -254,7 +254,7 @@ module.exports = {
         if (action === 'amount') {
             const amount = parseInt(value);
             playerCurrentBetAmount.set(userId, amount);
-            await interaction.followUp({ content: `Bạn đã chọn cược **${amount.toLocaleString()}**<a:diamondgem:1402590496647413811>. Bây giờ hãy chọn linh vật.`, ephemeral: true });
+            await interaction.followUp({ content: `Bạn đã chọn cược **${amount.toLocaleString()}**<a:diamondgem:1418649012289933434>. Bây giờ hãy chọn linh vật.`, ephemeral: true });
             return;
         }
 
@@ -263,7 +263,7 @@ module.exports = {
             const animal = value;
 
             if (userBalance < betAmount) {
-                return interaction.followUp({ content: `Bạn không đủ **${betAmount}**<a:diamondgem:1402590496647413811> để cược.`, ephemeral: true });
+                return interaction.followUp({ content: `Bạn không đủ **${betAmount}**<a:diamondgem:1418649012289933434> để cược.`, ephemeral: true });
             }
 
             // Ghi nhận cược
@@ -281,6 +281,7 @@ module.exports = {
         }
     },
 };
+
 
 
 
