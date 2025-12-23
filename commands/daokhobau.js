@@ -80,7 +80,7 @@ function createButtons(game) {
 
 function updateEmbed(game) {
     let description = `**Số lượt đào còn lại:** ${game.digsLeft}\n\n`;
-    description += `**Số tiền cược:** ${game.bet.toLocaleString()} <a:diamondgem:1402590496647413811>\n`;
+    description += `**Số tiền cược:** ${game.bet.toLocaleString()} <a:diamondgem:1418649012289933434>\n`;
     
     if (game.state === 'playing') {
         description += `Hãy nhấn vào ô bạn muốn đào!`;
@@ -125,7 +125,7 @@ module.exports = {
         const userBalance = await getBalance(interaction.user.id);
         
         if (userBalance < betAmount) {
-            return interaction.editReply({ content: `Bạn không có đủ **${betAmount.toLocaleString()}**<a:diamondgem:1402590496647413811> để cược.`, ephemeral: true });
+            return interaction.editReply({ content: `Bạn không có đủ **${betAmount.toLocaleString()}**<a:diamondgem:1418649012289933434> để cược.`, ephemeral: true });
         }
         
         await addBalance(interaction.user.id, -betAmount);
@@ -177,7 +177,7 @@ module.exports = {
             await addBalance(interaction.user.id, winnings);
             
             const updatedEmbed = updateEmbed(game);
-            updatedEmbed.setDescription(`<a:AbbyHappy:1393909327848538122> **Chúc mừng!** Bạn đã tìm thấy kho báu ${item.emoji} và nhận được **${winnings.toLocaleString()}**<a:diamondgem:1402590496647413811>`);
+            updatedEmbed.setDescription(`<a:AbbyHappy:1393909327848538122> **Chúc mừng!** Bạn đã tìm thấy kho báu ${item.emoji} và nhận được **${winnings.toLocaleString()}**<a:diamondgem:1418649012289933434>`);
 
             const updatedComponents = createButtons(game);
             updatedComponents.forEach(row => row.components.forEach(button => button.setDisabled(true)));
@@ -189,7 +189,7 @@ module.exports = {
             await addBalance(interaction.user.id, winnings);
             
             const updatedEmbed = updateEmbed(game);
-            updatedEmbed.setDescription(`${messageToUser} và nhận được **${winnings.toLocaleString()}**<a:diamondgem:1402590496647413811>.\n\nTiếp tục đào nào!`);
+            updatedEmbed.setDescription(`${messageToUser} và nhận được **${winnings.toLocaleString()}**<a:diamondgem:1418649012289933434>.\n\nTiếp tục đào nào!`);
             const updatedComponents = createButtons(game);
             await interaction.update({ embeds: [updatedEmbed], components: updatedComponents });
         } else if (item.type === 'money') {
@@ -197,7 +197,7 @@ module.exports = {
             await addBalance(interaction.user.id, winnings);
             
             const updatedEmbed = updateEmbed(game);
-            updatedEmbed.setDescription(`${messageToUser} và nhận được **${winnings.toLocaleString()}**<a:diamondgem:1402590496647413811>.\n\nTiếp tục đào nào!`);
+            updatedEmbed.setDescription(`${messageToUser} và nhận được **${winnings.toLocaleString()}**<a:diamondgem:1418649012289933434>.\n\nTiếp tục đào nào!`);
             const updatedComponents = createButtons(game);
             await interaction.update({ embeds: [updatedEmbed], components: updatedComponents });
         } else if (item.type === 'pickaxe') {
@@ -212,7 +212,7 @@ module.exports = {
             await addBalance(interaction.user.id, losses);
             
             const updatedEmbed = updateEmbed(game);
-            updatedEmbed.setDescription(`${messageToUser}! Bạn mất **${Math.abs(losses).toLocaleString()}**<a:diamondgem:1402590496647413811>. Game đã kết thúc`);
+            updatedEmbed.setDescription(`${messageToUser}! Bạn mất **${Math.abs(losses).toLocaleString()}**<a:diamondgem:1418649012289933434>. Game đã kết thúc`);
             
             const updatedComponents = createButtons(game);
             updatedComponents.forEach(row => row.components.forEach(button => button.setDisabled(true)));
@@ -224,7 +224,7 @@ module.exports = {
             if (game.digsLeft <= 0) {
                 game.state = 'lost';
                 const updatedEmbed = updateEmbed(game);
-                updatedEmbed.setDescription(`Hết lượt đào! Bạn đã thua và mất **${game.bet.toLocaleString()}**<a:diamondgem:1402590496647413811>`);
+                updatedEmbed.setDescription(`Hết lượt đào! Bạn đã thua và mất **${game.bet.toLocaleString()}**<a:diamondgem:1418649012289933434>`);
                 const updatedComponents = createButtons(game);
                 updatedComponents.forEach(row => row.components.forEach(button => button.setDisabled(true)));
                 await interaction.update({ embeds: [updatedEmbed], components: updatedComponents });
@@ -238,5 +238,6 @@ module.exports = {
         }
     }
 };
+
 
 
