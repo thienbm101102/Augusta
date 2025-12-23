@@ -92,7 +92,7 @@ module.exports = {
         const initialReel = `${spinning} ${spinning} ${spinning}`;
         const initialEmbed = new EmbedBuilder()
             .setColor('#FFFF00')
-            .setTitle('<a:mariospin:1411006690815643780> Trái Cây May Mắn <a:mariospin:1411006690815643780>')
+            .setTitle('<a:VerifiedTwitter:1418649004912148511> Trái Cây May Mắn')
             .setDescription('**Đang quay...**')
             .addFields(
                 { name: 'Ô số 1:', value: `\`\`\`\n${initialReel}\n\`\`\`` },
@@ -145,7 +145,7 @@ module.exports = {
         
         const finalEmbed = new EmbedBuilder()
             .setColor(winnings > 0 ? '#00ff00' : '#ff0000')
-            .setTitle('<a:mariospin:1411006690815643780> Trái Cây May Mắn <a:mariospin:1411006690815643780>')
+            .setTitle('<a:VerifiedTwitter:1418649004912148511> Trái Cây May Mắn <a:VerifiedTwitter:1418649004912148511>')
             .setDescription('**Bạn Đã Quay Được**')
             .addFields(
                 { name: 'Kết Quả:', value: `\`\`\`\n${finalReel.join(' ')}\n\`\`\`` },
@@ -159,4 +159,5 @@ module.exports = {
         await interaction.editReply({ embeds: [finalEmbed] });
     },
 };
+
 
