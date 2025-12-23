@@ -35,7 +35,7 @@ const lines = await Promise.all(
             console.warn(`[bangxephang] Không fetch được user ${user.userId}:`, e.message);
         }
 
-        return `${rankIcon} ${displayName} — **${user.balance.toLocaleString()}** <a:diamondgem:1402590496647413811>`;
+        return `${rankIcon} ${displayName} — **${user.balance.toLocaleString()}** <a:diamondgem:1418649012289933434>`;
     })
 );
 
