@@ -54,7 +54,7 @@ function updateEmbed(game) {
         .setTitle('**<a:Verified:1406631971509243974> Nối Hình**')
         .setDescription(
             `Người chơi: **<@${game.originalPlayerId}>**\n` + 
-            `Số tiền cược: **${game.bet.toLocaleString()}**<a:diamondgem:1402590496647413811>\n\n` +
+            `Số tiền cược: **${game.bet.toLocaleString()}**<a:diamondgem:1418649012289933434>\n\n` +
             `Bạn có **${TIME_LIMIT_MINUTES} phút** để hoàn thành game!\n\n`
         )
         .addFields(
@@ -87,7 +87,7 @@ module.exports = {
 
         if (userBalance < bet) {
             return interaction.editReply({
-                content: `Bạn không đủ tiền! Bạn cần **${bet}**<a:diamondgem:1402590496647413811> nhưng chỉ có **${userBalance}**<a:diamondgem:1402590496647413811>.`,
+                content: `Bạn không đủ tiền! Bạn cần **${bet}**<a:diamondgem:1418649012289933434> nhưng chỉ có **${userBalance}**<a:diamondgem:1418649012289933434>.`,
                 ephemeral: true
             });
         }
@@ -121,7 +121,7 @@ module.exports = {
                     .setTitle('**<a:Verified:1406631971509243974> Hết Giờ!**')
                     .setDescription(
                         `Đáng tiếc, **<@${game.originalPlayerId}>** không thể hoàn thành game trong **${TIME_LIMIT_MINUTES} phút**!` +
-                        `\n\nBạn đã mất **${game.bet.toLocaleString()}**<a:diamondgem:1402590496647413811>.`
+                        `\n\nBạn đã mất **${game.bet.toLocaleString()}**<a:diamondgem:1418649012289933434>.`
                     );
                 await interaction.editReply({ embeds: [timeoutEmbed], components: [] });
             }
@@ -175,7 +175,7 @@ module.exports = {
                 activeGames.delete(interaction.message.id);
                 addBalance(userId, game.winnings);
                 const finalEmbed = updateEmbed(game)
-                    .setDescription(`<a:AbbyHappy:1393909327848538122> Chúc mừng, **<@${game.originalPlayerId}>** đã thắng!\nBạn đã tìm được tất cả các cặp và nhận được **${game.winnings.toLocaleString()}**<a:diamondgem:1402590496647413811>!`)
+                    .setDescription(`<a:AbbyHappy:1393909327848538122> Chúc mừng, **<@${game.originalPlayerId}>** đã thắng!\nBạn đã tìm được tất cả các cặp và nhận được **${game.winnings.toLocaleString()}**<a:diamondgem:1418649012289933434>!`)
                     .setColor('#2ecc71');
                 await interaction.editReply({ embeds: [finalEmbed], components: [] });
             } else {
@@ -199,6 +199,7 @@ module.exports = {
         }
     }
 };
+
 
 
 
