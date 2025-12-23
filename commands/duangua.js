@@ -47,7 +47,7 @@ class HorseRacingGame {
 
         const embed = new EmbedBuilder()
             .setColor('#7289DA')
-            .setTitle('**<a:Verified:1406631971509243974> Cuộc Đua Ngựa Sắp Bắt Đầu!**')
+            .setTitle('**<a:VerifiedTwitter:1418649004912148511> Cuộc Đua Ngựa Sắp Bắt Đầu!**')
             .setDescription('Hãy chọn con ngựa bạn muốn cược và số tiền của bạn.')
             .addFields(
                 {
@@ -137,7 +137,7 @@ class HorseRacingGame {
 
         const racingEmbed = new EmbedBuilder()
             .setColor('#2ecc71')
-            .setTitle('**<a:Verified:1406631971509243974> Cuộc Đua Bắt Đầu!**')
+            .setTitle('**<a:VerifiedTwitter:1418649004912148511> Cuộc Đua Bắt Đầu!**')
             .setDescription(`Đường đua dài **${RACE_LENGTH}** bước!`)
             .addFields(
                 { name: 'Đường đua:', value: this.getRaceTrack(), inline: false }
@@ -201,7 +201,7 @@ class HorseRacingGame {
 
         const finalEmbed = new EmbedBuilder()
             .setColor('#3498db')
-            .setTitle('**<a:Verified:1406631971509243974> Kết Quả Cuộc Đua**')
+            .setTitle('**<a:VerifiedTwitter:1418649004912148511> Kết Quả Cuộc Đua**')
             .setDescription(`Ngựa chiến thắng là: **${winnerEmoji} ${winnerName}**!`)
             .addFields(
                 { name: 'Tổng tiền thưởng', value: `${totalWinnings.toLocaleString()}<a:diamondgem:1418649012289933434>`, inline: false },
@@ -242,5 +242,6 @@ module.exports = {
         await game.handleBet(interaction);
     }
 };
+
 
 
