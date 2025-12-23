@@ -49,7 +49,7 @@ module.exports = {
 
         if (userBalance < baitCost) {
             return interaction.editReply({
-                content: `🎣 Bạn không đủ tiền mồi! Bạn cần **${baitCost.toLocaleString()}**<a:diamondgem:1402590496647413811> nhưng chỉ có **${userBalance.toLocaleString()}**<a:diamondgem:1402590496647413811>.`,
+                content: `🎣 Bạn không đủ tiền mồi! Bạn cần **${baitCost.toLocaleString()}**<a:diamondgem:1418649012289933434> nhưng chỉ có **${userBalance.toLocaleString()}**<a:diamondgem:1418649012289933434>.`,
                 ephemeral: true
             });
         }
@@ -93,14 +93,15 @@ module.exports = {
             .setDescription(resultMessage)
             .addFields(
                 { name: 'Vật phẩm nhận:', value: `${loot.emoji} ${loot.name}`, inline: true },
-                { name: 'Thu về:', value: `${winnings.toLocaleString()}<a:diamondgem:1402590496647413811>`, inline: true },
-                { name: 'Số dư mới:', value: `${newBalance.toLocaleString()}<a:diamondgem:1402590496647413811>`, inline: true },
+                { name: 'Thu về:', value: `${winnings.toLocaleString()}<a:diamondgem:1418649012289933434>`, inline: true },
+                { name: 'Số dư mới:', value: `${newBalance.toLocaleString()}<a:diamondgem:1418649012289933434>`, inline: true },
             )
             .setFooter({ text: `Người câu: ${interaction.member.displayName}` });
 
         await interaction.editReply({ embeds: [finalEmbed] });
     },
 };
+
 
 
 
