@@ -421,7 +421,7 @@ module.exports = {
                         .setTitle(`<a:Verified:1406631971509243974> Mua Quái Vật Thành Công`)
                         .setDescription(`Bạn đã mua một **${monsterData.name}** ${monsterData.emoji}`)
                         .addFields(
-                            { name: 'Giá', value: `\`${monsterData.cost.toLocaleString()}\`<a:diamondgem:1402590496647413811>`, inline: true },
+                            { name: 'Giá', value: `\`${monsterData.cost.toLocaleString()}\`<a:diamondgem:1418649012289933434>`, inline: true },
                             { name: 'Chỉ số cơ bản', value: `Tấn công: ${monsterData.baseStats.attack}\nPhòng thủ: ${monsterData.baseStats.defense}\nMáu: ${monsterData.baseStats.hp}`, inline: false }
                         )
                         .setColor('#2ecc71');
@@ -438,7 +438,7 @@ module.exports = {
 
                     const userBalance = await getBalance(userId);
                     if (userBalance < equipmentData.cost) {
-                        return interaction.editReply({ content: `<a:AbbyShocked:1393909368138895411> Bạn không đủ tiền để mua **${equipmentData.name}**! Chi phí: **${equipmentData.cost.toLocaleString()}**<a:diamondgem:1402590496647413811>`, ephemeral: true });
+                        return interaction.editReply({ content: `<a:AbbyShocked:1393909368138895411> Bạn không đủ tiền để mua **${equipmentData.name}**! Chi phí: **${equipmentData.cost.toLocaleString()}**<a:diamondgem:1418649012289933434>`, ephemeral: true });
                     }
 
                     await addBalance(userId, -equipmentData.cost);
@@ -453,8 +453,8 @@ module.exports = {
                         .setTitle(`<a:Verified:1406631971509243974> Mua Trang Bị Thành Công`)
                         .setDescription(`Bạn đã mua một **${equipmentData.name}** ${equipmentData.emoji}`)
                         .addFields(
-                            { name: 'Chi phí', value: `\`${equipmentData.cost.toLocaleString()}\`<a:diamondgem:1402590496647413811>`, inline: true },
-                            { name: 'Số dư mới', value: `\`${(await getBalance(userId)).toLocaleString()}\`<a:diamondgem:1402590496647413811>`, inline: true },
+                            { name: 'Chi phí', value: `\`${equipmentData.cost.toLocaleString()}\`<a:diamondgem:1418649012289933434>`, inline: true },
+                            { name: 'Số dư mới', value: `\`${(await getBalance(userId)).toLocaleString()}\`<a:diamondgem:1418649012289933434>`, inline: true },
                         )
                         .setColor('#2ecc71');
                     return interaction.editReply({ embeds: [embed] });
@@ -564,11 +564,11 @@ module.exports = {
                     if (battleResult && battleResult.winner.id === yourMonsterCopy.id) {
                         await addBalance(userId, 500);
                         expGained = 15;
-                        resultMessage = `<a:AbbyHappy:1393909327848538122> **<@${userId}>** đã chiến thắng! Bạn nhận được **500**<a:diamondgem:1402590496647413811>!`;
+                        resultMessage = `<a:AbbyHappy:1393909327848538122> **<@${userId}>** đã chiến thắng! Bạn nhận được **500**<a:diamondgem:1418649012289933434>!`;
                     } else if (battleResult && battleResult.winner.id === opponentMonsterCopy.id) {
                         await addBalance(userId, -250);
                         expGained = 5;
-                        resultMessage = `<a:AbbyCry:1393909295665643540> **<@${opponentUser.id}>** đã chiến thắng! Bạn bị mất **250**<a:diamondgem:1402590496647413811>!`;
+                        resultMessage = `<a:AbbyCry:1393909295665643540> **<@${opponentUser.id}>** đã chiến thắng! Bạn bị mất **250**<a:diamondgem:1418649012289933434>!`;
                     } else {
                         expGained = 10;
                         resultMessage = `Trận đấu kết thúc với kết quả hòa. Không ai thắng hay thua.`;
@@ -642,3 +642,4 @@ module.exports = {
         }
     }
 };
+
