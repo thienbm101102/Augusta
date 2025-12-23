@@ -206,7 +206,7 @@ module.exports = {
 
                 const level1 = buildingData.levels[0];
                 if (userBalance < level1.cost) {
-                    return interaction.reply({ content: `<a:AbbyShocked:1393909368138895411> Bạn không đủ tiền để xây **${buildingData.name}**! Chi phí: **${level1.cost.toLocaleString()}**<a:diamondgem:1402590496647413811>`, ephemeral: true });
+                    return interaction.reply({ content: `<a:AbbyShocked:1393909368138895411> Bạn không đủ tiền để xây **${buildingData.name}**! Chi phí: **${level1.cost.toLocaleString()}**<a:diamondgem:1418649012289933434>`, ephemeral: true });
                 }
 
                 await addBalance(userId, -level1.cost);
@@ -217,7 +217,7 @@ module.exports = {
                     .setTitle(`**<a:Verified:1406631971509243974> Một Công Trình Đang Xây Ở ${interaction.member.displayName}**`)
                     .setDescription(`**${interaction.member.displayName}** đã xây **${buildingData.name}**!`)
                     .addFields(
-                        { name: 'Chi phí', value: `\`${level1.cost.toLocaleString()}\`<a:diamondgem:1402590496647413811>`, inline: true },
+                        { name: 'Chi phí', value: `\`${level1.cost.toLocaleString()}\`<a:diamondgem:1418649012289933434>`, inline: true },
                     )
                     .setColor('#2ecc71');
 
@@ -242,7 +242,7 @@ module.exports = {
 
                 const upgradeCost = buildingData.levels[nextLevel].cost;
                 if (userBalance < upgradeCost) {
-                    return interaction.reply({ content: `<a:AbbyShocked:1393909368138895411> Bạn không đủ tiền để nâng cấp! Chi phí: **${upgradeCost.toLocaleString()}**<a:diamondgem:1402590496647413811>`, ephemeral: true });
+                    return interaction.reply({ content: `<a:AbbyShocked:1393909368138895411> Bạn không đủ tiền để nâng cấp! Chi phí: **${upgradeCost.toLocaleString()}**<a:diamondgem:1418649012289933434>`, ephemeral: true });
                 }
 
                 await addBalance(userId, -upgradeCost);
@@ -254,7 +254,7 @@ module.exports = {
                     .setTitle(`<a:Verified:1406631971509243974> Nâng Cấp Thành Công!`)
                     .setDescription(`Công trình **${buildingData.name}** đã được nâng cấp lên cấp độ **${nextLevel + 1}**!`)
                     .addFields(
-                        { name: 'Chi phí', value: `\`${upgradeCost.toLocaleString()}\`<a:diamondgem:1402590496647413811>`, inline: true },
+                        { name: 'Chi phí', value: `\`${upgradeCost.toLocaleString()}\`<a:diamondgem:1418649012289933434>`, inline: true },
                     )
                     .setColor('#9b59b6');
 
@@ -267,7 +267,7 @@ module.exports = {
 
                 const buildingDetails = user.city.buildings.map((b, index) => {
                     const buildingData = BUILDINGS[b.type];
-                    return `\`${index + 1}.\` ${buildingData.emoji} **${buildingData.name}** (Cấp ${b.level + 1}) - Hạnh phúc: \`${buildingData.levels[b.level]?.happiness}\`, Thu nhập: \`${buildingData.levels[b.level]?.income}\`<a:diamondgem:1402590496647413811>`;
+                    return `\`${index + 1}.\` ${buildingData.emoji} **${buildingData.name}** (Cấp ${b.level + 1}) - Hạnh phúc: \`${buildingData.levels[b.level]?.happiness}\`, Thu nhập: \`${buildingData.levels[b.level]?.income}\`<a:diamondgem:1418649012289933434>`;
                 }).join('\n');
 
                 const timeUntilNextClaim = INCOME_INTERVAL - (Date.now() - (user.city.lastIncomeClaim || Date.now()));
@@ -279,12 +279,12 @@ module.exports = {
                     .setDescription(
                         `Chào mừng đến với thành phố của bạn, nơi mọi công trình đều mang lại thu nhập và hạnh phúc!\n\n` +
                         `**💵 Thu nhập**\n` +
-                        `> **Cơ bản:** \`${totalIncome.toLocaleString()}\`<a:diamondgem:1402590496647413811> mỗi giờ\n` +
-                        `> **Thực tế:** \`${finalIncome.toLocaleString()}\`<a:diamondgem:1402590496647413811> mỗi giờ\n\n` +
+                        `> **Cơ bản:** \`${totalIncome.toLocaleString()}\`<a:diamondgem:1418649012289933434> mỗi giờ\n` +
+                        `> **Thực tế:** \`${finalIncome.toLocaleString()}\`<a:diamondgem:1418649012289933434> mỗi giờ\n\n` +
                         `**💖 Hạnh phúc:** > **${happiness}%**\n` +
                         `**🏙️ Số công trình:** > **${user.city.buildings.length}**/${MAP_SIZE * MAP_SIZE}\n` +
                         `**⏱️ Thu hoạch tiếp theo:** > **${minutesLeft > 0 ? minutesLeft : 0}** phút\n` +
-                        `**📊 Tổng tài sản:** > **${estimatedWealth.toLocaleString()}**<a:diamondgem:1402590496647413811>\n` +
+                        `**📊 Tổng tài sản:** > **${estimatedWealth.toLocaleString()}**<a:diamondgem:1418649012289933434>\n` +
                         `_ (Ước tính thu nhập cả tuần)_\n\n` +
                         `**📜 Chi tiết Công trình:**\n` +
                         (buildingDetails || 'Chưa có công trình nào.')
@@ -326,9 +326,9 @@ module.exports = {
 
                 const embed = new EmbedBuilder()
                     .setTitle(`**<a:Verified:1406631971509243974> Thu Hoạch Thành Công!**`)
-                    .setDescription(`Bạn đã thu hoạch thành công **${totalClaim.toLocaleString()}**<a:diamondgem:1402590496647413811> từ thành phố của mình!`)
+                    .setDescription(`Bạn đã thu hoạch thành công **${totalClaim.toLocaleString()}**<a:diamondgem:1418649012289933434> từ thành phố của mình!`)
                     .addFields(
-                        { name: 'Số dư mới', value: `\`${(await getBalance(userId)).toLocaleString()}\`<a:diamondgem:1402590496647413811>`, inline: true },
+                        { name: 'Số dư mới', value: `\`${(await getBalance(userId)).toLocaleString()}\`<a:diamondgem:1418649012289933434>`, inline: true },
                         { name: 'Số lượt thu hoạch', value: `${intervalsPassed} lượt`, inline: true },
                         { name: 'Hiệu quả thu nhập', value: `+${happiness}% Hạnh phúc`, inline: true }
                     )
@@ -339,4 +339,5 @@ module.exports = {
         }
     }
 };
+
 
