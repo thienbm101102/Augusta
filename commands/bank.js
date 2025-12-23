@@ -47,7 +47,7 @@ module.exports = {
                 const debt = await getDebt(userId);
 
                 if (debt > 0) {
-                    return interaction.reply({ content: `<a:AbbyAnnoyed:1393909340914845706> Bạn đang có nợ là **${debt.toLocaleString()}**<a:diamondgem:1402590496647413811>. Vui lòng trả hết nợ để vay tiếp!`, ephemeral: true });
+                    return interaction.reply({ content: `<a:AbbyAnnoyed:1393909340914845706> Bạn đang có nợ là **${debt.toLocaleString()}**<a:diamondgem:1418649012289933434>. Vui lòng trả hết nợ để vay tiếp!`, ephemeral: true });
                 }
 
                 if (lastLoanDate && now - lastLoanDate < LOAN_COOLDOWN) {
@@ -57,7 +57,7 @@ module.exports = {
                 }
 
                 if (amount <= 0 || amount > MAX_LOAN_AMOUNT) {
-                    return interaction.reply({ content: `<a:AbbyAnnoyed:1393909340914845706> Số tiền vay phải lớn hơn 0 và không quá **${MAX_LOAN_AMOUNT.toLocaleString()}**<a:diamondgem:1402590496647413811>.`, ephemeral: true });
+                    return interaction.reply({ content: `<a:AbbyAnnoyed:1393909340914845706> Số tiền vay phải lớn hơn 0 và không quá **${MAX_LOAN_AMOUNT.toLocaleString()}**<a:diamondgem:1418649012289933434>.`, ephemeral: true });
                 }
 
                 const debtWithInterest = Math.floor(amount + amount * INTEREST_RATE);
@@ -69,10 +69,10 @@ module.exports = {
 
                 const embed = new EmbedBuilder()
                     .setTitle('**<a:Verified:1406631971509243974> Vay Tiền Thành Công**')
-                    .setDescription(`Bạn đã vay thành công **${amount.toLocaleString()}**<a:diamondgem:1402590496647413811>.`)
+                    .setDescription(`Bạn đã vay thành công **${amount.toLocaleString()}**<a:diamondgem:1418649012289933434>.`)
                     .addFields(
-                        { name: 'Số dư mới', value: `\`${newBalance.toLocaleString()}\`<a:diamondgem:1402590496647413811>`, inline: true },
-                        { name: 'Tổng nợ (gồm lãi)', value: `\`${debtWithInterest.toLocaleString()}\`<a:diamondgem:1402590496647413811>`, inline: true },
+                        { name: 'Số dư mới', value: `\`${newBalance.toLocaleString()}\`<a:diamondgem:1418649012289933434>`, inline: true },
+                        { name: 'Tổng nợ (gồm lãi)', value: `\`${debtWithInterest.toLocaleString()}\`<a:diamondgem:1418649012289933434>`, inline: true },
                         { name: 'Lãi suất', value: `${INTEREST_RATE * 100}%`, inline: true }
                     )
                     .setColor('#f1c40f');
@@ -89,7 +89,7 @@ module.exports = {
                 }
 
                 if (amount <= 0 || amount > debt || amount > userBalance) {
-                    return interaction.reply({ content: `<a:AbbyNom:1393909345514815589> Số tiền trả không hợp lệ. Bạn cần trả từ **1** đến **${Math.min(debt, userBalance).toLocaleString()}**<a:diamondgem:1402590496647413811>.`, ephemeral: true });
+                    return interaction.reply({ content: `<a:AbbyNom:1393909345514815589> Số tiền trả không hợp lệ. Bạn cần trả từ **1** đến **${Math.min(debt, userBalance).toLocaleString()}**<a:diamondgem:1418649012289933434>.`, ephemeral: true });
                 }
                 
                 await addBalance(userId, -amount);
@@ -100,10 +100,10 @@ module.exports = {
 
                 const embed = new EmbedBuilder()
                     .setTitle('**<a:Verified:1406631971509243974> Trả Nợ Thành Công**')
-                    .setDescription(`Bạn đã trả thành công **${amount.toLocaleString()}**<a:diamondgem:1402590496647413811>.`)
+                    .setDescription(`Bạn đã trả thành công **${amount.toLocaleString()}**<a:diamondgem:1418649012289933434>.`)
                     .addFields(
-                        { name: 'Số dư mới', value: `\`${newBalance.toLocaleString()}\`<a:diamondgem:1402590496647413811>`, inline: true },
-                        { name: 'Nợ còn lại', value: `\`${remainingDebt.toLocaleString()}\`<a:diamondgem:1402590496647413811>`, inline: true }
+                        { name: 'Số dư mới', value: `\`${newBalance.toLocaleString()}\`<a:diamondgem:1418649012289933434>`, inline: true },
+                        { name: 'Nợ còn lại', value: `\`${remainingDebt.toLocaleString()}\`<a:diamondgem:1418649012289933434>`, inline: true }
                     )
                     .setColor('#2ecc71');
                 return interaction.reply({ embeds: [embed] });
@@ -121,8 +121,8 @@ module.exports = {
                     .setTitle('**<a:Verified:1406631971509243974> Thông Tin Ngân Hàng**')
                     .setDescription('Thông tin về nợ và khả năng vay của bạn')
                     .addFields(
-                        { name: 'Nợ hiện tại', value: `\`${debt.toLocaleString()}\`<a:diamondgem:1402590496647413811>`, inline: false },
-                        { name: 'Số tiền vay tối đa', value: `\`${MAX_LOAN_AMOUNT.toLocaleString()}\`<a:diamondgem:1402590496647413811>`, inline: false },
+                        { name: 'Nợ hiện tại', value: `\`${debt.toLocaleString()}\`<a:diamondgem:1418649012289933434>`, inline: false },
+                        { name: 'Số tiền vay tối đa', value: `\`${MAX_LOAN_AMOUNT.toLocaleString()}\`<a:diamondgem:1418649012289933434>`, inline: false },
                         { name: 'Thời gian có thể vay tiếp', value: remainingHours > 0 ? `\`${remainingHours}\` giờ nữa` : 'Bạn có thể vay ngay bây giờ', inline: false }
                     )
                     .setColor('#3498db');
@@ -131,6 +131,7 @@ module.exports = {
         }
     }
 };
+
 
 
 
