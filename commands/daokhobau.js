@@ -96,7 +96,7 @@ function updateEmbed(game) {
 
     const embed = new EmbedBuilder()
         .setColor('#e67e22')
-        .setTitle('<a:Verified:1406631971509243974> **Đào Kho Báu**')
+        .setTitle('<a:VerifiedTwitter:1418649004912148511> **Đào Kho Báu**')
         .setDescription(description);
 
     return embed;
@@ -238,4 +238,5 @@ module.exports = {
         }
     }
 };
+
 
