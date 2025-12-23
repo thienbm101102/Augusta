@@ -81,7 +81,7 @@ module.exports = {
 
         if (userBalance < bet) {
             return interaction.editReply({
-                content: `<a:AbbyShocked:1393909368138895411> Bạn không đủ <a:diamondgem:1402590496647413811> để đặt **${bet}**! Số dư của bạn là **${userBalance}**<a:diamondgem:1402590496647413811>`,
+                content: `<a:AbbyShocked:1393909368138895411> Bạn không đủ <a:diamondgem:1418649012289933434> để đặt **${bet}**! Số dư của bạn là **${userBalance}**<a:diamondgem:1418649012289933434>`,
                 ephemeral: true
             });
         }
@@ -96,7 +96,7 @@ module.exports = {
             .setDescription('**Đang quay...**')
             .addFields(
                 { name: 'Ô số 1:', value: `\`\`\`\n${initialReel}\n\`\`\`` },
-                { name: 'Bạn đặt:', value: `${bet.toLocaleString()}<a:diamondgem:1402590496647413811>`, inline: true },
+                { name: 'Bạn đặt:', value: `${bet.toLocaleString()}<a:diamondgem:1418649012289933434>`, inline: true },
             )
             .setFooter({ text: `Người chơi: ${interaction.member.displayName}` });
 
@@ -122,7 +122,7 @@ module.exports = {
             const spinningEmbed = new EmbedBuilder(initialEmbed.toJSON())
                 .setFields(
                     { name: 'Ô số 2:', value: `\`\`\`\n${currentReel.trim()}\n\`\`\`` },
-                    { name: 'Bạn đặt:', value: `${bet.toLocaleString()}<a:diamondgem:1402590496647413811>`, inline: true },
+                    { name: 'Bạn đặt:', value: `${bet.toLocaleString()}<a:diamondgem:1418649012289933434>`, inline: true },
                 );
 
             await interaction.editReply({ embeds: [spinningEmbed] });
@@ -138,7 +138,7 @@ module.exports = {
         // Tạo chuỗi bảng tỷ lệ thắng
         let oddsTable = '';
         for (const [combo, mult] of Object.entries(odds)) {
-            oddsTable += `\`${combo}\`: x${mult} <a:diamondgem:1402590496647413811> đặt\n`;
+            oddsTable += `\`${combo}\`: x${mult} <a:diamondgem:1418649012289933434> đặt\n`;
         }
 
         const resultMessage = winnings > 0 ? `Chúc mừng, bạn đã thắng` : 'Chúc bạn may mắn lần sau!';
@@ -149,9 +149,9 @@ module.exports = {
             .setDescription('**Bạn Đã Quay Được**')
             .addFields(
                 { name: 'Kết Quả:', value: `\`\`\`\n${finalReel.join(' ')}\n\`\`\`` },
-                { name: 'Bạn đặt:', value: `${bet.toLocaleString()}<a:diamondgem:1402590496647413811>`, inline: true },
-                { name: 'Thu về:', value: `${winnings.toLocaleString()}<a:diamondgem:1402590496647413811>`, inline: true },
-                { name: 'Số dư mới:', value: `${newBalance.toLocaleString()}<a:diamondgem:1402590496647413811>`, inline: true },
+                { name: 'Bạn đặt:', value: `${bet.toLocaleString()}<a:diamondgem:1418649012289933434>`, inline: true },
+                { name: 'Thu về:', value: `${winnings.toLocaleString()}<a:diamondgem:1418649012289933434>`, inline: true },
+                { name: 'Số dư mới:', value: `${newBalance.toLocaleString()}<a:diamondgem:1418649012289933434>`, inline: true },
                 /*{ name: 'Bảng Tỷ Lệ Thắng', value: oddsTable },*/
             )
             .setFooter({ text: `${resultMessage} | Người chơi: ${interaction.member.displayName}` });
@@ -159,3 +159,4 @@ module.exports = {
         await interaction.editReply({ embeds: [finalEmbed] });
     },
 };
+
