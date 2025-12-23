@@ -163,7 +163,7 @@ module.exports = {
                     const embeds = receivedCards.map(card => {
                         const existingCard = user.cards.find(c => c.type === card.type);
                         const embed = new EmbedBuilder()
-                            .setTitle(`<a:Verified:1406631971509243974> **Bạn Đã Mở Một Gói Thẻ**`)
+                            .setTitle(`<a:VerifiedTwitter:1418649004912148511> **Bạn Đã Mở Một Gói Thẻ**`)
                             .setDescription(`Bạn nhận được thẻ **${card.data.name} [${card.rarity}]**`)
                             .setColor('#ffc800')
                             .setImage(card.data.imageUrl)
@@ -298,7 +298,7 @@ module.exports = {
                     await user.save();
     
                     const embed = new EmbedBuilder()
-                        .setTitle(`<a:Verified:1406631971509243974> **Bán Thẻ Thành Công**`)
+                        .setTitle(`<a:VerifiedTwitter:1418649004912148511> **Bán Thẻ Thành Công**`)
                         .setDescription(`Bạn đã bán **${cardToFind.name}** và nhận được **${sellPrice}**<a:diamondgem:1402590496647413811>.`)
                         .setColor('#2ecc71');
                     
@@ -312,5 +312,6 @@ module.exports = {
         }
     }
 };
+
 
 
