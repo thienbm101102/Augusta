@@ -89,7 +89,7 @@ function createGameEmbed(game, time) {
 
     const embed = new EmbedBuilder()
         .setColor('#e67e22')
-        .setTitle('<a:Verified:1406631971509243974> **Bầu Cua**')
+        .setTitle('<a:VerifiedTwitter:1418649004912148511> **Bầu Cua**')
         .setDescription(description)
         .setFooter({ text: 'Nhấp vào nút để chọn số tiền và đặt cược!' });
 
@@ -281,6 +281,7 @@ module.exports = {
         }
     },
 };
+
 
 
 
