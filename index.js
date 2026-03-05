@@ -232,23 +232,25 @@ client.on('messageCreate', async message => {
         // 1. Kiểm tra xem tin nhắn có nằm trong kênh TTS đã cấu hình không
         if (config && config.ttsTextChannel === message.channel.id) {
             
-            // 2. TÌM KÊNH THOẠI CỦA NGƯỜI GỬI
+            // 2. Tìm kênh thoại của người gửi (hỗ trợ cả Voice và Stage)
             const memberVoiceChannel = message.member.voice.channel;
-            
-            if (!memberVoiceChannel || memberVoiceChannel.type !== ChannelType.GuildVoice) {
+            if (!memberVoiceChannel || !memberVoiceChannel.isVoiceBased()) {
                 return;
             }
 
-            // 3. Chuẩn bị text
-            let text = message.content;
-            if (text.length > 200) { 
-                text = text.substring(0, 200) + '...';
+            // 3. Chuẩn bị text và xử lý triệt để lỗi giới hạn 200 ký tự
+            const prefix = `${message.member.displayName} nói: `;
+            const maxLen = 200 - prefix.length; // Tính khoảng trống an toàn còn lại
+            let cleanText = message.content;
+            
+            if (cleanText.length > maxLen) { 
+                cleanText = cleanText.substring(0, maxLen - 3) + '...';
             }
-            text = `${message.member.displayName} đã gửi tin nhắn thoại với nội dung: ${text}`;
+            const finalText = prefix + cleanText;
             
             console.log(`TTS: Đọc tin nhắn từ ${message.author.tag} trong kênh ${message.channel.name}`);
 
-            // 4. Kết nối và phát (tham gia kênh của người gửi)
+            // 4. Kết nối và phát
             const connection = joinVoiceChannel({
                 channelId: memberVoiceChannel.id,
                 guildId: memberVoiceChannel.guild.id,
@@ -258,7 +260,7 @@ client.on('messageCreate', async message => {
 
             await entersState(connection, VoiceConnectionStatus.Ready, 5_000);
 
-            const url = googleTTS.getAudioUrl(text, {
+            const url = googleTTS.getAudioUrl(finalText, {
                 lang: "vi",
                 slow: false,
                 host: "https://translate.google.com",
@@ -270,12 +272,10 @@ client.on('messageCreate', async message => {
 
             connection.subscribe(player);
             player.play(resource);
-
         }
     } catch (e) {
         console.error("❌ Lỗi khi thực thi logic TTS:", e);
     }
-
 
     // 📌 Xử lý logic đoán số (Giữ nguyên)
     if (client.commands.has('doanso')) {
