@@ -345,7 +345,6 @@ client.on("voiceStateUpdate", async (oldState, newState) => {
         }
     }
 });
-});
 
 // Khởi động bot (kết nối DB và login)
 startBot();
