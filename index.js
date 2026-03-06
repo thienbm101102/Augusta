@@ -256,7 +256,7 @@ client.on('messageCreate', async message => {
                 selfDeaf: false,
             });
 
-            await entersState(connection, VoiceConnectionStatus.Ready, 5_000);
+            await entersState(connection, VoiceConnectionStatus.Ready, 20_000);
 
             const url = googleTTS.getAudioUrl(text, {
                 lang: "vi",
