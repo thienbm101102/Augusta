@@ -35,7 +35,7 @@ app.get("/", (req, res) => {
     res.status(200).send("✅ Bot đang hoạt động!");
 });
 
-app.listen(PORT, () => {
+app.listen(PORT, 0.0.0.0, () => {
     console.log(`🌐 Web server đã khởi động tại cổng ${PORT}`);
 });
 
