@@ -232,25 +232,23 @@ client.on('messageCreate', async message => {
         // 1. Kiểm tra xem tin nhắn có nằm trong kênh TTS đã cấu hình không
         if (config && config.ttsTextChannel === message.channel.id) {
             
-            // 2. Tìm kênh thoại của người gửi (hỗ trợ cả Voice và Stage)
+            // 2. TÌM KÊNH THOẠI CỦA NGƯỜI GỬI
             const memberVoiceChannel = message.member.voice.channel;
-            if (!memberVoiceChannel || !memberVoiceChannel.isVoiceBased()) {
+            
+            if (!memberVoiceChannel || memberVoiceChannel.type !== ChannelType.GuildVoice) {
                 return;
             }
 
-            // 3. Chuẩn bị text và xử lý triệt để lỗi giới hạn 200 ký tự
-            const prefix = `${message.member.displayName} nói: `;
-            const maxLen = 200 - prefix.length; // Tính khoảng trống an toàn còn lại
-            let cleanText = message.content;
-            
-            if (cleanText.length > maxLen) { 
-                cleanText = cleanText.substring(0, maxLen - 3) + '...';
+            // 3. Chuẩn bị text
+            let text = message.content;
+            if (text.length > 200) { 
+                text = text.substring(0, 200) + '...';
             }
-            const finalText = prefix + cleanText;
+            text = `${message.member.displayName} đã gửi tin nhắn thoại với nội dung: ${text}`;
             
             console.log(`TTS: Đọc tin nhắn từ ${message.author.tag} trong kênh ${message.channel.name}`);
 
-            // 4. Kết nối và phát
+            // 4. Kết nối và phát (tham gia kênh của người gửi)
             const connection = joinVoiceChannel({
                 channelId: memberVoiceChannel.id,
                 guildId: memberVoiceChannel.guild.id,
@@ -260,7 +258,7 @@ client.on('messageCreate', async message => {
 
             await entersState(connection, VoiceConnectionStatus.Ready, 5_000);
 
-            const url = googleTTS.getAudioUrl(finalText, {
+            const url = googleTTS.getAudioUrl(text, {
                 lang: "vi",
                 slow: false,
                 host: "https://translate.google.com",
@@ -272,10 +270,12 @@ client.on('messageCreate', async message => {
 
             connection.subscribe(player);
             player.play(resource);
+
         }
     } catch (e) {
         console.error("❌ Lỗi khi thực thi logic TTS:", e);
     }
+
 
     // 📌 Xử lý logic đoán số (Giữ nguyên)
     if (client.commands.has('doanso')) {
@@ -288,50 +288,54 @@ client.on('messageCreate', async message => {
 
 
 // ------------------------------------------------------------------
-// --- Xử lý Voice State Update (TTS Chào/Rời) ---
+// --- Xử lý Voice State Update (TTS Chào/Rời - Giữ nguyên) ---
 // ------------------------------------------------------------------
 client.on("voiceStateUpdate", async (oldState, newState) => {
-    // 1. Logic Bot đọc TTS khi có người vào hoặc chuyển phòng
-    // Bắt sự kiện: Cứ có newState.channelId mà khác với oldState.channelId là tính có người vào
-    const isJoiningChannel = newState.channelId && oldState.channelId !== newState.channelId;
-
-    if (isJoiningChannel && newState.member && !newState.member.user.bot) {
+    // ... (logic chào và rời kênh giữ nguyên) ...
+    if (
+        !oldState.channelId &&
+        newState.channelId &&
+        newState.member &&
+        !newState.member.user.bot
+    ) {
+        // ... (logic chào) ...
         const member = newState.member;
         const channel = newState.channel;
 
-        const text = `${member.displayName} vừa mới vào phòng`;
+        const text = `${member.displayName} đã tham gia kênh thoại`;
 
         console.log(`🟢 ${member.displayName} vào voice: ${channel.name} | Bot đọc: ${text}`);
 
+        const url = googleTTS.getAudioUrl(text, {
+            lang: "vi",
+            slow: false,
+            host: "https://translate.google.com",
+        });
+
+        const connection = joinVoiceChannel({
+            channelId: channel.id,
+            guildId: channel.guild.id,
+            adapterCreator: channel.guild.voiceAdapterCreator,
+            selfDeaf: false,
+        });
+
         try {
-            const url = googleTTS.getAudioUrl(text, {
-                lang: "vi",
-                slow: false,
-                host: "https://translate.google.com",
-            });
-
-            const connection = joinVoiceChannel({
-                channelId: channel.id,
-                guildId: channel.guild.id,
-                adapterCreator: channel.guild.voiceAdapterCreator,
-                selfDeaf: false,
-            });
-
             await entersState(connection, VoiceConnectionStatus.Ready, 5_000);
-
-            const audioStream = await streamFromUrl(url);
-            const resource = createAudioResource(audioStream);
-            const player = createAudioPlayer();
-
-            connection.subscribe(player);
-            player.play(resource);
-
-        } catch (error) {
-            console.error(`❌ Lỗi khi chạy TTS chào người mới vào phòng:`, error);
+        } catch {
+            if (connection && !connection.destroyed) connection.destroy();
+            return;
         }
+
+        const audioStream = await streamFromUrl(url);
+        const resource = createAudioResource(audioStream);
+        const player = createAudioPlayer();
+
+        connection.subscribe(player);
+        player.play(resource);
+
     }
 
-    // 2. Logic nếu voice trống → bot rời kênh (giữ nguyên)
+    // Nếu voice trống → bot rời
     if (oldState.channelId && !newState.channelId && oldState.channel) {
         const channel = oldState.channel;
         const remaining = channel.members.filter((m) => !m.user.bot);
