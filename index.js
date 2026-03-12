@@ -83,15 +83,24 @@ try {
     console.error(`❌ Lỗi FATAL khi đọc thư mục commands:`, e);
 }
 
-// --- Khởi động Bot & DB ---
 async function startBot() {
     try {
         console.log("🚀 Đang kết nối tới MongoDB...");
         await mongoose.connect(process.env.MONGODB_URI);
         console.log("✅ Đã kết nối thành công tới MongoDB.");
-        client.login(process.env.TOKEN);
+        
+        // Kiểm tra xem Render có nhận được Token không
+        if (!process.env.TOKEN) {
+            console.error("❌ LỖI NGHIÊM TRỌNG: Không tìm thấy TOKEN! Hãy kiểm tra lại tab Environment trên Render.");
+            return;
+        }
+
+        console.log("🚀 Đang gửi yêu cầu đăng nhập lên Discord...");
+        await client.login(process.env.TOKEN);
+        console.log("✅ Quá trình đăng nhập đã hoàn tất!");
+
     } catch (err) {
-        console.error("❌ Failed to connect to MongoDB:", err);
+        console.error("❌ LỖI KHỞI ĐỘNG (MongoDB hoặc Discord):", err);
     }
 }
 
@@ -110,23 +119,6 @@ function streamFromUrl(url) {
             .on("error", reject);
     });
 }
-
-
-// ------------------------------------------------------------------
-// --- Xử lý Sự kiện READY (Giữ nguyên) ---
-// ------------------------------------------------------------------
-client.on('ready', async () => {
-    console.log(`✅ Logged in as ${client.user.tag}`);
-    // ... (logic trạng thái hoạt động giữ nguyên) ...
-    client.user.setPresence({
-        activities: [{
-            name: `/help để biết lệnh của BOT nhé ^^`, 
-            type: 4, 
-        }],
-        status: 'online', 
-    });
-    console.log('✅ Đã thiết lập trạng thái hoạt động của Bot.');
-});
 
 
 // ------------------------------------------------------------------
