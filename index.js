@@ -32,7 +32,7 @@ const Config = require('./models/Config');
 
 // --- Web server giữ cho Render không ngủ ---
 const app = express();
-const PORT = process.env.PORT || 10000; 
+const PORT = process.env.PORT || 4000; 
 
 app.get("/", (req, res) => {
     res.setHeader("Content-Type", "text/plain; charset=utf-8");
