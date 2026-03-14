@@ -1,20 +1,5 @@
-// 1. CHẠY WEB SERVER TRƯỚC TIÊN ĐỂ RENDER NHẬN DIỆN PORT
-const express = require("express");
-const app = express();
-const PORT = process.env.PORT || 10000; 
-
-app.get("/", (req, res) => res.status(200).send("✅ Bot đang hoạt động!"));
-
-app.listen(PORT, '0.0.0.0', () => {
-    console.log(`🌐 Web server đã khởi động tại cổng ${PORT}`);
-});
-
-// Bắt lỗi hệ thống để bot không bị crash văng ra ngoài
-process.on('unhandledRejection', error => {
-    console.error('Lỗi hệ thống (Unhandled Rejection):', error);
-});
-
-// 2. KHỞI TẠO CÁC THƯ VIỆN BOT PHÍA DƯỚI
+// index.js (Đã tối ưu Voice và sửa lỗi TTS)
+require('dotenv').config(); // Thêm dòng này để đọc file .env
 const {
     Client,
     Collection,
@@ -27,10 +12,45 @@ const {
 const fs = require('fs');
 const path = require('path');
 const mongoose = require('mongoose');
-const { joinVoiceChannel, createAudioPlayer, createAudioResource, entersState, VoiceConnectionStatus, getVoiceConnection } = require("@discordjs/voice");
+const express = require("express");
+const {
+    joinVoiceChannel,
+    createAudioPlayer,
+    createAudioResource,
+    entersState,
+    VoiceConnectionStatus,
+    getVoiceConnection,
+} = require("@discordjs/voice");
 const googleTTS = require("google-tts-api");
 
 const Config = require('./models/Config'); 
+
+// --- Quản lý Audio Player chung cho từng Server (tránh rò rỉ bộ nhớ) ---
+const guildPlayers = new Map();
+
+function getGuildPlayer(guildId) {
+    if (!guildPlayers.has(guildId)) {
+        const player = createAudioPlayer();
+        player.on('error', error => {
+            console.error(`❌ Lỗi Player TTS ở guild ${guildId}:`, error.message);
+        });
+        guildPlayers.set(guildId, player);
+    }
+    return guildPlayers.get(guildId);
+}
+
+// --- Web server giữ cho Render không ngủ ---
+const app = express();
+const PORT = process.env.PORT || 10000; 
+
+app.get("/", (req, res) => {
+    res.setHeader("Content-Type", "text/plain; charset=utf-8");
+    res.status(200).send("✅ Bot đang hoạt động!");
+});
+
+app.listen(PORT, () => {
+    console.log(`🌐 Web server đã khởi động tại cổng ${PORT}`);
+});
 
 // --- Setup Discord client ---
 const client = new Client({
@@ -180,11 +200,16 @@ client.on('messageCreate', async message => {
                 return;
             }
 
-            let text = message.content;
-            if (text.length > 200) text = text.substring(0, 200) + '...';
-            text = `${message.member.displayName} nói: ${text}`;
+            // Bỏ qua nếu tin nhắn rỗng (Ví dụ chỉ gửi ảnh)
+            if (!message.content) return;
+
+            // Đưa tên người dùng vào trước rồi mới cắt chuỗi (Tối đa 200 ký tự cho API)
+            let text = `${message.member.displayName} nói: ${message.content}`;
+            if (text.length > 195) {
+                text = text.substring(0, 195) + '...';
+            }
             
-            console.log(`TTS: Đọc tin nhắn từ ${message.author.tag} trong kênh ${message.channel.name}`);
+            console.log(`🔊 TTS: Đọc tin nhắn từ ${message.author.tag} trong kênh ${message.channel.name}`);
 
             const connection = joinVoiceChannel({
                 channelId: memberVoiceChannel.id,
@@ -202,11 +227,7 @@ client.on('messageCreate', async message => {
             });
             
             const resource = createAudioResource(url);
-            const player = createAudioPlayer();
-
-            player.on('error', error => {
-                console.error('Lỗi Player TTS:', error.message);
-            });
+            const player = getGuildPlayer(memberVoiceChannel.guild.id); // Dùng player tái sử dụng
 
             connection.subscribe(player);
             player.play(resource);
@@ -227,11 +248,14 @@ client.on('messageCreate', async message => {
 // --- Xử lý Voice State Update (TTS Chào/Rời) ---
 // ------------------------------------------------------------------
 client.on("voiceStateUpdate", async (oldState, newState) => {
+    // Sự kiện có người THAM GIA
     if (!oldState.channelId && newState.channelId && newState.member && !newState.member.user.bot) {
         const member = newState.member;
         const channel = newState.channel;
 
-        const text = `${member.displayName} đã tham gia`;
+        let text = `${member.displayName} đã tham gia`;
+        if (text.length > 195) text = text.substring(0, 195); // Bảo vệ chống lỗi API
+
         console.log(`🟢 ${member.displayName} vào voice: ${channel.name} | Bot đọc: ${text}`);
 
         const url = googleTTS.getAudioUrl(text, {
@@ -249,22 +273,19 @@ client.on("voiceStateUpdate", async (oldState, newState) => {
 
         try {
             await entersState(connection, VoiceConnectionStatus.Ready, 5_000);
-        } catch {
+            
+            const resource = createAudioResource(url);
+            const player = getGuildPlayer(channel.guild.id); // Dùng player tái sử dụng
+
+            connection.subscribe(player);
+            player.play(resource);
+        } catch (error) {
+            console.error("❌ Lỗi khi bot cố gắng join voice tham gia:", error);
             if (connection && !connection.destroyed) connection.destroy();
-            return;
         }
-
-        const resource = createAudioResource(url);
-        const player = createAudioPlayer();
-
-        player.on('error', error => {
-            console.error('Lỗi Player Join Voice:', error.message);
-        });
-
-        connection.subscribe(player);
-        player.play(resource);
     }
 
+    // Sự kiện kênh voice TRỐNG
     if (oldState.channelId && !newState.channelId && oldState.channel) {
         const channel = oldState.channel;
         const remaining = channel.members.filter((m) => !m.user.bot);
