@@ -28,13 +28,17 @@ const Config = require('./models/Config');
 const app = express();
 const PORT = process.env.PORT || 10000; 
 
+// Phục vụ các file tĩnh (như styles.css) trong cùng thư mục
+app.use(express.static(__dirname)); 
+
+// Trả về file index.html thay vì text thuần để đồng bộ giao diện
 app.get("/", (req, res) => {
-    res.setHeader("Content-Type", "text/plain; charset=utf-8");
-    res.status(200).send("✅ Bot đang hoạt động!");
+    res.sendFile(path.join(__dirname, 'index.html'));
 });
 
-app.listen(PORT, () => {
-    console.log(`🌐 Web server đã khởi động tại cổng ${PORT}`);
+// BẮT BUỘC phải có '0.0.0.0' để Render nhận diện được Port
+app.listen(PORT, '0.0.0.0', () => {
+    console.log(`🌐 Web server đã khởi động tại cổng ${PORT} (0.0.0.0)`);
 });
 
 // --- Setup Discord client ---
