@@ -1,4 +1,4 @@
-// index.js (Đã tối ưu Voice và sửa lỗi TTS)
+// 1. CHẠY WEB SERVER TRƯỚC TIÊN ĐỂ RENDER NHẬN DIỆN PORT
 const express = require("express");
 const app = express();
 const PORT = process.env.PORT || 10000; 
@@ -14,6 +14,7 @@ process.on('unhandledRejection', error => {
     console.error('Lỗi hệ thống (Unhandled Rejection):', error);
 });
 
+// 2. KHỞI TẠO CÁC THƯ VIỆN BOT PHÍA DƯỚI
 const {
     Client,
     Collection,
@@ -26,15 +27,7 @@ const {
 const fs = require('fs');
 const path = require('path');
 const mongoose = require('mongoose');
-const express = require("express");
-const {
-    joinVoiceChannel,
-    createAudioPlayer,
-    createAudioResource,
-    entersState,
-    VoiceConnectionStatus,
-    getVoiceConnection,
-} = require("@discordjs/voice");
+const { joinVoiceChannel, createAudioPlayer, createAudioResource, entersState, VoiceConnectionStatus, getVoiceConnection } = require("@discordjs/voice");
 const googleTTS = require("google-tts-api");
 
 const Config = require('./models/Config'); 
