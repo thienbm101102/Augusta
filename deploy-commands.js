@@ -3,7 +3,7 @@ const fs = require('fs');
 const path = require('path');
 
 const clientId = process.env.CLIENT_ID || "1404793124991139850";
-const guildId = process.env.GUILD_ID || "757207847883767948";
+const guildId = process.env.GUILD_ID || "1418490590869590039";
 const token = process.env.TOKEN || "MTQwNDc5MzEyNDk5MTEzOTg1MA.GlsLdo.04Gmfonwe5BVOGd9WnIV3yb9MZ6h2rA3XlQeLE";
 
 const commands = [];
