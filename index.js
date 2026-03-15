@@ -272,7 +272,7 @@ client.on("voiceStateUpdate", async (oldState, newState) => {
         });
 
         try {
-            await entersState(connection, VoiceConnectionStatus.Ready, 15_000);
+            await entersState(connection, VoiceConnectionStatus.Ready, 5_000);
             
             const resource = createAudioResource(url);
             const player = getGuildPlayer(channel.guild.id); // Dùng player tái sử dụng
