@@ -248,14 +248,12 @@ client.on('messageCreate', async message => {
 // --- Xử lý Voice State Update (TTS Chào/Rời) ---
 // ------------------------------------------------------------------
 client.on("voiceStateUpdate", async (oldState, newState) => {
-    // Sự kiện có người THAM GIA
+    // 1. Logic khi có người tham gia kênh thoại
     if (!oldState.channelId && newState.channelId && newState.member && !newState.member.user.bot) {
         const member = newState.member;
         const channel = newState.channel;
 
-        let text = `${member.displayName} đã tham gia`;
-        if (text.length > 195) text = text.substring(0, 195); // Bảo vệ chống lỗi API
-
+        const text = `${member.displayName} đã tham gia`;
         console.log(`🟢 ${member.displayName} vào voice: ${channel.name} | Bot đọc: ${text}`);
 
         const url = googleTTS.getAudioUrl(text, {
@@ -272,29 +270,47 @@ client.on("voiceStateUpdate", async (oldState, newState) => {
         });
 
         try {
-            await entersState(connection, VoiceConnectionStatus.Ready, 5_000);
-            
-            const resource = createAudioResource(url);
-            const player = getGuildPlayer(channel.guild.id); // Dùng player tái sử dụng
-
-            connection.subscribe(player);
-            player.play(resource);
+            // TĂNG thời gian chờ lên 20 giây để Render có đủ thời gian kết nối
+            await entersState(connection, VoiceConnectionStatus.Ready, 20_000);
         } catch (error) {
-            console.error("❌ Lỗi khi bot cố gắng join voice tham gia:", error);
-            if (connection && !connection.destroyed) connection.destroy();
+            console.error("⚠️ Lỗi kết nối voice (Timeout):", error.message);
+            // SỬA LỖI CRASH: Chỉ destroy khi kết nối chưa bị hủy
+            if (connection.state.status !== VoiceConnectionStatus.Destroyed) {
+                try {
+                    connection.destroy();
+                } catch (e) {
+                    console.error("Bỏ qua lỗi khi destroy:", e.message);
+                }
+            }
+            return; // Thoát ra, không chạy code phát âm thanh bên dưới nữa
         }
+
+        const resource = createAudioResource(url);
+        const player = createAudioPlayer();
+
+        player.on('error', error => {
+            console.error('⚠️ Lỗi Player Join Voice:', error.message);
+        });
+
+        connection.subscribe(player);
+        player.play(resource);
     }
 
-    // Sự kiện kênh voice TRỐNG
+    // 2. Logic khi người dùng rời đi (Bot rời kênh nếu trống)
     if (oldState.channelId && !newState.channelId && oldState.channel) {
         const channel = oldState.channel;
         const remaining = channel.members.filter((m) => !m.user.bot);
 
         if (remaining.size === 0) {
             const botConnection = getVoiceConnection(channel.guild.id);
-            if (botConnection && botConnection.state.status !== "destroyed") {
-                botConnection.destroy();
-                console.log("👋 Bot đã rời vì voice trống.");
+            // SỬA LỖI CRASH: Kiểm tra an toàn trước khi destroy
+            if (botConnection && botConnection.state.status !== VoiceConnectionStatus.Destroyed) {
+                try {
+                    botConnection.destroy();
+                    console.log("👋 Bot đã rời vì voice trống.");
+                } catch (e) {
+                    console.error("Lỗi khi bot tự rời kênh:", e.message);
+                }
             }
         }
     }
