@@ -21,17 +21,15 @@ const rest = new REST({ version: '10' }).setToken(token);
 (async () => {
   try {
     console.log(`🔄 Refreshing ${commands.length} slash commands...`);
-    
-    // Đã sửa thành applicationGuildCommands để lệnh hiện lên server của bạn ngay lập tức
-    await rest.put(Routes.applicationGuildCommands(clientId, guildId), { body: commands });
-    
+    await rest.put(Routes.applicationCommands(clientId), { body: commands });
     console.log('✅ Slash commands deployed!');
     
-    // DÒNG QUAN TRỌNG: Ép file này tự tắt sau khi xong việc để Render có thể chạy tiếp npm start
-    process.exit(0);
+    // Thêm dòng này để ép tiến trình đóng lại, nhường đường cho npm start
+    process.exit(0); 
   } catch (error) {
     console.error(error);
-    // Báo lỗi và tự tắt tiến trình nếu deploy thất bại
+    
+    // Thêm dòng này để thoát an toàn nếu có lỗi xảy ra
     process.exit(1); 
   }
 })();
