@@ -1,4 +1,4 @@
-// index.js (Đã tối ưu Voice, sửa lỗi TTS Base64 và phục hồi sự kiện Join Room)
+// index.js (Phiên bản Ghi File Vật Lý - Ổn định tối đa cho Server Miễn phí)
 require('dotenv').config();
 const {
     Client,
@@ -11,7 +11,6 @@ const {
 } = require('discord.js');
 const fs = require('fs');
 const path = require('path');
-const { Readable } = require("stream");
 const mongoose = require('mongoose');
 const express = require("express");
 const {
@@ -26,7 +25,7 @@ const googleTTS = require("google-tts-api");
 
 const Config = require('./models/Config'); 
 
-// --- Quản lý Audio Player chung cho từng Server ---
+// --- Quản lý Audio Player chung ---
 const guildPlayers = new Map();
 
 function getGuildPlayer(guildId) {
@@ -185,7 +184,7 @@ client.on('messageCreate', async message => {
             const memberVoiceChannel = message.member.voice.channel;
             
             if (!memberVoiceChannel || memberVoiceChannel.type !== ChannelType.GuildVoice) return;
-            if (!message.content) return; // Bỏ qua nếu tin nhắn trống (chỉ có ảnh)
+            if (!message.content) return; 
 
             let text = `${message.member.displayName} nói: ${message.content}`;
             if (text.length > 195) text = text.substring(0, 195) + '...';
@@ -199,34 +198,39 @@ client.on('messageCreate', async message => {
                 selfDeaf: true,
             });
 
+            // ÉP CHỜ MẠNG (Không đá bot ra ngoài nữa)
             try {
-                await entersState(connection, VoiceConnectionStatus.Ready, 20_000);
+                await entersState(connection, VoiceConnectionStatus.Ready, 15_000);
             } catch (error) {
-                console.error("⚠️ Timeout kết nối. Bỏ qua lần đọc này.");
-                if (connection.state.status !== VoiceConnectionStatus.Destroyed) {
-                    try { connection.destroy(); } catch (e) {}
-                }
-                return;
+                console.error("⚠️ Mạng Render kết nối Voice chậm (Timeout). Vẫn ép phát âm thanh...");
             }
 
-            // Dùng Base64 để chống Google block
+            // Ghi Base64 ra file .mp3 cứng để FFmpeg không bị lỗi
             const base64Audio = await googleTTS.getAudioBase64(text, {
                 lang: "vi",
                 slow: false,
                 host: "https://translate.google.com",
             });
             
-            const audioBuffer = Buffer.from(base64Audio, "base64");
-            const audioStream = Readable.from(audioBuffer);
+            const tempFileName = `tts-${Date.now()}.mp3`;
+            const tempFilePath = path.join(__dirname, tempFileName);
+            fs.writeFileSync(tempFilePath, Buffer.from(base64Audio, "base64"));
             
-            const resource = createAudioResource(audioStream);
+            const resource = createAudioResource(tempFilePath);
             const player = getGuildPlayer(memberVoiceChannel.guild.id); 
 
             connection.subscribe(player);
             player.play(resource);
+
+            // Tự động xóa file sau 20 giây để không rác máy chủ
+            setTimeout(() => {
+                try {
+                    if (fs.existsSync(tempFilePath)) fs.unlinkSync(tempFilePath);
+                } catch (err) {}
+            }, 20000);
         }
     } catch (e) {
-        console.error("❌ Lỗi mạng lưới khi xử lý TTS:", e.message);
+        console.error("❌ Lỗi logic khi xử lý TTS:", e.message);
     }
 
     // 2. Game Đoán Số
@@ -239,7 +243,7 @@ client.on('messageCreate', async message => {
 });
 
 // ------------------------------------------------------------------
-// --- Sự kiện Voice (Chào/Rời) ĐÃ ĐƯỢC PHỤC HỒI ---
+// --- Sự kiện Voice (Chào/Rời) ---
 // ------------------------------------------------------------------
 client.on("voiceStateUpdate", async (oldState, newState) => {
     // 1. Người dùng tham gia kênh
@@ -257,33 +261,40 @@ client.on("voiceStateUpdate", async (oldState, newState) => {
             selfDeaf: true,
         });
 
+        // ÉP CHỜ MẠNG (Không đá bot ra ngoài)
         try {
-            await entersState(connection, VoiceConnectionStatus.Ready, 20_000);
+            await entersState(connection, VoiceConnectionStatus.Ready, 15_000);
         } catch (error) {
-            console.error("⚠️ Timeout khi join voice:", error.message);
-            if (connection.state.status !== VoiceConnectionStatus.Destroyed) {
-                try { connection.destroy(); } catch (e) {}
-            }
-            return;
+            console.error("⚠️ Timeout mạng khi join voice. Vẫn ép phát âm thanh...");
         }
 
         try {
-            // Dùng Base64
+            // Ghi file cứng
             const base64Audio = await googleTTS.getAudioBase64(text, {
                 lang: "vi",
                 slow: false,
                 host: "https://translate.google.com",
             });
 
-            const audioBuffer = Buffer.from(base64Audio, "base64");
-            const audioStream = Readable.from(audioBuffer);
-            const resource = createAudioResource(audioStream);
+            const tempFileName = `join-${Date.now()}.mp3`;
+            const tempFilePath = path.join(__dirname, tempFileName);
+            fs.writeFileSync(tempFilePath, Buffer.from(base64Audio, "base64"));
 
+            const resource = createAudioResource(tempFilePath);
             const player = getGuildPlayer(channel.guild.id);
+            
             connection.subscribe(player);
             player.play(resource);
+
+            // Dọn rác
+            setTimeout(() => {
+                try {
+                    if (fs.existsSync(tempFilePath)) fs.unlinkSync(tempFilePath);
+                } catch (err) {}
+            }, 20000);
+
         } catch (error) {
-            console.error("❌ Lỗi Base64 Join Room:", error.message);
+            console.error("❌ Lỗi khi tải âm thanh Chào Mừng:", error.message);
         }
     }
 
