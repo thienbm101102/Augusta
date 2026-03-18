@@ -215,7 +215,7 @@ client.on('messageCreate', async message => {
                 channelId: memberVoiceChannel.id,
                 guildId: memberVoiceChannel.guild.id,
                 adapterCreator: memberVoiceChannel.guild.voiceAdapterCreator,
-                selfDeaf: false,
+                selfDeaf: true,
             });
 
             await entersState(connection, VoiceConnectionStatus.Ready, 20_000);
