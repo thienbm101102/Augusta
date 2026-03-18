@@ -11,6 +11,7 @@ const {
 } = require('discord.js');
 const fs = require('fs');
 const path = require('path');
+const { Readable } = require("stream");
 const mongoose = require('mongoose');
 const express = require("express");
 const {
