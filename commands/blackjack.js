@@ -45,7 +45,7 @@ module.exports = {
     const userBalance = await getBalance(interaction.user.id);
     
     if (bet <= 0 || bet > userBalance) {
-      return interaction.reply('<a:AbbyCheers:1393909248076943380> Số <a:diamondgem:1418649012289933434> cược không hợp lệ hoặc không đủ, vui lòng kiếm thêm tiền!');
+      return interaction.reply('Số <a:diamondgem:1418649012289933434> cược không hợp lệ hoặc không đủ, vui lòng kiếm thêm tiền!');
     }
 
     const deductionSuccess = await deductBalance(interaction.user.id, bet);
@@ -66,7 +66,7 @@ module.exports = {
       return interaction.reply({
         embeds: [new EmbedBuilder()
           .setTitle(`**<a:VerifiedTwitter:1418649004912148511> Xì Zách | Số <a:diamondgem:1418649012289933434> Đặt ${bet}**`)
-          .setDescription(`* **Bài Của Bạn:** ${playerHand.map(c => c.rank + c.suit).join(' ')} (2 Át)\n\n<a:AbbyWOW:1393909383884439602> Bạn đã thắng **2 ÁT**! Nhận được **${bet}**<a:diamondgem:1402590496647413811>`)
+          .setDescription(`* **Bài Của Bạn:** ${playerHand.map(c => c.rank + c.suit).join(' ')} (2 Át)\n\nBạn đã thắng **2 ÁT**! Nhận được **${bet}**<a:diamondgem:1402590496647413811>`)
           .setColor('Gold')],
         components: []
       });
@@ -77,7 +77,7 @@ module.exports = {
       return interaction.reply({
         embeds: [new EmbedBuilder()
           .setTitle(`**<a:VerifiedTwitter:1418649004912148511> Xì Zách | Số <a:diamondgem:1418649012289933434> Đặt ${bet}**`)
-          .setDescription(`* **Bài Của Bạn:** ${playerHand.map(c => c.rank + c.suit).join(' ')} (${playerVal})\n\n<a:AbbyWOW:1393909383884439602> Bạn đã thắng **XÌ DÁCH**! Nhận được **${bet}**<a:diamondgem:1402590496647413811>`)
+          .setDescription(`* **Bài Của Bạn:** ${playerHand.map(c => c.rank + c.suit).join(' ')} (${playerVal})\n\nBạn đã thắng **XÌ DÁCH**! Nhận được **${bet}**<a:diamondgem:1402590496647413811>`)
           .setColor('Gold')],
         components: []
       });
@@ -103,7 +103,7 @@ module.exports = {
 
   async handleButton(interaction) {
     const game = activeGames[interaction.user.id];
-    if (!game) return interaction.reply({ content: '<a:AbbyShocked:1393909368138895411> Bạn chưa bắt đầu ván bài nào!', ephemeral: true });
+    if (!game) return interaction.reply({ content: 'Bạn chưa bắt đầu ván bài nào!', ephemeral: true });
 
     const { playerHand, dealerHand, bet } = game;
     
