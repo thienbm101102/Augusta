@@ -192,12 +192,12 @@ module.exports = {
       
       if (isDraw) {
         await addBalance(interaction.user.id, bet);
-        result = `<a:AbbyFlower:1393909312761364541> Hòa, bạn được hoàn lại **${bet}**<a:diamondgem:1418649012289933434>`;
+        result = `Hòa, bạn được hoàn lại **${bet}**<a:diamondgem:1418649012289933434>`;
       } else if (isWin) {
         await addBalance(interaction.user.id, bet * 2);
-        result = `<a:AbbyWOW:1393909383884439602> Bạn đã thắng! Nhận được **${bet}**<a:diamondgem:1418649012289933434>`;
+        result = `Bạn đã thắng! Nhận được **${bet}**<a:diamondgem:1418649012289933434>`;
       } else {
-        result = `<a:AbbyCry:1393909295665643540> BOT đã thắng! Bạn bị mất **${bet}**<a:diamondgem:1418649012289933434>`;
+        result = `BOT đã thắng! Bạn bị mất **${bet}**<a:diamondgem:1418649012289933434>`;
       }
 
       delete activeGames[interaction.user.id];
