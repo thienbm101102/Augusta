@@ -116,7 +116,7 @@ module.exports = {
       if (playerVal > 21) {
         delete activeGames[interaction.user.id];
         return interaction.update({
-          embeds: [new EmbedBuilder().setTitle(`**<a:VerifiedTwitter:1418649004912148511> Xì Zách | Số <a:diamondgem:1418649012289933434> Đặt ${bet}**`).setDescription(`* **Bài Của Bạn:** ${game.playerHand.map(c => c.rank + c.suit).join(' ')}  (${playerVal})\n\n<a:AbbyCry:1393909295665643540> Bạn đã thua ${bet}<a:diamondgem:1402590496647413811> do **QUẮC**`).setColor('Red')],
+          embeds: [new EmbedBuilder().setTitle(`**<a:VerifiedTwitter:1418649004912148511> Xì Zách | Số <a:diamondgem:1418649012289933434> Đặt ${bet}**`).setDescription(`* **Bài Của Bạn:** ${game.playerHand.map(c => c.rank + c.suit).join(' ')}  (${playerVal})\n\n Bạn đã thua ${bet}<a:diamondgem:1402590496647413811> do **QUẮC**`).setColor('Red')],
           components: []
         });
       }
@@ -125,7 +125,7 @@ module.exports = {
         await addBalance(interaction.user.id, bet * 2);
         delete activeGames[interaction.user.id];
         return interaction.update({
-          embeds: [new EmbedBuilder().setTitle(`**<a:VerifiedTwitter:1418649004912148511> Xì Zách | Số <a:diamondgem:1418649012289933434> Đặt ${bet}**`).setDescription(`* **Bài Của Bạn:** ${game.playerHand.map(c => c.rank + c.suit).join(' ')} (${playerVal})\n\n<a:AbbyWOW:1393909383884439602> Bạn đã thắng **NGŨ LINH**! Nhận được **${bet}**<a:diamondgem:1402590496647413811>`).setColor('Gold')],
+          embeds: [new EmbedBuilder().setTitle(`**<a:VerifiedTwitter:1418649004912148511> Xì Zách | Số <a:diamondgem:1418649012289933434> Đặt ${bet}**`).setDescription(`* **Bài Của Bạn:** ${game.playerHand.map(c => c.rank + c.suit).join(' ')} (${playerVal})\n\n Bạn đã thắng **NGŨ LINH**! Nhận được **${bet}**<a:diamondgem:1402590496647413811>`).setColor('Gold')],
           components: []
         });
       }
