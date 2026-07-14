@@ -229,31 +229,36 @@ client.on('messageCreate', async message => {
     try {
         const config = await Config.findById('config');
         
-        // 1. Kiểm tra xem tin nhắn có nằm trong kênh TTS đã cấu hình không
+        // 1. Kiểm tra kênh đã set
         if (config && config.ttsTextChannel === message.channel.id) {
             
             // 2. TÌM KÊNH THOẠI CỦA NGƯỜI GỬI
             const memberVoiceChannel = message.member.voice.channel;
             
-            if (!memberVoiceChannel || memberVoiceChannel.type !== ChannelType.GuildVoice) {
+            // Dùng isVoiceBased() để hỗ trợ cả Voice Channel bình thường và Stage Channel
+            if (!memberVoiceChannel || !memberVoiceChannel.isVoiceBased()) {
                 return;
             }
 
-            // 3. Chuẩn bị text
-            let text = message.content;
-            if (text.length > 200) { 
-                text = text.substring(0, 200) + '...';
-            }
-            text = `${message.member.displayName} đã gửi tin nhắn thoại với nội dung: ${text}`;
+            // 3. Chuẩn bị text (Đảm bảo tổng độ dài tuyệt đối < 200 ký tự)
+            // Đổi câu dẫn ngắn gọn hơn để ưu tiên đọc nội dung tin nhắn
+            const prefix = `${message.member.displayName} nói: `; 
+            const maxLen = 200 - prefix.length - 3; // Trừ hao cho dấu "..."
             
-            console.log(`TTS: Đọc tin nhắn từ ${message.author.tag} trong kênh ${message.channel.name}`);
+            let msgContent = message.content;
+            if (msgContent.length > maxLen) { 
+                msgContent = msgContent.substring(0, maxLen) + '...';
+            }
+            
+            const text = prefix + msgContent;
+            console.log(`TTS: Đọc tin nhắn từ ${message.author.tag} | Độ dài: ${text.length}/200`);
 
-            // 4. Kết nối và phát (tham gia kênh của người gửi)
+            // 4. Kết nối và phát
             const connection = joinVoiceChannel({
                 channelId: memberVoiceChannel.id,
                 guildId: memberVoiceChannel.guild.id,
                 adapterCreator: memberVoiceChannel.guild.voiceAdapterCreator,
-                selfDeaf: false,
+                selfDeaf: true, // Nên để true giúp bot tiết kiệm băng thông khi không cần nghe
             });
 
             await entersState(connection, VoiceConnectionStatus.Ready, 20_000);
@@ -264,18 +269,16 @@ client.on('messageCreate', async message => {
                 host: "https://translate.google.com",
             });
             
-            const audioStream = await streamFromUrl(url);
-            const resource = createAudioResource(audioStream);
+            // Bỏ qua streamFromUrl, Discord.js hỗ trợ nạp thẳng URL rất ổn định
+            const resource = createAudioResource(url);
             const player = createAudioPlayer();
 
             connection.subscribe(player);
             player.play(resource);
-
         }
     } catch (e) {
         console.error("❌ Lỗi khi thực thi logic TTS:", e);
     }
-
 
     // 📌 Xử lý logic đoán số (Giữ nguyên)
     if (client.commands.has('doanso')) {
