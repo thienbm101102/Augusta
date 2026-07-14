@@ -1,5 +1,5 @@
-// index.js
-require('dotenv').config(); // 📌 ĐÃ THÊM DÒNG NÀY ĐỂ BOT TỰ ĐỌC FILE .ENV
+// index.js (Đã fix lỗi nhận dạng link async của FPT.AI V5)
+require('dotenv').config();
 
 const {
     Client,
@@ -80,11 +80,12 @@ async function startBot() {
         await mongoose.connect(process.env.MONGODB_URI);
         console.log("✅ Đã kết nối thành công tới MongoDB.");
         
-        // KIỂM TRA KEY FPT LÚC KHỞI ĐỘNG (Giúp bạn bắt lỗi ngay)
+        // KIỂM TRA KEY FPT
         if (!process.env.FPT_API_KEY) {
             console.warn("⚠️ CẢNH BÁO: Chưa tìm thấy FPT_API_KEY trong hệ thống!");
         } else {
-            console.log(`✅ Đã nhận được FPT_API_KEY: ${process.env.FPT_API_KEY.substring(0, 5)}...`);
+            let testKey = process.env.FPT_API_KEY.replace(/['"]/g, '').replace(/\r?\n|\r/g, "").trim();
+            console.log(`✅ Đã nhận được FPT_API_KEY (Độ dài: ${testKey.length} ký tự). Đầu chuỗi: ${testKey.substring(0, 5)}...`);
         }
 
         client.login(process.env.TOKEN);
@@ -96,42 +97,45 @@ async function startBot() {
 // --- HÀM PHỤ TRỢ: FPT.AI TTS ---
 async function playTTS(text, voiceChannel) {
     try {
-        const apiKey = process.env.FPT_API_KEY;
-        
-        if (!apiKey) {
-            console.error("❌ LỖI: Bot chưa nhận được API Key. Vui lòng check lại file .env hoặc cấu hình trên Render.");
+        if (!process.env.FPT_API_KEY) {
+            console.error("❌ LỖI: Bot chưa nhận được API Key FPT.");
             return;
         }
 
-        // Cắt bỏ khoảng trắng vô tình dính vào Key
-        const cleanApiKey = apiKey.trim(); 
+        const cleanApiKey = process.env.FPT_API_KEY.replace(/['"]/g, '').replace(/\r?\n|\r/g, "").trim();
 
         if (text.length > 1000) text = text.substring(0, 997) + '...';
 
-        // 1. Gửi văn bản lên máy chủ FPT
         const response = await fetch("https://api.fpt.ai/hmi/tts/v5", {
             method: "POST",
             headers: {
                 "api-key": cleanApiKey,
                 "voice": "banmai", 
-                "speed": "0", 
-                "format": "mp3"
+                "speed": "0",
+                "Content-Type": "text/plain; charset=utf-8" 
             },
             body: text
         });
 
-        const data = await response.json();
+        const rawResponse = await response.text();
+        let data;
+        try {
+            data = JSON.parse(rawResponse);
+        } catch (err) {
+            throw new Error(`Lỗi phản hồi từ máy chủ FPT: ${rawResponse}`);
+        }
 
-        // Xử lý lỗi trả về từ FPT
-        if (data.error !== 0 || !data.audiourl) {
+        // 📌 ĐÃ SỬA: Kiểm tra data.async thay vì data.audiourl
+        if (data.error !== 0 || (!data.async && !data.audiourl)) {
             throw new Error(`FPT API Error: ${data.message || JSON.stringify(data)}`);
         }
 
-        const audioUrl = data.audiourl;
+        // 📌 Lấy link từ biến async của FPT
+        const audioUrl = data.async || data.audiourl;
 
-        // 2. Chờ file mp3 được tạo trên CDN của FPT (Ping kiểm tra)
+        // Chờ file mp3 được tạo trên hệ thống FPT (Ping kiểm tra tối đa 10 lần)
         let isReady = false;
-        for (let i = 0; i < 5; i++) {
+        for (let i = 0; i < 10; i++) {
             const checkReq = await fetch(audioUrl, { method: "HEAD" });
             if (checkReq.ok) {
                 isReady = true;
@@ -142,7 +146,7 @@ async function playTTS(text, voiceChannel) {
 
         if (!isReady) throw new Error("Quá thời gian tạo âm thanh từ hệ thống FPT.");
 
-        // 3. Kết nối Voice Discord
+        // Phát âm thanh
         const connection = joinVoiceChannel({
             channelId: voiceChannel.id,
             guildId: voiceChannel.guild.id,
@@ -152,7 +156,6 @@ async function playTTS(text, voiceChannel) {
 
         await entersState(connection, VoiceConnectionStatus.Ready, 15_000);
 
-        // 4. Phát URL mp3
         const player = createAudioPlayer();
         const resource = createAudioResource(audioUrl);
 
@@ -163,7 +166,7 @@ async function playTTS(text, voiceChannel) {
         connection.subscribe(player);
         player.play(resource);
 
-        console.log(`🔊 [FPT.AI] Đã phát: "${text}"`);
+        console.log(`🔊 [FPT.AI] Đã phát thành công: "${text}"`);
     } catch (error) {
         console.error("❌ Lỗi trong hàm playTTS (FPT.AI):", error.message || error);
     }
