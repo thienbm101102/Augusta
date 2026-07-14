@@ -1,4 +1,4 @@
-// index.js (Phiên bản sử dụng API TikTok TTS trực tiếp, không cần thư viện trung gian)
+// index.js (Phiên bản sử dụng hệ thống FPT.AI Tiếng Việt cực chuẩn)
 
 const {
     Client,
@@ -23,7 +23,6 @@ const {
     VoiceConnectionStatus,
     getVoiceConnection,
 } = require("@discordjs/voice");
-const { Readable } = require("stream"); // Thêm Stream để xử lý dữ liệu từ TikTok
 
 const Config = require('./models/Config'); 
 
@@ -33,7 +32,7 @@ const PORT = process.env.PORT || 10000;
 
 app.get("/", (req, res) => {
     res.setHeader("Content-Type", "text/plain; charset=utf-8");
-    res.status(200).send("✅ Bot đang hoạt động với hệ thống TikTok TTS!");
+    res.status(200).send("✅ Bot đang hoạt động với hệ thống FPT.AI TTS!");
 });
 
 app.listen(PORT, () => {
@@ -63,11 +62,7 @@ try {
     for (const file of commandFiles) {
         try {
             let command = require(path.join(commandsPath, file));
-            
-            if (command.default) { 
-                command = command.default;
-            }
-
+            if (command.default) command = command.default;
             if (command.data && command.execute) {
                 client.commands.set(command.data.name, command);
             }
@@ -91,39 +86,52 @@ async function startBot() {
     }
 }
 
-// --- HÀM PHỤ TRỢ: TIKTOK TTS ---
+// --- HÀM PHỤ TRỢ: FPT.AI TTS ---
 async function playTTS(text, voiceChannel) {
     try {
-        // TikTok TTS có giới hạn độ dài ký tự khá ngắn (nên giữ dưới 250 ký tự)
-        if (text.length > 250) {
-            text = text.substring(0, 247) + '...';
+        const apiKey = process.env.FPT_API_KEY;
+        if (!apiKey) {
+            console.error("❌ LỖI: Chưa cấu hình FPT_API_KEY trong file .env");
+            return;
         }
 
-        // Mã giọng nói TikTok (Có thể đổi thành en_us_002, en_us_006...)
-        const voiceCode = "en_us_001"; 
+        // FPT.AI có giới hạn rất rộng, nhưng ta vẫn nên cắt ở khoảng 1000 ký tự cho an toàn
+        if (text.length > 1000) text = text.substring(0, 997) + '...';
 
-        // Endpoint ẩn của TikTok
-        const apiUrl = `https://api16-normal-v6.tiktokv.com/media/api/text/speech/invoke/?text_speaker=${voiceCode}&req_text=${encodeURIComponent(text)}&speaker_map_type=0&aid=1233`;
-        
-        const response = await fetch(apiUrl, {
+        // 1. Gửi văn bản lên máy chủ FPT
+        const response = await fetch("https://api.fpt.ai/hmi/tts/v5", {
             method: "POST",
             headers: {
-                "User-Agent": "com.zhiliaoapp.musically/2022600030 (Linux; U; Android 7.1.2; en_US; SM-G988N; Build/NRD90M;tt-ok/3.12.13.1)"
-            }
+                "api-key": apiKey,
+                "voice": "banmai", // Các giọng khác: lannhi (Nữ Nam), thuminh (Nữ Bắc), minhquang (Nam Nam)
+                "speed": "0", 
+                "format": "mp3"
+            },
+            body: text
         });
 
         const data = await response.json();
 
-        // Kiểm tra xem TikTok có trả về dữ liệu chuẩn không
-        if (data.status_code !== 0 || !data.data || !data.data.v_str) {
-            throw new Error(`TikTok API Error: ${data.message || "Bị từ chối hoặc không có Audio"}`);
+        if (data.error !== 0 || !data.audiourl) {
+            throw new Error(`FPT API Error: ${data.message || "Không thể lấy link audio"}`);
         }
 
-        // Dữ liệu trả về của TikTok là chuỗi Base64
-        const audioBuffer = Buffer.from(data.data.v_str, 'base64');
-        const stream = Readable.from(audioBuffer);
+        const audioUrl = data.audiourl;
 
-        // Kết nối Voice Discord
+        // 2. Chờ file mp3 được tạo trên CDN của FPT (Ping kiểm tra tối đa 5 lần)
+        let isReady = false;
+        for (let i = 0; i < 5; i++) {
+            const checkReq = await fetch(audioUrl, { method: "HEAD" });
+            if (checkReq.ok) {
+                isReady = true;
+                break;
+            }
+            await new Promise(r => setTimeout(r, 1000)); // Đợi 1 giây rồi check lại
+        }
+
+        if (!isReady) throw new Error("Quá thời gian tạo âm thanh từ hệ thống FPT.");
+
+        // 3. Kết nối Voice Discord
         const connection = joinVoiceChannel({
             channelId: voiceChannel.id,
             guildId: voiceChannel.guild.id,
@@ -133,9 +141,9 @@ async function playTTS(text, voiceChannel) {
 
         await entersState(connection, VoiceConnectionStatus.Ready, 15_000);
 
-        // Truyền Stream vào hệ thống phát của Discord
+        // 4. Phát thẳng URL mp3 (Discord.js tự stream dữ liệu)
         const player = createAudioPlayer();
-        const resource = createAudioResource(stream);
+        const resource = createAudioResource(audioUrl);
 
         player.on('error', error => {
             console.error(`❌ Lỗi Audio Player: ${error.message}`);
@@ -144,9 +152,9 @@ async function playTTS(text, voiceChannel) {
         connection.subscribe(player);
         player.play(resource);
 
-        console.log(`🔊 [TikTok TTS] Đã phát: "${text}"`);
+        console.log(`🔊 [FPT.AI] Đã phát thành công: "${text}"`);
     } catch (error) {
-        console.error("❌ Lỗi trong hàm playTTS (TikTok):", error.message || error);
+        console.error("❌ Lỗi trong hàm playTTS (FPT.AI):", error.message || error);
     }
 }
 
@@ -156,10 +164,7 @@ async function playTTS(text, voiceChannel) {
 client.on('ready', async () => {
     console.log(`✅ Logged in as ${client.user.tag}`);
     client.user.setPresence({
-        activities: [{
-            name: `/help để biết lệnh của BOT nhé ^^`, 
-            type: 4, 
-        }],
+        activities: [{ name: `/help để biết lệnh của BOT nhé ^^`, type: 4 }],
         status: 'online', 
     });
 });
@@ -177,10 +182,9 @@ client.on('interactionCreate', async interaction => {
             const [commandName, messageId] = interaction.customId.split(/[_-]/);
             const command = client.commands.get(commandName);
 
-            // Xử lý Confession
             if (commandName === 'accept' || commandName === 'reject') { 
                 const config = await Config.findById('config'); 
-                if (!config) return interaction.reply({ content: '❌ Cấu hình Confession chưa được thiết lập (chạy /confession setup).', ephemeral: true });
+                if (!config) return interaction.reply({ content: '❌ Cấu hình Confession chưa được thiết lập.', ephemeral: true });
 
                 if (!interaction.memberPermissions.has(PermissionsBitField.Flags.ManageMessages)) {
                     return await interaction.reply({ content: "❌ Bạn không có quyền duyệt.", ephemeral: true });
@@ -229,14 +233,11 @@ client.on('interactionCreate', async interaction => {
         }
     } catch (error) {
         console.error(error);
-        if (error.code === 10062) {
-            console.warn('⚠️ Unknown Interaction (10062) - Đã bỏ qua lỗi.');
-            return; 
-        }
+        if (error.code === 10062) return console.warn('⚠️ Interaction hết hạn.');
         if (interaction.replied || interaction.deferred) {
-            await interaction.followUp({ content: '❌ Có lỗi xảy ra khi thực thi tương tác này!', ephemeral: true });
+            await interaction.followUp({ content: '❌ Có lỗi xảy ra!', ephemeral: true });
         } else {
-            await interaction.reply({ content: '❌ Có lỗi xảy ra khi thực thi tương tác này!', ephemeral: true });
+            await interaction.reply({ content: '❌ Có lỗi xảy ra!', ephemeral: true });
         }
     }
 });
@@ -247,13 +248,10 @@ client.on('interactionCreate', async interaction => {
 client.on('messageCreate', async message => {
     if (message.author.bot || message.system || message.content.startsWith('/')) return; 
 
-    // --- LOGIC ĐỌC TIN NHẮN (TTS) ---
     try {
         const config = await Config.findById('config');
-        
         if (config && config.ttsTextChannel === message.channel.id) {
             const memberVoiceChannel = message.member.voice.channel;
-            
             if (memberVoiceChannel && memberVoiceChannel.isVoiceBased()) {
                 const text = `${message.member.displayName} nói: ${message.content}`;
                 await playTTS(text, memberVoiceChannel);
@@ -275,7 +273,6 @@ client.on('messageCreate', async message => {
 // --- Xử lý Voice State Update (TTS Chào/Rời) ---
 // ------------------------------------------------------------------
 client.on("voiceStateUpdate", async (oldState, newState) => {
-    // Người tham gia phòng
     if (!oldState.channelId && newState.channelId && newState.member && !newState.member.user.bot) {
         const member = newState.member;
         const channel = newState.channel;
@@ -285,7 +282,6 @@ client.on("voiceStateUpdate", async (oldState, newState) => {
         await playTTS(text, channel);
     }
 
-    // Bot rời phòng khi trống
     if (oldState.channelId && !newState.channelId && oldState.channel) {
         const channel = oldState.channel;
         const remaining = channel.members.filter((m) => !m.user.bot);
@@ -300,5 +296,4 @@ client.on("voiceStateUpdate", async (oldState, newState) => {
     }
 });
 
-// Khởi động bot
 startBot();
