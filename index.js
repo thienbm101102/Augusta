@@ -1,4 +1,4 @@
-// index.js (Đã sửa lỗi, dùng Edge TTS chống lỗi Render, và dùng MongoDB cho Config)
+// index.js (Đã sửa lỗi Render bằng kỹ thuật lấy URL trực tiếp từ Google TTS)
 
 const {
     Client,
@@ -24,8 +24,8 @@ const {
     getVoiceConnection,
 } = require("@discordjs/voice");
 
-// 📌 THÊM THƯ VIỆN EDGE TTS
-const { MsEdgeTTS, OUTPUT_FORMAT } = require("msedge-tts");
+// 📌 THÊM LẠI THƯ VIỆN GOOGLE TTS
+const googleTTS = require("google-tts-api");
 
 const Config = require('./models/Config'); 
 
@@ -93,23 +93,22 @@ async function startBot() {
     }
 }
 
-// --- Hàm phụ trợ cho TTS (Dùng luồng trực tiếp từ Edge TTS) ---
+// --- Hàm phụ trợ cho TTS (Lấy URL trực tiếp để lách 429 trên Render) ---
 async function playTTS(text, voiceChannel) {
     try {
-        // Cắt chuỗi an toàn để không bị lỗi độ dài (Edge có thể xử lý chuỗi dài hơn Google)
-        if (text.length > 300) {
-            text = text.substring(0, 295) + '...';
+        // Cắt chuỗi an toàn dưới 200 ký tự (Giới hạn của API Google Translate)
+        if (text.length > 195) {
+            text = text.substring(0, 195) + '...';
         }
 
-        const tts = new MsEdgeTTS();
-        
-        // Cài đặt giọng đọc tiếng Việt nữ (Đổi thành vi-VN-NamMinhNeural nếu muốn giọng nam)
-        await tts.setMetadata("vi-VN-HoaiMyNeural", OUTPUT_FORMAT.AUDIO_24KHZ_48KBITRATE_MONO_MP3);
+        // 1. Chỉ sinh ra URL, KHÔNG tải dữ liệu cục bộ về để tránh bị Google chặn IP
+        const url = googleTTS.getAudioUrl(text, {
+            lang: "vi",
+            slow: false,
+            host: "https://translate.google.com",
+        });
 
-        // Lấy stream trực tiếp
-        const stream = tts.toStream(text);
-
-        // Kết nối Voice
+        // 2. Kết nối Voice
         const connection = joinVoiceChannel({
             channelId: voiceChannel.id,
             guildId: voiceChannel.guild.id,
@@ -119,9 +118,9 @@ async function playTTS(text, voiceChannel) {
 
         await entersState(connection, VoiceConnectionStatus.Ready, 15_000);
 
-        // Phát âm thanh trực tiếp từ Stream
+        // 3. Phát âm thanh trực tiếp (Discord.js Voice & FFmpeg sẽ tự stream từ URL)
         const player = createAudioPlayer();
-        const resource = createAudioResource(stream); 
+        const resource = createAudioResource(url); 
 
         // Bắt lỗi cụ thể của Player (nếu có)
         player.on('error', error => {
