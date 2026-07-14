@@ -23,7 +23,7 @@ const {
     VoiceConnectionStatus,
     getVoiceConnection,
 } = require("@discordjs/voice");
-const { edgeTTS, OUTPUT_FORMAT } = require("edge-tts");
+const { edgeTTS } = require('edge-tts');
 const https = require("https");
 const { Readable } = require("stream");
 
