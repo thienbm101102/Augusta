@@ -23,11 +23,7 @@ const {
     VoiceConnectionStatus,
     getVoiceConnection,
 } = require("@discordjs/voice");
-// Thử gọi qua đường dẫn đích cụ thể nếu có hoặc dùng dynamic import
-async function getEdgeTTS() {
-    const { edgeTTS } = await import('edge-tts');
-    return edgeTTS;
-}
+const { edgeTTS } = require('edge-tts');
 const https = require("https");
 const { Readable } = require("stream");
 
