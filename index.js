@@ -111,6 +111,9 @@ async function playTTS(text, voiceChannel) {
             timeout: 10000,
         });
 
+        const delay = ms => new Promise(res => setTimeout(res, ms));
+        await delay(1000); // Đợi 1 giây trước khi phát đoạn âm thanh tiếp theo
+
         // 2. Chuyển Base64 thành Buffer Stream
         const audioBuffer = Buffer.from(base64Audio, 'base64');
         const stream = Readable.from(audioBuffer);
