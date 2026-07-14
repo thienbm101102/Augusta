@@ -23,7 +23,7 @@ const {
     VoiceConnectionStatus,
     getVoiceConnection,
 } = require("@discordjs/voice");
-const { edgeTTS } = require('edge-tts');
+const googleTTS = require("google-tts-api");
 const https = require("https");
 const { Readable } = require("stream");
 
@@ -95,43 +95,51 @@ async function startBot() {
     }
 }
 
-// --- Hàm phụ trợ cho TTS dùng Microsoft Edge ---
+// --- Hàm phụ trợ cho TTS (Dùng Base64 Buffer để tránh lỗi Stream/URL) ---
 async function playTTS(text, voiceChannel) {
     try {
-        if (!text || !voiceChannel) return;
+        // Cắt chuỗi an toàn dưới 200 ký tự cho Google TTS
+        if (text.length > 195) {
+            text = text.substring(0, 195) + '...';
+        }
 
-        // Khởi tạo Edge TTS client
-        const tts = new MsEdgeTTS();
-        
-        // Cài đặt metadata với giọng đọc tiếng Việt (hoặc đổi sang vi-VN-NamMinhNeural cho giọng nam)
-        await tts.setMetadata("vi-VN-HoaiMyNeural", OUTPUT_FORMAT.AUDIO_24KHZ_48KBITRATE_MONO_MP3);
+        // 1. Lấy dữ liệu âm thanh trực tiếp dưới dạng Base64
+        const base64Audio = await googleTTS.getAudioBase64(text, {
+            lang: "vi",
+            slow: false,
+            host: "https://translate.google.com",
+            timeout: 10000,
+        });
 
-        // Lấy stream âm thanh từ Edge Read Aloud API
-        const audioStream = tts.toStream(text);
+        // 2. Chuyển Base64 thành Buffer Stream
+        const audioBuffer = Buffer.from(base64Audio, 'base64');
+        const stream = Readable.from(audioBuffer);
 
-        // Kết nối kênh thoại
+        // 3. Kết nối Voice
         const connection = joinVoiceChannel({
             channelId: voiceChannel.id,
             guildId: voiceChannel.guild.id,
             adapterCreator: voiceChannel.guild.voiceAdapterCreator,
-            selfDeaf: true,
+            selfDeaf: true, // Tiết kiệm tài nguyên mạng cho bot
         });
 
         await entersState(connection, VoiceConnectionStatus.Ready, 15_000);
 
+        // 4. Phát âm thanh
         const player = createAudioPlayer();
-        const resource = createAudioResource(audioStream);
+        const resource = createAudioResource(stream); // Truyền luồng bộ nhớ vào
 
+        // Bắt lỗi cụ thể của Player (nếu có)
         player.on('error', error => {
-            console.error(`❌ Lỗi Audio Player Edge TTS: ${error.message}`);
+            console.error(`❌ Lỗi Audio Player khi phát TTS: ${error.message}`);
         });
 
         connection.subscribe(player);
         player.play(resource);
 
-        console.log(`🔊 [Edge TTS] Đã phát: "${text}"`);
+        console.log(`🔊 [TTS SUCCESS] Đã phát: "${text}"`);
     } catch (error) {
-        console.error("❌ Lỗi trong hàm playTTS (Edge):", error.message || error);
+        console.error("❌ Lỗi trong hàm playTTS:", error.message || error);
     }
 }
 
