@@ -1,4 +1,4 @@
-// index.js (Đã fix lỗi nhận dạng link async của FPT.AI V5)
+// index.js (Phiên bản Google TTS URL - Chống lỗi Render, Đọc tiếng Việt chuẩn)
 require('dotenv').config();
 
 const {
@@ -23,22 +23,23 @@ const {
     getVoiceConnection,
 } = require("@discordjs/voice");
 
+// 📌 THÊM LẠI THƯ VIỆN GOOGLE TTS
+const googleTTS = require("google-tts-api");
+
 const Config = require('./models/Config'); 
 
-// --- Web server giữ cho Render không ngủ ---
 const app = express();
 const PORT = process.env.PORT || 10000; 
 
 app.get("/", (req, res) => {
     res.setHeader("Content-Type", "text/plain; charset=utf-8");
-    res.status(200).send("✅ Bot đang hoạt động với hệ thống FPT.AI TTS!");
+    res.status(200).send("✅ Bot đang hoạt động với hệ thống Google TTS!");
 });
 
 app.listen(PORT, () => {
     console.log(`🌐 Web server đã khởi động tại cổng ${PORT}`);
 });
 
-// --- Setup Discord client ---
 const client = new Client({
     intents: [
         GatewayIntentBits.Guilds,
@@ -52,7 +53,6 @@ const client = new Client({
     partials: [Partials.Channel],
 });
 
-// --- Tải lệnh ---
 client.commands = new Collection();
 const commandsPath = path.join(__dirname, 'commands');
 
@@ -73,80 +73,33 @@ try {
     console.error(`❌ Lỗi FATAL khi đọc thư mục commands:`, e);
 }
 
-// --- Khởi động Bot & DB ---
 async function startBot() {
     try {
         console.log("🚀 Đang kết nối tới MongoDB...");
         await mongoose.connect(process.env.MONGODB_URI);
         console.log("✅ Đã kết nối thành công tới MongoDB.");
-        
-        // KIỂM TRA KEY FPT
-        if (!process.env.FPT_API_KEY) {
-            console.warn("⚠️ CẢNH BÁO: Chưa tìm thấy FPT_API_KEY trong hệ thống!");
-        } else {
-            let testKey = process.env.FPT_API_KEY.replace(/['"]/g, '').replace(/\r?\n|\r/g, "").trim();
-            console.log(`✅ Đã nhận được FPT_API_KEY (Độ dài: ${testKey.length} ký tự). Đầu chuỗi: ${testKey.substring(0, 5)}...`);
-        }
-
         client.login(process.env.TOKEN);
     } catch (err) {
         console.error("❌ Failed to connect to MongoDB:", err);
     }
 }
 
-// --- HÀM PHỤ TRỢ: FPT.AI TTS ---
+// --- HÀM PHỤ TRỢ: GOOGLE TTS (Lấy URL trực tiếp để lách 429 trên Render) ---
 async function playTTS(text, voiceChannel) {
     try {
-        if (!process.env.FPT_API_KEY) {
-            console.error("❌ LỖI: Bot chưa nhận được API Key FPT.");
-            return;
+        // Cắt chuỗi an toàn dưới 200 ký tự (Giới hạn của API Google Translate)
+        if (text.length > 195) {
+            text = text.substring(0, 195) + '...';
         }
 
-        const cleanApiKey = process.env.FPT_API_KEY.replace(/['"]/g, '').replace(/\r?\n|\r/g, "").trim();
-
-        if (text.length > 1000) text = text.substring(0, 997) + '...';
-
-        const response = await fetch("https://api.fpt.ai/hmi/tts/v5", {
-            method: "POST",
-            headers: {
-                "api-key": cleanApiKey,
-                "voice": "banmai", 
-                "speed": "0",
-                "Content-Type": "text/plain; charset=utf-8" 
-            },
-            body: text
+        // 1. Chỉ sinh ra URL, KHÔNG tải dữ liệu cục bộ về để tránh bị Google chặn IP
+        const url = googleTTS.getAudioUrl(text, {
+            lang: "vi",
+            slow: false,
+            host: "https://translate.google.com",
         });
 
-        const rawResponse = await response.text();
-        let data;
-        try {
-            data = JSON.parse(rawResponse);
-        } catch (err) {
-            throw new Error(`Lỗi phản hồi từ máy chủ FPT: ${rawResponse}`);
-        }
-
-        // 📌 ĐÃ SỬA: Kiểm tra data.async thay vì data.audiourl
-        if (data.error !== 0 || (!data.async && !data.audiourl)) {
-            throw new Error(`FPT API Error: ${data.message || JSON.stringify(data)}`);
-        }
-
-        // 📌 Lấy link từ biến async của FPT
-        const audioUrl = data.async || data.audiourl;
-
-        // Chờ file mp3 được tạo trên hệ thống FPT (Ping kiểm tra tối đa 10 lần)
-        let isReady = false;
-        for (let i = 0; i < 10; i++) {
-            const checkReq = await fetch(audioUrl, { method: "HEAD" });
-            if (checkReq.ok) {
-                isReady = true;
-                break;
-            }
-            await new Promise(r => setTimeout(r, 1000));
-        }
-
-        if (!isReady) throw new Error("Quá thời gian tạo âm thanh từ hệ thống FPT.");
-
-        // Phát âm thanh
+        // 2. Kết nối Voice
         const connection = joinVoiceChannel({
             channelId: voiceChannel.id,
             guildId: voiceChannel.guild.id,
@@ -156,8 +109,9 @@ async function playTTS(text, voiceChannel) {
 
         await entersState(connection, VoiceConnectionStatus.Ready, 15_000);
 
+        // 3. Phát âm thanh trực tiếp (Discord.js Voice sẽ tự stream từ URL)
         const player = createAudioPlayer();
-        const resource = createAudioResource(audioUrl);
+        const resource = createAudioResource(url); 
 
         player.on('error', error => {
             console.error(`❌ Lỗi Audio Player: ${error.message}`);
@@ -166,15 +120,12 @@ async function playTTS(text, voiceChannel) {
         connection.subscribe(player);
         player.play(resource);
 
-        console.log(`🔊 [FPT.AI] Đã phát thành công: "${text}"`);
+        console.log(`🔊 [Google TTS] Đã phát: "${text}"`);
     } catch (error) {
-        console.error("❌ Lỗi trong hàm playTTS (FPT.AI):", error.message || error);
+        console.error("❌ Lỗi trong hàm playTTS:", error.message || error);
     }
 }
 
-// ------------------------------------------------------------------
-// --- Xử lý Sự kiện READY ---
-// ------------------------------------------------------------------
 client.on('ready', async () => {
     console.log(`✅ Logged in as ${client.user.tag}`);
     client.user.setPresence({
@@ -183,9 +134,6 @@ client.on('ready', async () => {
     });
 });
 
-// ------------------------------------------------------------------
-// --- Xử lý Tương tác (Interactions) ---
-// ------------------------------------------------------------------
 client.on('interactionCreate', async interaction => {
     try {
         if (interaction.isChatInputCommand()) {
@@ -255,9 +203,6 @@ client.on('interactionCreate', async interaction => {
     }
 });
 
-// ------------------------------------------------------------------
-// --- Xử lý Tin nhắn (Message) - LOGIC ĐỌC TIN NHẮN (TTS) ---
-// ------------------------------------------------------------------
 client.on('messageCreate', async message => {
     if (message.author.bot || message.system || message.content.startsWith('/')) return; 
 
@@ -282,9 +227,6 @@ client.on('messageCreate', async message => {
     }
 });
 
-// ------------------------------------------------------------------
-// --- Xử lý Voice State Update (TTS Chào/Rời) ---
-// ------------------------------------------------------------------
 client.on("voiceStateUpdate", async (oldState, newState) => {
     if (!oldState.channelId && newState.channelId && newState.member && !newState.member.user.bot) {
         const member = newState.member;
