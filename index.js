@@ -1,4 +1,5 @@
-// index.js (Phiên bản sử dụng hệ thống FPT.AI Tiếng Việt cực chuẩn)
+// index.js
+require('dotenv').config(); // 📌 ĐÃ THÊM DÒNG NÀY ĐỂ BOT TỰ ĐỌC FILE .ENV
 
 const {
     Client,
@@ -12,14 +13,12 @@ const {
 const fs = require('fs');
 const path = require('path');
 const mongoose = require('mongoose');
-const cron = require('node-cron');
 const express = require("express");
 const {
     joinVoiceChannel,
     createAudioPlayer,
     createAudioResource,
     entersState,
-    AudioPlayerStatus,
     VoiceConnectionStatus,
     getVoiceConnection,
 } = require("@discordjs/voice");
@@ -80,6 +79,14 @@ async function startBot() {
         console.log("🚀 Đang kết nối tới MongoDB...");
         await mongoose.connect(process.env.MONGODB_URI);
         console.log("✅ Đã kết nối thành công tới MongoDB.");
+        
+        // KIỂM TRA KEY FPT LÚC KHỞI ĐỘNG (Giúp bạn bắt lỗi ngay)
+        if (!process.env.FPT_API_KEY) {
+            console.warn("⚠️ CẢNH BÁO: Chưa tìm thấy FPT_API_KEY trong hệ thống!");
+        } else {
+            console.log(`✅ Đã nhận được FPT_API_KEY: ${process.env.FPT_API_KEY.substring(0, 5)}...`);
+        }
+
         client.login(process.env.TOKEN);
     } catch (err) {
         console.error("❌ Failed to connect to MongoDB:", err);
@@ -90,20 +97,23 @@ async function startBot() {
 async function playTTS(text, voiceChannel) {
     try {
         const apiKey = process.env.FPT_API_KEY;
+        
         if (!apiKey) {
-            console.error("❌ LỖI: Chưa cấu hình FPT_API_KEY trong file .env");
+            console.error("❌ LỖI: Bot chưa nhận được API Key. Vui lòng check lại file .env hoặc cấu hình trên Render.");
             return;
         }
 
-        // FPT.AI có giới hạn rất rộng, nhưng ta vẫn nên cắt ở khoảng 1000 ký tự cho an toàn
+        // Cắt bỏ khoảng trắng vô tình dính vào Key
+        const cleanApiKey = apiKey.trim(); 
+
         if (text.length > 1000) text = text.substring(0, 997) + '...';
 
         // 1. Gửi văn bản lên máy chủ FPT
         const response = await fetch("https://api.fpt.ai/hmi/tts/v5", {
             method: "POST",
             headers: {
-                "api-key": apiKey,
-                "voice": "banmai", // Các giọng khác: lannhi (Nữ Nam), thuminh (Nữ Bắc), minhquang (Nam Nam)
+                "api-key": cleanApiKey,
+                "voice": "banmai", 
                 "speed": "0", 
                 "format": "mp3"
             },
@@ -112,13 +122,14 @@ async function playTTS(text, voiceChannel) {
 
         const data = await response.json();
 
+        // Xử lý lỗi trả về từ FPT
         if (data.error !== 0 || !data.audiourl) {
-            throw new Error(`FPT API Error: ${data.message || "Không thể lấy link audio"}`);
+            throw new Error(`FPT API Error: ${data.message || JSON.stringify(data)}`);
         }
 
         const audioUrl = data.audiourl;
 
-        // 2. Chờ file mp3 được tạo trên CDN của FPT (Ping kiểm tra tối đa 5 lần)
+        // 2. Chờ file mp3 được tạo trên CDN của FPT (Ping kiểm tra)
         let isReady = false;
         for (let i = 0; i < 5; i++) {
             const checkReq = await fetch(audioUrl, { method: "HEAD" });
@@ -126,7 +137,7 @@ async function playTTS(text, voiceChannel) {
                 isReady = true;
                 break;
             }
-            await new Promise(r => setTimeout(r, 1000)); // Đợi 1 giây rồi check lại
+            await new Promise(r => setTimeout(r, 1000));
         }
 
         if (!isReady) throw new Error("Quá thời gian tạo âm thanh từ hệ thống FPT.");
@@ -141,7 +152,7 @@ async function playTTS(text, voiceChannel) {
 
         await entersState(connection, VoiceConnectionStatus.Ready, 15_000);
 
-        // 4. Phát thẳng URL mp3 (Discord.js tự stream dữ liệu)
+        // 4. Phát URL mp3
         const player = createAudioPlayer();
         const resource = createAudioResource(audioUrl);
 
@@ -152,7 +163,7 @@ async function playTTS(text, voiceChannel) {
         connection.subscribe(player);
         player.play(resource);
 
-        console.log(`🔊 [FPT.AI] Đã phát thành công: "${text}"`);
+        console.log(`🔊 [FPT.AI] Đã phát: "${text}"`);
     } catch (error) {
         console.error("❌ Lỗi trong hàm playTTS (FPT.AI):", error.message || error);
     }
@@ -184,7 +195,7 @@ client.on('interactionCreate', async interaction => {
 
             if (commandName === 'accept' || commandName === 'reject') { 
                 const config = await Config.findById('config'); 
-                if (!config) return interaction.reply({ content: '❌ Cấu hình Confession chưa được thiết lập.', ephemeral: true });
+                if (!config) return interaction.reply({ content: '❌ Cấu hình Confession chưa thiết lập.', ephemeral: true });
 
                 if (!interaction.memberPermissions.has(PermissionsBitField.Flags.ManageMessages)) {
                     return await interaction.reply({ content: "❌ Bạn không có quyền duyệt.", ephemeral: true });
@@ -232,12 +243,11 @@ client.on('interactionCreate', async interaction => {
             }
         }
     } catch (error) {
-        console.error(error);
-        if (error.code === 10062) return console.warn('⚠️ Interaction hết hạn.');
+        if (error.code === 10062) return;
         if (interaction.replied || interaction.deferred) {
-            await interaction.followUp({ content: '❌ Có lỗi xảy ra!', ephemeral: true });
+            await interaction.followUp({ content: '❌ Có lỗi xảy ra!', ephemeral: true }).catch(() => {});
         } else {
-            await interaction.reply({ content: '❌ Có lỗi xảy ra!', ephemeral: true });
+            await interaction.reply({ content: '❌ Có lỗi xảy ra!', ephemeral: true }).catch(() => {});
         }
     }
 });
