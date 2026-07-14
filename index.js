@@ -1,4 +1,4 @@
-// index.js (Phiên bản Google TTS URL - Chống lỗi Render, Đọc tiếng Việt chuẩn)
+// index.js (Bản hoàn thiện Google TTS - Xử lý lỗi im lặng)
 require('dotenv').config();
 
 const {
@@ -22,10 +22,9 @@ const {
     VoiceConnectionStatus,
     getVoiceConnection,
 } = require("@discordjs/voice");
+const { Readable } = require("stream"); // 📌 THÊM THƯ VIỆN STREAM ĐỂ PHÁT NHẠC
 
-// 📌 THÊM LẠI THƯ VIỆN GOOGLE TTS
 const googleTTS = require("google-tts-api");
-
 const Config = require('./models/Config'); 
 
 const app = express();
@@ -84,22 +83,35 @@ async function startBot() {
     }
 }
 
-// --- HÀM PHỤ TRỢ: GOOGLE TTS (Lấy URL trực tiếp để lách 429 trên Render) ---
+// --- HÀM PHỤ TRỢ: GOOGLE TTS (Tải qua Buffer Stream để chống lỗi im lặng) ---
 async function playTTS(text, voiceChannel) {
     try {
-        // Cắt chuỗi an toàn dưới 200 ký tự (Giới hạn của API Google Translate)
         if (text.length > 195) {
             text = text.substring(0, 195) + '...';
         }
 
-        // 1. Chỉ sinh ra URL, KHÔNG tải dữ liệu cục bộ về để tránh bị Google chặn IP
+        // 1. Tạo URL của Google TTS
         const url = googleTTS.getAudioUrl(text, {
             lang: "vi",
             slow: false,
             host: "https://translate.google.com",
         });
 
-        // 2. Kết nối Voice
+        // 2. Giả lập trình duyệt Chrome để tải file âm thanh (Chống Google chặn)
+        const response = await fetch(url, {
+            headers: {
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36"
+            }
+        });
+
+        if (!response.ok) throw new Error(`Google từ chối cung cấp âm thanh: ${response.statusText}`);
+
+        // 3. Chuyển đổi dữ liệu tải về thành luồng Stream để Discord đọc
+        const arrayBuffer = await response.arrayBuffer();
+        const buffer = Buffer.from(arrayBuffer);
+        const stream = Readable.from(buffer);
+
+        // 4. Kết nối Voice
         const connection = joinVoiceChannel({
             channelId: voiceChannel.id,
             guildId: voiceChannel.guild.id,
@@ -109,9 +121,9 @@ async function playTTS(text, voiceChannel) {
 
         await entersState(connection, VoiceConnectionStatus.Ready, 15_000);
 
-        // 3. Phát âm thanh trực tiếp (Discord.js Voice sẽ tự stream từ URL)
+        // 5. Phát âm thanh
         const player = createAudioPlayer();
-        const resource = createAudioResource(url); 
+        const resource = createAudioResource(stream); 
 
         player.on('error', error => {
             console.error(`❌ Lỗi Audio Player: ${error.message}`);
