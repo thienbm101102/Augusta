@@ -1,4 +1,4 @@
-// index.js (Bản hoàn thiện Google TTS - Xử lý lỗi im lặng)
+// index.js (Bản Hoàn Thiện Tối Ưu Mạng - Google TTS URL & Tái sử dụng Kết nối)
 require('dotenv').config();
 
 const {
@@ -22,23 +22,25 @@ const {
     VoiceConnectionStatus,
     getVoiceConnection,
 } = require("@discordjs/voice");
-const { Readable } = require("stream"); // 📌 THÊM THƯ VIỆN STREAM ĐỂ PHÁT NHẠC
+const { Readable } = require("stream"); 
 
 const googleTTS = require("google-tts-api");
 const Config = require('./models/Config'); 
 
+// --- Web server giữ cho Render không ngủ ---
 const app = express();
 const PORT = process.env.PORT || 10000; 
 
 app.get("/", (req, res) => {
     res.setHeader("Content-Type", "text/plain; charset=utf-8");
-    res.status(200).send("✅ Bot đang hoạt động với hệ thống Google TTS!");
+    res.status(200).send("✅ Bot đang hoạt động với hệ thống Google TTS Tối ưu mạng!");
 });
 
 app.listen(PORT, () => {
     console.log(`🌐 Web server đã khởi động tại cổng ${PORT}`);
 });
 
+// --- Setup Discord client ---
 const client = new Client({
     intents: [
         GatewayIntentBits.Guilds,
@@ -52,6 +54,7 @@ const client = new Client({
     partials: [Partials.Channel],
 });
 
+// --- Tải lệnh ---
 client.commands = new Collection();
 const commandsPath = path.join(__dirname, 'commands');
 
@@ -72,6 +75,7 @@ try {
     console.error(`❌ Lỗi FATAL khi đọc thư mục commands:`, e);
 }
 
+// --- Khởi động Bot & DB ---
 async function startBot() {
     try {
         console.log("🚀 Đang kết nối tới MongoDB...");
@@ -83,9 +87,10 @@ async function startBot() {
     }
 }
 
-// --- HÀM PHỤ TRỢ: GOOGLE TTS (Tải qua Buffer Stream để chống lỗi im lặng) ---
+// --- HÀM PHỤ TRỢ: GOOGLE TTS (Tải qua Buffer Stream + Tối ưu hóa Kết nối Mạng Render) ---
 async function playTTS(text, voiceChannel) {
     try {
+        // Cắt chuỗi an toàn dưới 200 ký tự
         if (text.length > 195) {
             text = text.substring(0, 195) + '...';
         }
@@ -97,29 +102,39 @@ async function playTTS(text, voiceChannel) {
             host: "https://translate.google.com",
         });
 
-        // 2. Giả lập trình duyệt Chrome để tải file âm thanh (Chống Google chặn)
+        // 2. Giả lập trình duyệt Chrome để tải file âm thanh
         const response = await fetch(url, {
             headers: {
                 "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36"
             }
         });
 
-        if (!response.ok) throw new Error(`Google từ chối cung cấp âm thanh: ${response.statusText}`);
+        if (!response.ok) throw new Error(`Google từ chối: ${response.statusText}`);
 
-        // 3. Chuyển đổi dữ liệu tải về thành luồng Stream để Discord đọc
+        // Chuyển âm thanh thành luồng stream
         const arrayBuffer = await response.arrayBuffer();
         const buffer = Buffer.from(arrayBuffer);
         const stream = Readable.from(buffer);
 
-        // 4. Kết nối Voice
-        const connection = joinVoiceChannel({
-            channelId: voiceChannel.id,
-            guildId: voiceChannel.guild.id,
-            adapterCreator: voiceChannel.guild.voiceAdapterCreator,
-            selfDeaf: true, 
-        });
+        // 3. TỐI ƯU HÓA KẾT NỐI: Kiểm tra xem bot đã có kết nối với kênh thoại này chưa
+        let connection = getVoiceConnection(voiceChannel.guild.id);
 
-        await entersState(connection, VoiceConnectionStatus.Ready, 15_000);
+        if (!connection || connection.state.status === VoiceConnectionStatus.Destroyed) {
+            // Nếu chưa có, tạo kết nối mới
+            connection = joinVoiceChannel({
+                channelId: voiceChannel.id,
+                guildId: voiceChannel.guild.id,
+                adapterCreator: voiceChannel.guild.voiceAdapterCreator,
+                selfDeaf: true, 
+            });
+        }
+
+        // 4. VƯỢT RÀO CẢN MẠNG RENDER: Tăng thời gian chờ và ép phát nhạc nếu trễ
+        try {
+            await entersState(connection, VoiceConnectionStatus.Ready, 30_000);
+        } catch (err) {
+            console.warn("⚠️ Cảnh báo mạng: Discord Voice phản hồi chậm. Bỏ qua chờ và tiếp tục luồng phát...");
+        }
 
         // 5. Phát âm thanh
         const player = createAudioPlayer();
@@ -138,6 +153,9 @@ async function playTTS(text, voiceChannel) {
     }
 }
 
+// ------------------------------------------------------------------
+// --- Xử lý Sự kiện READY ---
+// ------------------------------------------------------------------
 client.on('ready', async () => {
     console.log(`✅ Logged in as ${client.user.tag}`);
     client.user.setPresence({
@@ -146,6 +164,9 @@ client.on('ready', async () => {
     });
 });
 
+// ------------------------------------------------------------------
+// --- Xử lý Tương tác (Interactions) ---
+// ------------------------------------------------------------------
 client.on('interactionCreate', async interaction => {
     try {
         if (interaction.isChatInputCommand()) {
@@ -215,6 +236,9 @@ client.on('interactionCreate', async interaction => {
     }
 });
 
+// ------------------------------------------------------------------
+// --- Xử lý Tin nhắn (Message) - LOGIC ĐỌC TIN NHẮN (TTS) ---
+// ------------------------------------------------------------------
 client.on('messageCreate', async message => {
     if (message.author.bot || message.system || message.content.startsWith('/')) return; 
 
@@ -239,6 +263,9 @@ client.on('messageCreate', async message => {
     }
 });
 
+// ------------------------------------------------------------------
+// --- Xử lý Voice State Update (TTS Chào/Rời) ---
+// ------------------------------------------------------------------
 client.on("voiceStateUpdate", async (oldState, newState) => {
     if (!oldState.channelId && newState.channelId && newState.member && !newState.member.user.bot) {
         const member = newState.member;
