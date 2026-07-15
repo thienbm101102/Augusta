@@ -1,5 +1,6 @@
 // index.js (Bản Hoàn Thiện Tối Ưu Mạng - Google TTS URL & Tái sử dụng Kết nối)
 require('dotenv').config();
+process.env.FFMPEG_PATH = require('ffmpeg-static'); // 📌 BẮT BUỘC PHẢI THÊM DÒNG NÀY CHO RENDER
 
 const {
     Client,
@@ -21,6 +22,7 @@ const {
     entersState,
     VoiceConnectionStatus,
     getVoiceConnection,
+    StreamType, // 📌 Thêm cái này vào để ép kiểu luồng âm thanh
 } = require("@discordjs/voice");
 const { Readable } = require("stream"); 
 
@@ -138,7 +140,11 @@ async function playTTS(text, voiceChannel) {
 
         // 5. Phát âm thanh
         const player = createAudioPlayer();
-        const resource = createAudioResource(stream); 
+        
+        // 📌 SỬA DÒNG NÀY: Thêm inputType để ép hệ thống dùng FFmpeg giải mã MP3
+        const resource = createAudioResource(stream, { 
+            inputType: StreamType.Arbitrary 
+        }); 
 
         player.on('error', error => {
             console.error(`❌ Lỗi Audio Player: ${error.message}`);
