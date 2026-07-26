@@ -4,7 +4,7 @@ const { addBalance, getBalance } = require('../db');
 // --- Cấu hình trò chơi ---
 // Cấu trúc lại để lưu tên và ID của emoji
 const animals = {
-    'bau': { name: 'gourd~1', id: '1445002862609432606', animated: true },
+    'bau': { name: 'gourd', id: '1445002862609432606', animated: true },
     'cua': { name: '5229crab', id: '1418648976755921028', animated: true },
     'tom': { name: 'empreitadaprojectshrimp', id: '1418648974520488057', animated: true },
     'ca': { name: '47967koifish', id: '1418648968467845151', animated: true },
