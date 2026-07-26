@@ -1,6 +1,4 @@
-// index.js (Bản Hoàn Thiện Tối Ưu Mạng - Google TTS URL & Tái sử dụng Kết nối)
-require('dotenv').config();
-process.env.FFMPEG_PATH = require('ffmpeg-static'); // 📌 BẮT BUỘC PHẢI THÊM DÒNG NÀY CHO RENDER
+// index.js (Đã sửa lỗi, thêm TTS, và dùng MongoDB cho Config)
 
 const {
     Client,
@@ -9,24 +7,27 @@ const {
     Partials,
     EmbedBuilder,
     PermissionsBitField,
-    ChannelType, 
+    ChannelType, // Cần cho TTS
 } = require('discord.js');
 const fs = require('fs');
 const path = require('path');
 const mongoose = require('mongoose');
+const cron = require('node-cron');
 const express = require("express");
 const {
     joinVoiceChannel,
     createAudioPlayer,
     createAudioResource,
     entersState,
+    AudioPlayerStatus,
     VoiceConnectionStatus,
     getVoiceConnection,
-    StreamType, // 📌 Thêm cái này vào để ép kiểu luồng âm thanh
 } = require("@discordjs/voice");
-const { Readable } = require("stream"); 
-
 const googleTTS = require("google-tts-api");
+const https = require("https");
+const { Readable } = require("stream");
+
+// 📌 THAY THẾ require('./db') bằng require('./models/Config')
 const Config = require('./models/Config'); 
 
 // --- Web server giữ cho Render không ngủ ---
@@ -35,7 +36,7 @@ const PORT = process.env.PORT || 10000;
 
 app.get("/", (req, res) => {
     res.setHeader("Content-Type", "text/plain; charset=utf-8");
-    res.status(200).send("✅ Bot đang hoạt động với hệ thống Google TTS Tối ưu mạng!");
+    res.status(200).send("✅ Bot đang hoạt động!");
 });
 
 app.listen(PORT, () => {
@@ -56,7 +57,7 @@ const client = new Client({
     partials: [Partials.Channel],
 });
 
-// --- Tải lệnh ---
+// --- Tải lệnh (Thêm khối TRY...CATCH để bắt lỗi khởi động) ---
 client.commands = new Collection();
 const commandsPath = path.join(__dirname, 'commands');
 
@@ -65,12 +66,17 @@ try {
     for (const file of commandFiles) {
         try {
             let command = require(path.join(commandsPath, file));
-            if (command.default) command = command.default;
+            
+            // Xử lý trường hợp dùng ES Module (export default)
+            if (command.default) { 
+                command = command.default;
+            }
+
             if (command.data && command.execute) {
                 client.commands.set(command.data.name, command);
             }
         } catch (e) {
-            console.error(`❌ Lỗi khi tải lệnh ${file}:`, e);
+            console.error(`❌ Lỗi khi tải lệnh ${file}. Vui lòng kiểm tra cú pháp:`, e);
         }
     }
 } catch (e) {
@@ -89,89 +95,42 @@ async function startBot() {
     }
 }
 
-// --- HÀM PHỤ TRỢ: GOOGLE TTS (Tải qua Buffer Stream + Tối ưu hóa Kết nối Mạng Render) ---
-async function playTTS(text, voiceChannel) {
-    try {
-        // Cắt chuỗi an toàn dưới 200 ký tự
-        if (text.length > 195) {
-            text = text.substring(0, 195) + '...';
-        }
-
-        // 1. Tạo URL của Google TTS
-        const url = googleTTS.getAudioUrl(text, {
-            lang: "vi",
-            slow: false,
-            host: "https://translate.google.com",
-        });
-
-        // 2. Giả lập trình duyệt Chrome để tải file âm thanh
-        const response = await fetch(url, {
-            headers: {
-                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36"
-            }
-        });
-
-        if (!response.ok) throw new Error(`Google từ chối: ${response.statusText}`);
-
-        // Chuyển âm thanh thành luồng stream
-        const arrayBuffer = await response.arrayBuffer();
-        const buffer = Buffer.from(arrayBuffer);
-        const stream = Readable.from(buffer);
-
-        // 3. TỐI ƯU HÓA KẾT NỐI: Kiểm tra xem bot đã có kết nối với kênh thoại này chưa
-        let connection = getVoiceConnection(voiceChannel.guild.id);
-
-        if (!connection || connection.state.status === VoiceConnectionStatus.Destroyed) {
-            // Nếu chưa có, tạo kết nối mới
-            connection = joinVoiceChannel({
-                channelId: voiceChannel.id,
-                guildId: voiceChannel.guild.id,
-                adapterCreator: voiceChannel.guild.voiceAdapterCreator,
-                selfDeaf: true, 
-            });
-        }
-
-        // 4. VƯỢT RÀO CẢN MẠNG RENDER: Tăng thời gian chờ và ép phát nhạc nếu trễ
-        try {
-            await entersState(connection, VoiceConnectionStatus.Ready, 30_000);
-        } catch (err) {
-            console.warn("⚠️ Cảnh báo mạng: Discord Voice phản hồi chậm. Bỏ qua chờ và tiếp tục luồng phát...");
-        }
-
-        // 5. Phát âm thanh
-        const player = createAudioPlayer();
-        
-        // 📌 SỬA DÒNG NÀY: Thêm inputType để ép hệ thống dùng FFmpeg giải mã MP3
-        const resource = createAudioResource(stream, { 
-            inputType: StreamType.Arbitrary 
-        }); 
-
-        player.on('error', error => {
-            console.error(`❌ Lỗi Audio Player: ${error.message}`);
-        });
-
-        connection.subscribe(player);
-        player.play(resource);
-
-        console.log(`🔊 [Google TTS] Đã phát: "${text}"`);
-    } catch (error) {
-        console.error("❌ Lỗi trong hàm playTTS:", error.message || error);
-    }
+// Hàm phụ trợ cho TTS
+function streamFromUrl(url) {
+    return new Promise((resolve, reject) => {
+        https
+            .get(url, (res) => {
+                if (res.statusCode !== 200) {
+                    reject(new Error(`HTTP ${res.statusCode}`));
+                    return;
+                }
+                const stream = new Readable().wrap(res);
+                resolve(stream);
+            })
+            .on("error", reject);
+    });
 }
 
+
 // ------------------------------------------------------------------
-// --- Xử lý Sự kiện READY ---
+// --- Xử lý Sự kiện READY (Giữ nguyên) ---
 // ------------------------------------------------------------------
 client.on('ready', async () => {
     console.log(`✅ Logged in as ${client.user.tag}`);
+    // ... (logic trạng thái hoạt động giữ nguyên) ...
     client.user.setPresence({
-        activities: [{ name: `/help để biết lệnh của BOT nhé ^^`, type: 4 }],
+        activities: [{
+            name: `/help để biết lệnh của BOT nhé ^^`, 
+            type: 4, 
+        }],
         status: 'online', 
     });
+    console.log('✅ Đã thiết lập trạng thái hoạt động của Bot.');
 });
 
+
 // ------------------------------------------------------------------
-// --- Xử lý Tương tác (Interactions) ---
+// --- Xử lý Tương tác (Interactions) (Dùng DB cho Confession) ---
 // ------------------------------------------------------------------
 client.on('interactionCreate', async interaction => {
     try {
@@ -183,10 +142,13 @@ client.on('interactionCreate', async interaction => {
             const [commandName, messageId] = interaction.customId.split(/[_-]/);
             const command = client.commands.get(commandName);
 
+            // Xử lý Confession
             if (commandName === 'accept' || commandName === 'reject') { 
+                // 📌 DÙNG CONFIG TỪ DB
                 const config = await Config.findById('config'); 
-                if (!config) return interaction.reply({ content: '❌ Cấu hình Confession chưa thiết lập.', ephemeral: true });
+                if (!config) return interaction.reply({ content: '❌ Cấu hình Confession chưa được thiết lập (chạy /confession setup).', ephemeral: true });
 
+                
                 if (!interaction.memberPermissions.has(PermissionsBitField.Flags.ManageMessages)) {
                     return await interaction.reply({ content: "❌ Bạn không có quyền duyệt.", ephemeral: true });
                 }
@@ -198,6 +160,7 @@ client.on('interactionCreate', async interaction => {
 
                 const originalContent = targetMsg.embeds[0]?.description || "Không rõ nội dung";
 
+                // disable nút sau khi bấm
                 const disabledRow = {
                     type: 1,
                     components: targetMsg.components[0].components.map((btn) => ({
@@ -208,7 +171,7 @@ client.on('interactionCreate', async interaction => {
                 await targetMsg.edit({ components: [disabledRow] });
 
                 if (commandName === 'accept') {
-                    const publicChannel = await client.channels.fetch(config.publicChannel).catch(() => null); 
+                    const publicChannel = await client.channels.fetch(config.publicChannel).catch(() => null); // 📌 Dùng config.publicChannel từ DB
                     if (!publicChannel) return;
 
                     const embed = new EmbedBuilder()
@@ -219,7 +182,13 @@ client.on('interactionCreate', async interaction => {
                         .setTimestamp();
 
                     const sent = await publicChannel.send({ embeds: [embed] });
-                    const emojis = ["👍", "❤️", "😂", "😭", "🔥"];
+                    const emojis = [
+                        "👍",
+                        "❤️",
+                        "😂",
+                        "😭",
+                        "🔥",
+                    ];
                     for (const emoji of emojis) await sent.react(emoji);
                 }
             } else if (command && typeof command.handleButton === 'function') {
@@ -233,34 +202,82 @@ client.on('interactionCreate', async interaction => {
             }
         }
     } catch (error) {
-        if (error.code === 10062) return;
+        console.error(error);
+        
+        if (error.code === 10062) {
+            console.warn('⚠️ Unknown Interaction (10062) - Đã bỏ qua lỗi tương tác hết hạn để tránh crash.');
+            return; 
+        }
+
         if (interaction.replied || interaction.deferred) {
-            await interaction.followUp({ content: '❌ Có lỗi xảy ra!', ephemeral: true }).catch(() => {});
+            await interaction.followUp({ content: '❌ Có lỗi xảy ra khi thực thi tương tác này!', ephemeral: true });
         } else {
-            await interaction.reply({ content: '❌ Có lỗi xảy ra!', ephemeral: true }).catch(() => {});
+            await interaction.reply({ content: '❌ Có lỗi xảy ra khi thực thi tương tác này!', ephemeral: true });
         }
     }
 });
+
 
 // ------------------------------------------------------------------
 // --- Xử lý Tin nhắn (Message) - LOGIC ĐỌC TIN NHẮN (TTS) ---
 // ------------------------------------------------------------------
 client.on('messageCreate', async message => {
+    // Ngăn bot phản hồi chính nó, hệ thống hoặc lệnh slash
     if (message.author.bot || message.system || message.content.startsWith('/')) return; 
 
+    // --- LOGIC ĐỌC TIN NHẮN (TTS) ---
     try {
         const config = await Config.findById('config');
+        
+        // 1. Kiểm tra xem tin nhắn có nằm trong kênh TTS đã cấu hình không
         if (config && config.ttsTextChannel === message.channel.id) {
+            
+            // 2. TÌM KÊNH THOẠI CỦA NGƯỜI GỬI
             const memberVoiceChannel = message.member.voice.channel;
-            if (memberVoiceChannel && memberVoiceChannel.isVoiceBased()) {
-                const text = `${message.member.displayName} nói: ${message.content}`;
-                await playTTS(text, memberVoiceChannel);
+            
+            if (!memberVoiceChannel || memberVoiceChannel.type !== ChannelType.GuildVoice) {
+                return;
             }
+
+            // 3. Chuẩn bị text
+            let text = message.content;
+            if (text.length > 200) { 
+                text = text.substring(0, 200) + '...';
+            }
+            text = `${message.member.displayName} đã gửi tin nhắn thoại với nội dung: ${text}`;
+            
+            console.log(`TTS: Đọc tin nhắn từ ${message.author.tag} trong kênh ${message.channel.name}`);
+
+            // 4. Kết nối và phát (tham gia kênh của người gửi)
+            const connection = joinVoiceChannel({
+                channelId: memberVoiceChannel.id,
+                guildId: memberVoiceChannel.guild.id,
+                adapterCreator: memberVoiceChannel.guild.voiceAdapterCreator,
+                selfDeaf: false,
+            });
+
+            await entersState(connection, VoiceConnectionStatus.Ready, 20_000);
+
+            const url = googleTTS.getAudioUrl(text, {
+                lang: "vi",
+                slow: false,
+                host: "https://translate.google.com",
+            });
+            
+            const audioStream = await streamFromUrl(url);
+            const resource = createAudioResource(audioStream);
+            const player = createAudioPlayer();
+
+            connection.subscribe(player);
+            player.play(resource);
+
         }
     } catch (e) {
         console.error("❌ Lỗi khi thực thi logic TTS:", e);
     }
 
+
+    // 📌 Xử lý logic đoán số (Giữ nguyên)
     if (client.commands.has('doanso')) {
         const doansoCommand = client.commands.get('doanso');
         if (message.content.toLowerCase() === 'doanso') { 
@@ -269,19 +286,56 @@ client.on('messageCreate', async message => {
     }
 });
 
+
 // ------------------------------------------------------------------
-// --- Xử lý Voice State Update (TTS Chào/Rời) ---
+// --- Xử lý Voice State Update (TTS Chào/Rời - Giữ nguyên) ---
 // ------------------------------------------------------------------
 client.on("voiceStateUpdate", async (oldState, newState) => {
-    if (!oldState.channelId && newState.channelId && newState.member && !newState.member.user.bot) {
+    // ... (logic chào và rời kênh giữ nguyên) ...
+    if (
+        !oldState.channelId &&
+        newState.channelId &&
+        newState.member &&
+        !newState.member.user.bot
+    ) {
+        // ... (logic chào) ...
         const member = newState.member;
         const channel = newState.channel;
-        const text = `${member.displayName} vừa vào phòng.`;
 
-        console.log(`🟢 [JOIN] ${member.displayName} vào voice: ${channel.name}`);
-        await playTTS(text, channel);
+        const text = `${member.displayName} đã tham gia kênh thoại`;
+
+        console.log(`🟢 ${member.displayName} vào voice: ${channel.name} | Bot đọc: ${text}`);
+
+        const url = googleTTS.getAudioUrl(text, {
+            lang: "vi",
+            slow: false,
+            host: "https://translate.google.com",
+        });
+
+        const connection = joinVoiceChannel({
+            channelId: channel.id,
+            guildId: channel.guild.id,
+            adapterCreator: channel.guild.voiceAdapterCreator,
+            selfDeaf: false,
+        });
+
+        try {
+            await entersState(connection, VoiceConnectionStatus.Ready, 5_000);
+        } catch {
+            if (connection && !connection.destroyed) connection.destroy();
+            return;
+        }
+
+        const audioStream = await streamFromUrl(url);
+        const resource = createAudioResource(audioStream);
+        const player = createAudioPlayer();
+
+        connection.subscribe(player);
+        player.play(resource);
+
     }
 
+    // Nếu voice trống → bot rời
     if (oldState.channelId && !newState.channelId && oldState.channel) {
         const channel = oldState.channel;
         const remaining = channel.members.filter((m) => !m.user.bot);
@@ -290,10 +344,11 @@ client.on("voiceStateUpdate", async (oldState, newState) => {
             const botConnection = getVoiceConnection(channel.guild.id);
             if (botConnection && botConnection.state.status !== "destroyed") {
                 botConnection.destroy();
-                console.log("👋 Bot đã rời vì phòng voice trống.");
+                console.log("👋 Bot đã rời vì voice trống.");
             }
         }
     }
 });
 
+// Khởi động bot (kết nối DB và login)
 startBot();
