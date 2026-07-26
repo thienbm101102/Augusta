@@ -67,7 +67,7 @@ function updateEmbed(game) {
     const wrongGuessesDisplay = '<a:AbbyCry:1393909295665643540> '.repeat(game.incorrectGuesses) + '<a:AbbyCheer:1393909243840827432> '.repeat(MAX_INCORRECT_GUESSES - game.incorrectGuesses);
     const embed = new EmbedBuilder()
         .setColor('#e74c3c')
-        .setTitle('<a:Verified:1406631971509243974> **Đoán Từ**')
+        .setTitle('<a:VerifiedTwitter:1418649004912148511> **Đoán Từ**')
         .setDescription(
             `**Tiền cược:** **${game.bet.toLocaleString()}**<a:diamondgem:1418649012289933434>\n` +
             `**Trạng thái:** ${wrongGuessesDisplay}\n\n` +
@@ -190,7 +190,7 @@ module.exports = {
             const reward = game.bet * 2; 
             await addBalance(userId, reward);
             embed.setDescription(
-                `<a:AbbyHappy:1393909327848538122> Chúc mừng **${interaction.member.displayName}** đã đoán đúng từ: **${game.word}**\n\n` +
+                `Chúc mừng **${interaction.member.displayName}** đã đoán đúng từ: **${game.word}**\n\n` +
                 `Bạn đã thắng **${reward.toLocaleString()}**<a:diamondgem:1418649012289933434> (bao gồm cả tiền cược **${game.bet.toLocaleString()}**). Lợi nhuận: **${game.bet.toLocaleString()}**<a:diamondgem:1418649012289933434>`
             );
             await interaction.editReply({ embeds: [embed], components: [] });
