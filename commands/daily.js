@@ -19,7 +19,7 @@ module.exports = {
       const embed = new EmbedBuilder()
       .setColor('Blue')
       .setTitle('**<a:VerifiedTwitter:1418649004912148511> Điểm Danh Thất Bại**')
-      .setDescription(`<a:AbbyHappy:1393909327848538122> **|** Bạn đã điểm danh hôm nay rồi! Thử lại sau **${hours}h ${minutes}m** nhé`)
+      .setDescription(` Bạn đã điểm danh hôm nay rồi! Thử lại sau **${hours}h ${minutes}m** nhé`)
       .setTimestamp();
     return interaction.reply({ embeds: [embed] });
   }
@@ -30,7 +30,7 @@ module.exports = {
     const embed = new EmbedBuilder()
       .setColor('Blue')
       .setTitle('**<a:VerifiedTwitter:1418649004912148511> Điểm Danh Thành Công**')
-      .setDescription(`<a:AbbyPeek:1393909356625657876> **|** Bạn đã điểm danh thành công và nhận được **10,000**<a:diamondgem:1418649012289933434>!`)
+      .setDescription(` Bạn đã điểm danh thành công và nhận được **10,000**<a:diamondgem:1418649012289933434>!`)
       .setTimestamp();
     return interaction.reply({ embeds: [embed] });
   }
