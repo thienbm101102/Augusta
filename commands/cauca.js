@@ -77,13 +77,13 @@ module.exports = {
         let finalColor;
 
         if (loot.multiplier > 5) {
-            resultMessage = `<a:AbbyHappy:1393909327848538122> **Sự xuất hiện của ${loot.name} đã làm cả vùng biển dậy sóng! Bạn đã câu được vật phẩm Huyền Thoại!**`;
+            resultMessage = `**Sự xuất hiện của ${loot.name} đã làm cả vùng biển dậy sóng! Bạn đã câu được vật phẩm Huyền Thoại!**`;
             finalColor = '#FFD700'; // Vàng
         } else if (loot.multiplier > 0) {
-            resultMessage = `<a:AbbyFlower:1393909312761364541> **Từ dưới đáy biển, bạn kéo cần lên và nhận được:**`;
+            resultMessage = `**Từ dưới đáy biển, bạn kéo cần lên và nhận được:**`;
             finalColor = '#2ECC71'; // Xanh lá
         } else {
-            resultMessage = `<a:AbbyShocked:1393909368138895411> **Ôi không, có vẻ hôm nay không phải ngày may mắn của bạn...**`;
+            resultMessage = `**Ôi không, có vẻ hôm nay không phải ngày may mắn của bạn...**`;
             finalColor = '#E74C3C'; // Đỏ
         }
 
