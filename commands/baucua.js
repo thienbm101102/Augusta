@@ -18,7 +18,7 @@ function getEmojiUrl(animalKey) {
     return `https://cdn.discordapp.com/emojis/${emoji.id}.${extension}`;
 }
 
-const bettingTime = 30; // Thời gian đặt cược (giây)
+const bettingTime = 20; // Thời gian đặt cược (giây)
 
 // Lưu trạng thái các game đang diễn ra
 const activeGames = new Map();
