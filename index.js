@@ -90,6 +90,7 @@ async function startBot() {
 
 // 🟢 HÀM XỬ LÝ TTS CHUẨN (TẢI FILE -> ĐỌC -> XOÁ)
 async function playTTS(text, voiceChannel) {
+    let tempFileName = "";
     try {
         // 1. Tải audio dạng Base64 từ Google
         const base64 = await googleTTS.getAudioBase64(text, {
@@ -100,7 +101,7 @@ async function playTTS(text, voiceChannel) {
         });
 
         // 2. Tạo tên file mp3 ngẫu nhiên và lưu vào ổ cứng
-        const tempFileName = path.join(__dirname, `${uuidv4()}.mp3`);
+        tempFileName = path.join(__dirname, `${uuidv4()}.mp3`);
         fs.writeFileSync(tempFileName, Buffer.from(base64, "base64"));
 
         // 3. Kết nối kênh thoại
@@ -111,16 +112,26 @@ async function playTTS(text, voiceChannel) {
             selfDeaf: false,
         });
 
-        await entersState(connection, VoiceConnectionStatus.Ready, 10_000);
+        // BỌC LỖI Ở ĐÂY: Nếu ai đó rời phòng sớm làm bot out, nó sẽ huỷ êm đẹp
+        try {
+            await entersState(connection, VoiceConnectionStatus.Ready, 15_000);
+        } catch (err) {
+            if (connection && connection.state.status !== VoiceConnectionStatus.Destroyed) {
+                connection.destroy();
+            }
+            if (fs.existsSync(tempFileName)) fs.unlinkSync(tempFileName);
+            console.log("⚠️ Huỷ đọc TTS (Do người dùng rời đi sớm hoặc mạng delay).");
+            return; // Dừng lại ở đây, không báo lỗi đỏ
+        }
 
-        // 4. Phát audio trực tiếp từ file mp3 (Cực kỳ ổn định)
+        // 4. Phát audio trực tiếp từ file mp3
         const player = createAudioPlayer();
         const resource = createAudioResource(tempFileName);
         
         connection.subscribe(player);
         player.play(resource);
 
-        // 5. Xoá file rác khi đọc xong hoặc khi có lỗi
+        // 5. Xoá file rác khi đọc xong hoặc khi có lỗi phát
         player.on(AudioPlayerStatus.Idle, () => {
             if (fs.existsSync(tempFileName)) fs.unlinkSync(tempFileName);
         });
@@ -131,7 +142,8 @@ async function playTTS(text, voiceChannel) {
         });
 
     } catch (error) {
-        console.error("❌ Lỗi trong luồng playTTS:", error);
+        console.error("❌ Lỗi trong luồng playTTS:", error.message);
+        if (tempFileName && fs.existsSync(tempFileName)) fs.unlinkSync(tempFileName);
     }
 }
 
