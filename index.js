@@ -1,4 +1,4 @@
-// index.js (Đã sửa lỗi Google chặn TTS bằng fetch Buffer)
+// index.js (Đã sửa triệt để lỗi Crash và lỗi Im lặng bằng cách dùng file MP3 tạm)
 
 const {
     Client,
@@ -20,10 +20,10 @@ const {
     entersState,
     VoiceConnectionStatus,
     getVoiceConnection,
-    generateDependencyReport, // Thêm dòng này để log kiểm tra hệ thống audio
+    AudioPlayerStatus, // Thêm trạng thái để biết khi nào đọc xong
 } = require("@discordjs/voice");
 const googleTTS = require("google-tts-api");
-const { Readable } = require('stream'); // Gọi Readable để stream buffer
+const { v4: uuidv4 } = require('uuid'); // Dùng tạo tên file ngẫu nhiên (Đã có sẵn trong package.json)
 
 const Config = require('./models/Config'); 
 
@@ -88,31 +88,51 @@ async function startBot() {
     }
 }
 
-// 🟢 HÀM HỖ TRỢ LẤY TTS RESOURCE (GIẢI QUYẾT TRIỆT ĐỂ LỖI IM LẶNG)
-async function getTTSResource(text) {
-    const url = googleTTS.getAudioUrl(text, {
-        lang: "vi",
-        slow: false,
-        host: "https://translate.google.com",
-    });
+// 🟢 HÀM XỬ LÝ TTS CHUẨN (TẢI FILE -> ĐỌC -> XOÁ)
+async function playTTS(text, voiceChannel) {
+    try {
+        // 1. Tải audio dạng Base64 từ Google
+        const base64 = await googleTTS.getAudioBase64(text, {
+            lang: "vi",
+            slow: false,
+            host: "https://translate.google.com",
+            timeout: 10000,
+        });
 
-    // Giả danh trình duyệt để lách luật chặn 403 của Google
-    const response = await fetch(url, {
-        headers: {
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
-        }
-    });
+        // 2. Tạo tên file mp3 ngẫu nhiên và lưu vào ổ cứng
+        const tempFileName = path.join(__dirname, `${uuidv4()}.mp3`);
+        fs.writeFileSync(tempFileName, Buffer.from(base64, "base64"));
 
-    if (!response.ok) {
-        throw new Error(`Google TTS API từ chối kết nối. Mã HTTP: ${response.status}`);
+        // 3. Kết nối kênh thoại
+        const connection = joinVoiceChannel({
+            channelId: voiceChannel.id,
+            guildId: voiceChannel.guild.id,
+            adapterCreator: voiceChannel.guild.voiceAdapterCreator,
+            selfDeaf: false,
+        });
+
+        await entersState(connection, VoiceConnectionStatus.Ready, 10_000);
+
+        // 4. Phát audio trực tiếp từ file mp3 (Cực kỳ ổn định)
+        const player = createAudioPlayer();
+        const resource = createAudioResource(tempFileName);
+        
+        connection.subscribe(player);
+        player.play(resource);
+
+        // 5. Xoá file rác khi đọc xong hoặc khi có lỗi
+        player.on(AudioPlayerStatus.Idle, () => {
+            if (fs.existsSync(tempFileName)) fs.unlinkSync(tempFileName);
+        });
+
+        player.on('error', error => {
+            console.error(`❌ Lỗi AudioPlayer: ${error.message}`);
+            if (fs.existsSync(tempFileName)) fs.unlinkSync(tempFileName);
+        });
+
+    } catch (error) {
+        console.error("❌ Lỗi trong luồng playTTS:", error);
     }
-    
-    // Đổi file tải về thành luồng stream cho Discord
-    const arrayBuffer = await response.arrayBuffer();
-    const buffer = Buffer.from(arrayBuffer);
-    const stream = Readable.from(buffer);
-
-    return createAudioResource(stream);
 }
 
 
@@ -121,12 +141,6 @@ async function getTTSResource(text) {
 // ------------------------------------------------------------------
 client.on('ready', async () => {
     console.log(`✅ Logged in as ${client.user.tag}`);
-    
-    // In ra báo cáo thư viện Audio ở Log Render
-    console.log("====== BÁO CÁO HỆ THỐNG ÂM THANH ======");
-    console.log(generateDependencyReport());
-    console.log("=======================================");
-
     client.user.setPresence({
         activities: [{ name: `/help để biết lệnh của BOT nhé ^^`, type: 4 }],
         status: 'online', 
@@ -223,29 +237,12 @@ client.on('messageCreate', async message => {
 
             let text = message.content;
             if (text.length > 200) text = text.substring(0, 200) + '...';
-            text = `${message.member.displayName} đã gửi tin nhắn: ${text}`;
+            text = `${message.member.displayName} nói: ${text}`; // Đã làm cho câu đọc ngắn gọn, tự nhiên hơn
             
             console.log(`🔊 [Message TTS] -> ${text}`);
-
-            const connection = joinVoiceChannel({
-                channelId: memberVoiceChannel.id,
-                guildId: memberVoiceChannel.guild.id,
-                adapterCreator: memberVoiceChannel.guild.voiceAdapterCreator,
-                selfDeaf: false,
-            });
-
-            await entersState(connection, VoiceConnectionStatus.Ready, 10_000);
-
-            // Gọi hàm an toàn để lấy luồng audio
-            const resource = await getTTSResource(text);
-            const player = createAudioPlayer();
-
-            player.on('error', error => {
-                console.error(`❌ Lỗi AudioPlayer (Message TTS): ${error.message}`);
-            });
-
-            connection.subscribe(player);
-            player.play(resource);
+            
+            // Gọi hàm playTTS duy nhất ở trên
+            await playTTS(text, memberVoiceChannel);
         }
     } catch (e) {
         console.error("❌ Lỗi khi thực thi logic Message TTS:", e);
@@ -265,62 +262,39 @@ client.on('messageCreate', async message => {
 // ------------------------------------------------------------------
 client.on("voiceStateUpdate", async (oldState, newState) => {
     
-    // Logic chào
+    // Logic chào khi user thật vào room
     if (
         !oldState.channelId &&
         newState.channelId &&
         newState.member &&
         !newState.member.user.bot
     ) {
-        const member = newState.member;
-        const channel = newState.channel;
-        const text = `${member.displayName} đã tham gia kênh thoại`;
-
-        console.log(`🟢 [Voice Join] ${member.displayName} vào ${channel.name}`);
-
-        const connection = joinVoiceChannel({
-            channelId: channel.id,
-            guildId: channel.guild.id,
-            adapterCreator: channel.guild.voiceAdapterCreator,
-            selfDeaf: false,
-        });
-
-        try {
-            // Tăng timeout lên 10 giây để Render có đủ thời gian kết nối
-            await entersState(connection, VoiceConnectionStatus.Ready, 10_000); 
-            
-            // Gọi hàm an toàn để lấy luồng audio
-            const resource = await getTTSResource(text);
-            const player = createAudioPlayer();
-
-            // Theo dõi trạng thái để log
-            player.on('stateChange', (oldPState, newPState) => {
-                if (newPState.status === 'playing') console.log(`▶️ Đang phát âm thanh...`);
-            });
-
-            player.on('error', error => {
-                console.error(`❌ Lỗi AudioPlayer (Voice Join TTS): ${error.message}`);
-            });
-
-            connection.subscribe(player);
-            player.play(resource);
-
-        } catch (err) {
-            console.error("❌ Lỗi kết nối hoặc lấy dữ liệu Voice Join:", err);
-            if (connection && !connection.destroyed) connection.destroy();
-        }
+        const text = `${newState.member.displayName} đã tham gia kênh thoại`;
+        console.log(`🟢 [Voice Join] ${newState.member.displayName} vào ${newState.channel.name}`);
+        
+        // Gọi hàm playTTS
+        await playTTS(text, newState.channel);
     }
 
-    // Nếu voice trống → bot rời
-    if (oldState.channelId && !newState.channelId && oldState.channel) {
+    // Logic thoát room (ĐÃ SỬA LỖI CRASH 100%)
+    // Kiểm tra thêm điều kiện: Người out không phải là bot (tránh vòng lặp bot tự out -> chạy lại sự kiện out)
+    if (oldState.channelId && !newState.channelId && !oldState.member.user.bot && oldState.channel) {
         const channel = oldState.channel;
         const remaining = channel.members.filter((m) => !m.user.bot);
 
         if (remaining.size === 0) {
             const botConnection = getVoiceConnection(channel.guild.id);
-            if (botConnection && botConnection.state.status !== "destroyed") {
-                botConnection.destroy();
-                console.log("👋 Bot đã rời vì voice trống.");
+            
+            if (botConnection) {
+                try {
+                    // Kiểm tra an toàn trước khi destroy
+                    if (botConnection.state.status !== VoiceConnectionStatus.Destroyed) {
+                        botConnection.destroy();
+                        console.log("👋 Bot đã rời vì voice trống.");
+                    }
+                } catch (error) {
+                    console.error("⚠️ Lỗi ngắt kết nối (bỏ qua được):", error.message);
+                }
             }
         }
     }
