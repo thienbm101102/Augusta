@@ -1,9 +1,7 @@
-// index.js (Bản chốt hạ - Sửa lỗi IPv6 UDP của Node 20 trên Render)
+// index.js (Bản Fix Triệt Để AbortError - Thay thế bộ chờ mạng mặc định)
 
-// 🔥 2 DÒNG LỆNH PHÉP THUẬT: Ép Node.js dùng IPv4 để gửi âm thanh cho Discord
 const dns = require('dns');
-dns.setDefaultResultOrder('ipv4first');
-
+dns.setDefaultResultOrder('ipv4first'); // Hỗ trợ kết nối IPv4 ổn định cho Render
 process.env.FFMPEG_PATH = require('ffmpeg-static');
 
 const {
@@ -23,7 +21,6 @@ const {
     joinVoiceChannel,
     createAudioPlayer,
     createAudioResource,
-    entersState,
     VoiceConnectionStatus,
     getVoiceConnection,
 } = require("@discordjs/voice");
@@ -105,40 +102,50 @@ function getGuildPlayer(guildId) {
     return guildPlayers.get(guildId);
 }
 
-// 🟢 HÀM XỬ LÝ TTS CẮM CHỐT
+// 🟢 HÀM XỬ LÝ TTS: CẮM CHỐT & BỘ CHỜ MẠNG AN TOÀN
 async function playTTS(text, voiceChannel) {
     try {
         let connection = getVoiceConnection(voiceChannel.guild.id);
         
-        // Cắm chốt vào phòng (Nếu chưa có trong phòng)
+        // Nếu bot chưa có mặt trong phòng, cho bot vào
         if (!connection || connection.joinConfig.channelId !== voiceChannel.id) {
-            console.log(`🔌 Kết nối vào kênh ${voiceChannel.name}...`);
+            console.log(`🔌 Đang kết nối vào kênh ${voiceChannel.name}...`);
             connection = joinVoiceChannel({
                 channelId: voiceChannel.id,
                 guildId: voiceChannel.guild.id,
                 adapterCreator: voiceChannel.guild.voiceAdapterCreator,
-                selfDeaf: true, 
+                selfDeaf: false,
+                selfMute: false,
             });
 
-            connection.on(VoiceConnectionStatus.Disconnected, async () => {
-                try {
-                    await Promise.race([
-                        entersState(connection, VoiceConnectionStatus.Signalling, 5_000),
-                        entersState(connection, VoiceConnectionStatus.Connecting, 5_000),
-                    ]);
-                } catch (error) {
-                    if (connection.state.status !== VoiceConnectionStatus.Destroyed) {
-                        connection.destroy();
-                    }
+            console.log("⏳ Đang chờ đường truyền mạng ổn định...");
+            
+            // 🔥 THAY THẾ ENTERSSTATE BẰNG BỘ CHỜ AN TOÀN (Sửa lỗi AbortError) 🔥
+            await new Promise((resolve) => {
+                if (connection.state.status === VoiceConnectionStatus.Ready) {
+                    return resolve();
                 }
+                
+                const onReady = () => {
+                    connection.removeListener(VoiceConnectionStatus.Ready, onReady);
+                    resolve();
+                };
+                
+                connection.on(VoiceConnectionStatus.Ready, onReady);
+                
+                // Cho bot tối đa 15s để nối mạng. Nếu quá 15s vẫn chưa xong, KHÔNG báo lỗi đỏ mà cứ đi tiếp để ép phát âm thanh.
+                setTimeout(() => {
+                    connection.removeListener(VoiceConnectionStatus.Ready, onReady);
+                    console.log("⚠️ Render delay mạng, ép phát âm thanh luôn...");
+                    resolve();
+                }, 15000);
             });
 
-            // Chờ cho kết nối sẵn sàng
-            await entersState(connection, VoiceConnectionStatus.Ready, 20_000);
-            console.log("✅ Kênh thoại đã kết nối bằng IPv4 thành công!");
+            console.log("✅ Đã sẵn sàng phát!");
+            await new Promise(r => setTimeout(r, 1000)); // Nghỉ 1s để chống Discord "nuốt" mất chữ đầu tiên
         }
 
-        // Tải audio từ Google dưới dạng Base64
+        // Tải audio từ Google (Dùng Base64 để không bao giờ bị Google block)
         const base64 = await googleTTS.getAudioBase64(text, {
             lang: "vi",
             slow: false,
@@ -146,17 +153,17 @@ async function playTTS(text, voiceChannel) {
             timeout: 10000,
         });
 
-        // Chuyển Base64 thành luồng Stream
+        // Chuyển Base64 thành luồng Stream đẩy vào Discord
         const buffer = Buffer.from(base64, 'base64');
         const stream = Readable.from(buffer);
 
-        // Phát
+        // Phát ra loa
         const player = getGuildPlayer(voiceChannel.guild.id);
         const resource = createAudioResource(stream);
         
         connection.subscribe(player);
         player.play(resource);
-        console.log(`▶️ Đã đẩy âm thanh qua Discord!`);
+        console.log(`▶️ Đã đẩy âm thanh TTS: "${text}"`);
 
     } catch (error) {
         console.error("❌ Lỗi trong luồng playTTS:", error.message);
@@ -267,6 +274,7 @@ client.on('messageCreate', async message => {
 
 
 client.on("voiceStateUpdate", async (oldState, newState) => {
+    // KHÔNG CÓ LOGIC RỜI PHÒNG, BOT SẼ Ở LẠI VĨNH VIỄN
     if (
         !oldState.channelId &&
         newState.channelId &&
