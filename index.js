@@ -1,4 +1,4 @@
-// index.js (Đã sửa lỗi, thêm TTS, và dùng MongoDB cho Config)
+// index.js (Đã sửa lỗi TTS, bỏ HTTP Stream thủ công)
 
 const {
     Client,
@@ -19,15 +19,12 @@ const {
     createAudioPlayer,
     createAudioResource,
     entersState,
-    AudioPlayerStatus,
     VoiceConnectionStatus,
     getVoiceConnection,
 } = require("@discordjs/voice");
 const googleTTS = require("google-tts-api");
-const https = require("https");
-const { Readable } = require("stream");
 
-// 📌 THAY THẾ require('./db') bằng require('./models/Config')
+// 📌 Config từ DB
 const Config = require('./models/Config'); 
 
 // --- Web server giữ cho Render không ngủ ---
@@ -57,7 +54,7 @@ const client = new Client({
     partials: [Partials.Channel],
 });
 
-// --- Tải lệnh (Thêm khối TRY...CATCH để bắt lỗi khởi động) ---
+// --- Tải lệnh ---
 client.commands = new Collection();
 const commandsPath = path.join(__dirname, 'commands');
 
@@ -95,29 +92,12 @@ async function startBot() {
     }
 }
 
-// Hàm phụ trợ cho TTS
-function streamFromUrl(url) {
-    return new Promise((resolve, reject) => {
-        https
-            .get(url, (res) => {
-                if (res.statusCode !== 200) {
-                    reject(new Error(`HTTP ${res.statusCode}`));
-                    return;
-                }
-                const stream = new Readable().wrap(res);
-                resolve(stream);
-            })
-            .on("error", reject);
-    });
-}
-
 
 // ------------------------------------------------------------------
-// --- Xử lý Sự kiện READY (Giữ nguyên) ---
+// --- Xử lý Sự kiện READY ---
 // ------------------------------------------------------------------
 client.on('ready', async () => {
     console.log(`✅ Logged in as ${client.user.tag}`);
-    // ... (logic trạng thái hoạt động giữ nguyên) ...
     client.user.setPresence({
         activities: [{
             name: `/help để biết lệnh của BOT nhé ^^`, 
@@ -130,7 +110,7 @@ client.on('ready', async () => {
 
 
 // ------------------------------------------------------------------
-// --- Xử lý Tương tác (Interactions) (Dùng DB cho Confession) ---
+// --- Xử lý Tương tác (Interactions) ---
 // ------------------------------------------------------------------
 client.on('interactionCreate', async interaction => {
     try {
@@ -144,11 +124,9 @@ client.on('interactionCreate', async interaction => {
 
             // Xử lý Confession
             if (commandName === 'accept' || commandName === 'reject') { 
-                // 📌 DÙNG CONFIG TỪ DB
                 const config = await Config.findById('config'); 
                 if (!config) return interaction.reply({ content: '❌ Cấu hình Confession chưa được thiết lập (chạy /confession setup).', ephemeral: true });
 
-                
                 if (!interaction.memberPermissions.has(PermissionsBitField.Flags.ManageMessages)) {
                     return await interaction.reply({ content: "❌ Bạn không có quyền duyệt.", ephemeral: true });
                 }
@@ -171,7 +149,7 @@ client.on('interactionCreate', async interaction => {
                 await targetMsg.edit({ components: [disabledRow] });
 
                 if (commandName === 'accept') {
-                    const publicChannel = await client.channels.fetch(config.publicChannel).catch(() => null); // 📌 Dùng config.publicChannel từ DB
+                    const publicChannel = await client.channels.fetch(config.publicChannel).catch(() => null);
                     if (!publicChannel) return;
 
                     const embed = new EmbedBuilder()
@@ -264,20 +242,24 @@ client.on('messageCreate', async message => {
                 host: "https://translate.google.com",
             });
             
-            const audioStream = await streamFromUrl(url);
-            const resource = createAudioResource(audioStream);
+            // Lấy AudioResource trực tiếp từ URL
+            const resource = createAudioResource(url);
             const player = createAudioPlayer();
+
+            // Bắt lỗi của AudioPlayer
+            player.on('error', error => {
+                console.error(`❌ Lỗi AudioPlayer (Message TTS): ${error.message}`);
+            });
 
             connection.subscribe(player);
             player.play(resource);
-
         }
     } catch (e) {
         console.error("❌ Lỗi khi thực thi logic TTS:", e);
     }
 
 
-    // 📌 Xử lý logic đoán số (Giữ nguyên)
+    // 📌 Xử lý logic đoán số
     if (client.commands.has('doanso')) {
         const doansoCommand = client.commands.get('doanso');
         if (message.content.toLowerCase() === 'doanso') { 
@@ -288,17 +270,17 @@ client.on('messageCreate', async message => {
 
 
 // ------------------------------------------------------------------
-// --- Xử lý Voice State Update (TTS Chào/Rời - Giữ nguyên) ---
+// --- Xử lý Voice State Update (TTS Chào/Rời) ---
 // ------------------------------------------------------------------
 client.on("voiceStateUpdate", async (oldState, newState) => {
-    // ... (logic chào và rời kênh giữ nguyên) ...
+    
+    // Logic chào khi có người vào kênh voice
     if (
         !oldState.channelId &&
         newState.channelId &&
         newState.member &&
         !newState.member.user.bot
     ) {
-        // ... (logic chào) ...
         const member = newState.member;
         const channel = newState.channel;
 
@@ -326,13 +308,17 @@ client.on("voiceStateUpdate", async (oldState, newState) => {
             return;
         }
 
-        const audioStream = await streamFromUrl(url);
-        const resource = createAudioResource(audioStream);
+        // Lấy AudioResource trực tiếp từ URL
+        const resource = createAudioResource(url);
         const player = createAudioPlayer();
+
+        // Bắt lỗi của AudioPlayer
+        player.on('error', error => {
+            console.error(`❌ Lỗi AudioPlayer (Voice Join TTS): ${error.message}`);
+        });
 
         connection.subscribe(player);
         player.play(resource);
-
     }
 
     // Nếu voice trống → bot rời
