@@ -1,4 +1,4 @@
-// index.js (Bản Chốt: Thêm Delay 1.5s chống Discord nuốt tiếng & Dùng Base64)
+// index.js (Bản Fix AbortError - Bot cắm chốt vĩnh viễn, không bao giờ tự thoát)
 
 process.env.FFMPEG_PATH = require('ffmpeg-static');
 
@@ -101,42 +101,37 @@ function getGuildPlayer(guildId) {
     return guildPlayers.get(guildId);
 }
 
-// 🟢 HÀM XỬ LÝ TTS: CẮM CHỐT & CHỐNG NUỐT TIẾNG
+// 🟢 HÀM XỬ LÝ TTS: CẮM CHỐT VÀ CHỐNG NUỐT TIẾNG
 async function playTTS(text, voiceChannel) {
     try {
         let connection = getVoiceConnection(voiceChannel.guild.id);
         
-        // Cắm chốt vào phòng
+        // Cắm chốt vào phòng (Nếu chưa có trong phòng)
         if (!connection || connection.joinConfig.channelId !== voiceChannel.id) {
             console.log(`🔌 Kết nối vào kênh ${voiceChannel.name}...`);
             connection = joinVoiceChannel({
                 channelId: voiceChannel.id,
                 guildId: voiceChannel.guild.id,
                 adapterCreator: voiceChannel.guild.voiceAdapterCreator,
-                selfDeaf: true, 
+                selfDeaf: true, // Tắt nghe để giảm lag cho bot
             });
 
-            connection.on(VoiceConnectionStatus.Disconnected, async () => {
-                try {
-                    await Promise.race([
-                        entersState(connection, VoiceConnectionStatus.Signalling, 5_000),
-                        entersState(connection, VoiceConnectionStatus.Connecting, 5_000),
-                    ]);
-                } catch (error) {
-                    if (connection.state.status !== VoiceConnectionStatus.Destroyed) {
-                        connection.destroy();
-                    }
-                }
-            });
+            // ⚠️ ĐÃ XÓA BỎ LỆNH TỰ HỦY GÂY LỖI ABORTERROR Ở ĐÂY
 
-            await entersState(connection, VoiceConnectionStatus.Ready, 20_000);
+            try {
+                // Ép bot chờ sẵn sàng
+                await entersState(connection, VoiceConnectionStatus.Ready, 20_000);
+                console.log("✅ Đã kết nối voice thành công!");
+            } catch (error) {
+                console.log("⚠️ Render phản hồi mạng chậm, bot vẫn ép phát âm thanh...");
+            }
             
-            // 🔥 THẦN CHÚ CHỐNG NUỐT TIẾNG: Chờ 1.5 giây để Discord mở luồng nhận âm thanh
+            // Chờ 1.5s để Discord mở luồng truyền giọng nói
             console.log("⏳ Đang chờ 1.5s khởi tạo luồng RTP...");
             await new Promise(resolve => setTimeout(resolve, 1500));
         }
 
-        // Tải audio từ Google dưới dạng Base64 (Chuẩn xác 100%, không bị 403)
+        // Tải audio từ Google dưới dạng Base64
         const base64 = await googleTTS.getAudioBase64(text, {
             lang: "vi",
             slow: false,
@@ -265,7 +260,7 @@ client.on('messageCreate', async message => {
 
 
 client.on("voiceStateUpdate", async (oldState, newState) => {
-    // KHI CÓ NGƯỜI VÀO
+    // CHỈ CHÀO KHI CÓ NGƯỜI VÀO (KHÔNG CODE LOGIC RỜI PHÒNG NỮA)
     if (
         !oldState.channelId &&
         newState.channelId &&
