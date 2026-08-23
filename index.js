@@ -1,4 +1,8 @@
-// index.js (Bản Fix AbortError - Bot cắm chốt vĩnh viễn, không bao giờ tự thoát)
+// index.js (Bản chốt hạ - Sửa lỗi IPv6 UDP của Node 20 trên Render)
+
+// 🔥 2 DÒNG LỆNH PHÉP THUẬT: Ép Node.js dùng IPv4 để gửi âm thanh cho Discord
+const dns = require('dns');
+dns.setDefaultResultOrder('ipv4first');
 
 process.env.FFMPEG_PATH = require('ffmpeg-static');
 
@@ -101,7 +105,7 @@ function getGuildPlayer(guildId) {
     return guildPlayers.get(guildId);
 }
 
-// 🟢 HÀM XỬ LÝ TTS: CẮM CHỐT VÀ CHỐNG NUỐT TIẾNG
+// 🟢 HÀM XỬ LÝ TTS CẮM CHỐT
 async function playTTS(text, voiceChannel) {
     try {
         let connection = getVoiceConnection(voiceChannel.guild.id);
@@ -113,22 +117,25 @@ async function playTTS(text, voiceChannel) {
                 channelId: voiceChannel.id,
                 guildId: voiceChannel.guild.id,
                 adapterCreator: voiceChannel.guild.voiceAdapterCreator,
-                selfDeaf: true, // Tắt nghe để giảm lag cho bot
+                selfDeaf: true, 
             });
 
-            // ⚠️ ĐÃ XÓA BỎ LỆNH TỰ HỦY GÂY LỖI ABORTERROR Ở ĐÂY
+            connection.on(VoiceConnectionStatus.Disconnected, async () => {
+                try {
+                    await Promise.race([
+                        entersState(connection, VoiceConnectionStatus.Signalling, 5_000),
+                        entersState(connection, VoiceConnectionStatus.Connecting, 5_000),
+                    ]);
+                } catch (error) {
+                    if (connection.state.status !== VoiceConnectionStatus.Destroyed) {
+                        connection.destroy();
+                    }
+                }
+            });
 
-            try {
-                // Ép bot chờ sẵn sàng
-                await entersState(connection, VoiceConnectionStatus.Ready, 20_000);
-                console.log("✅ Đã kết nối voice thành công!");
-            } catch (error) {
-                console.log("⚠️ Render phản hồi mạng chậm, bot vẫn ép phát âm thanh...");
-            }
-            
-            // Chờ 1.5s để Discord mở luồng truyền giọng nói
-            console.log("⏳ Đang chờ 1.5s khởi tạo luồng RTP...");
-            await new Promise(resolve => setTimeout(resolve, 1500));
+            // Chờ cho kết nối sẵn sàng
+            await entersState(connection, VoiceConnectionStatus.Ready, 20_000);
+            console.log("✅ Kênh thoại đã kết nối bằng IPv4 thành công!");
         }
 
         // Tải audio từ Google dưới dạng Base64
@@ -149,7 +156,7 @@ async function playTTS(text, voiceChannel) {
         
         connection.subscribe(player);
         player.play(resource);
-        console.log(`▶️ Lệnh phát TTS đã được thực thi!`);
+        console.log(`▶️ Đã đẩy âm thanh qua Discord!`);
 
     } catch (error) {
         console.error("❌ Lỗi trong luồng playTTS:", error.message);
@@ -260,7 +267,6 @@ client.on('messageCreate', async message => {
 
 
 client.on("voiceStateUpdate", async (oldState, newState) => {
-    // CHỈ CHÀO KHI CÓ NGƯỜI VÀO (KHÔNG CODE LOGIC RỜI PHÒNG NỮA)
     if (
         !oldState.channelId &&
         newState.channelId &&
