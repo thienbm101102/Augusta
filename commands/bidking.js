@@ -66,10 +66,10 @@ function createBlindAuctionEmbed(auction) {
     // Sử dụng Discord Timestamp gốc (<t:thoigian:R>)
     desc += `**Thời gian kết thúc:** <t:${auction.endTime}:R>\n`;
     
-    desc += `**Giá thầu hiện tại:** \`${auction.currentBid.toLocaleString()}\` <a:diamondgem:1418649012289933434>\n`;
+    desc += `**Giá đấu hiện tại:** \`${auction.currentBid.toLocaleString()}\` <a:diamondgem:1418649012289933434>\n`;
     desc += `**Người dẫn đầu:** ${auction.highestBidder ? `<@${auction.highestBidder}>` : 'Chưa có ai'}\n`;
     
-    desc += `\n*Rương này có thể chứa Thần Khí giá trị triệu đô, hoặc chỉ là một bình máu ghẻ... Nhấn nút để tranh thầu!*`;
+    desc += `\n*Rương này có thể chứa đồ Thần Phẩm giá trị triệu đô, hoặc chỉ là một đồ ghẻ... Nhấn nút để đấu giá!*`;
 
     return new EmbedBuilder()
         .setTitle(`**<a:VerifiedTwitter:1418649004912148511> ĐẤU GIÁ RƯƠNG BÍ ẨN**`)
@@ -115,7 +115,7 @@ module.exports = {
         const itemData = getRandomItem();
 
         const suspenseEmbed = new EmbedBuilder()
-            .setTitle('🔮 **ĐANG GIẢI MÃ RƯƠNG BÁU...**')
+            .setTitle('<a:VerifiedTwitter:1418649004912148511> **ĐANG TÌM KIẾM RƯƠNG BÁU ẨN...**')
             .setDescription('Một khe nứt không gian vừa mở ra. Hệ thống đang trích xuất một vật phẩm ngẫu nhiên...')
             .setColor('#2c3e50');
 
@@ -220,7 +220,7 @@ module.exports = {
         if (!auction.highestBidder) {
             const embed = new EmbedBuilder()
                 .setTitle('⚖️ KẾT THÚC ĐẤU GIÁ')
-                .setDescription(`Rương mù đã bị ế. Khi mở ra, hệ thống phát hiện đó là ${auction.item.emoji} **${auction.item.name}**! Thật đáng tiếc...`)
+                .setDescription(`Rương mù không có chủ. Khi mở ra, hệ thống phát hiện đó là ${auction.item.emoji} **${auction.item.name}**! Thật đáng tiếc...`)
                 .setColor('#95a5a6');
             await auction.message.edit({ embeds: [embed], components: getDynamicButtons(auction.currentBid, true) }).catch(() => {});
             return;
@@ -248,7 +248,7 @@ module.exports = {
         }
 
         const finalEmbed = new EmbedBuilder()
-            .setTitle('<a:VerifiedTwitter:1418649004912148511> KHUI RƯƠNG BÍ ẨN!')
+            .setTitle('<a:VerifiedTwitter:1418649004912148511> KHUI RƯƠNG BÍ ẨN')
             .setDescription(`Búa đã gõ! <@${winnerId}> đã chốt rương với giá **${winningPrice.toLocaleString()}** <a:diamondgem:1418649012289933434>\n\nMở rương ra, bên trong là:\n\n${auction.item.emoji} **${auction.item.name.toUpperCase()}**\nĐộ hiếm: **[${auction.item.rarity}]**`)
             .addFields(
                 { name: 'Định giá thị trường', value: `\`${actualValue.toLocaleString()}\` <a:diamondgem:1418649012289933434>`, inline: true },
