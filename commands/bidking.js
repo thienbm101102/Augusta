@@ -26,7 +26,6 @@ const LOOT_TABLE = [
 
 const activeAuctions = new Map();
 
-// Hàm quay vật phẩm ngẫu nhiên
 function getRandomItem() {
     const totalWeight = LOOT_TABLE.reduce((sum, item) => sum + item.weight, 0);
     let random = Math.random() * totalWeight;
@@ -40,7 +39,6 @@ function getRandomItem() {
     return { ...LOOT_TABLE[0], actualValue: LOOT_TABLE[0].minSell };
 }
 
-// Nút bấm linh hoạt: Tự động đổi nấc tiền khi giá cược lên cao
 function getDynamicButtons(currentBid, isDisabled = false) {
     let steps = [100, 500, 1000, 5000];
     
@@ -64,7 +62,10 @@ function createBlindAuctionEmbed(auction) {
     desc += `**Báu vật:** 📦 **RƯƠNG MÙ BÍ ẨN**\n`;
     desc += `**Độ hiếm:** \`[???]\`\n`;
     desc += `**Định giá:** \`???\` <a:diamondgem:1418649012289933434>\n\n`;
-    desc += `**Thời gian còn lại:** \`${auction.timeLeft}\` giây\n`;
+    
+    // Sử dụng Discord Timestamp gốc (<t:thoigian:R>)
+    desc += `**Thời gian kết thúc:** <t:${auction.endTime}:R>\n`;
+    
     desc += `**Giá thầu hiện tại:** \`${auction.currentBid.toLocaleString()}\` <a:diamondgem:1418649012289933434>\n`;
     desc += `**Người dẫn đầu:** ${auction.highestBidder ? `<@${auction.highestBidder}>` : 'Chưa có ai'}\n`;
     
@@ -73,7 +74,7 @@ function createBlindAuctionEmbed(auction) {
     return new EmbedBuilder()
         .setTitle(`**<a:VerifiedTwitter:1418649004912148511> ĐẤU GIÁ RƯƠNG BÍ ẨN**`)
         .setDescription(desc)
-        .setColor('#95a5a6') // Màu xám bí ẩn
+        .setColor('#95a5a6')
         .setFooter({ text: 'Chú ý: Cược ở 10 giây cuối sẽ tự động cộng thêm 10 giây!' });
 }
 
@@ -89,7 +90,7 @@ module.exports = {
         )
         .addIntegerOption(option =>
             option.setName('thoigian')
-                .setDescription('Thời lượng đếm ngược (10 - 120 giây) - Mặc định: 40s')
+                .setDescription('Thời lượng đấu giá (10 - 120 giây) - Mặc định: 40s')
                 .setRequired(false)
                 .setMinValue(10)
                 .setMaxValue(120)
@@ -109,9 +110,18 @@ module.exports = {
 
         const startPrice = interaction.options.getInteger('giakhoidiem');
         const duration = interaction.options.getInteger('thoigian') || 40;
+        const endTimeUnix = Math.floor(Date.now() / 1000) + duration;
         
-        // Quay vật phẩm nhưng CHƯA HIỂN THỊ
         const itemData = getRandomItem();
+
+        const suspenseEmbed = new EmbedBuilder()
+            .setTitle('🔮 **ĐANG GIẢI MÃ RƯƠNG BÁU...**')
+            .setDescription('Một khe nứt không gian vừa mở ra. Hệ thống đang trích xuất một vật phẩm ngẫu nhiên...')
+            .setColor('#2c3e50');
+
+        const reply = await interaction.editReply({ embeds: [suspenseEmbed], fetchReply: true });
+
+        await new Promise(resolve => setTimeout(resolve, 3000));
 
         const auction = {
             channelId: channelId,
@@ -119,32 +129,27 @@ module.exports = {
             item: itemData,
             currentBid: startPrice,
             highestBidder: null,
-            timeLeft: duration,
+            endTime: endTimeUnix,
             timer: null,
-            message: null,
+            message: reply,
             isProcessing: false
         };
         activeAuctions.set(channelId, auction);
 
-        // Hiển thị Embed Rương Mù & Nút bấm theo giá hiện tại
         const embed = createBlindAuctionEmbed(auction);
         const components = getDynamicButtons(auction.currentBid);
 
-        const reply = await interaction.editReply({ embeds: [embed], components, fetchReply: true });
-        auction.message = reply;
+        await reply.edit({ embeds: [embed], components }).catch(() => {});
 
-        // Đếm ngược
+        // Đếm ngược ngầm: Khác biệt ở đây là BOT không update tin nhắn mỗi giây nữa
+        // Nó chỉ kiểm tra giờ của hệ thống xem đã tới hạn hay chưa
         auction.timer = setInterval(async () => {
-            auction.timeLeft -= 2;
-
-            if (auction.timeLeft <= 0) {
+            const now = Math.floor(Date.now() / 1000);
+            if (now >= auction.endTime) {
                 clearInterval(auction.timer);
                 await this.endAuction(channelId, auction);
-            } else {
-                const updatedEmbed = createBlindAuctionEmbed(auction);
-                await auction.message.edit({ embeds: [updatedEmbed] }).catch(() => {});
             }
-        }, 2000);
+        }, 1000);
     },
 
     async handleButton(interaction) {
@@ -179,25 +184,24 @@ module.exports = {
             }
 
             if (auction.highestBidder === userId) {
-                // Tự đẩy giá chính mình
                 await addBalance(userId, -addAmount);
             } else {
-                // Người mới đè giá
                 if (auction.highestBidder) {
-                    await addBalance(auction.highestBidder, auction.currentBid); // Hoàn tiền người cũ
+                    await addBalance(auction.highestBidder, auction.currentBid);
                 }
-                await addBalance(userId, -newBid); // Trừ tiền người mới
+                await addBalance(userId, -newBid);
             }
 
             auction.currentBid = newBid;
             auction.highestBidder = userId;
 
-            // Anti-snipe: Dưới 10 giây tự cộng thêm 10 giây
-            if (auction.timeLeft < 10) {
-                auction.timeLeft += 10;
+            // Anti-snipe: Nếu thời gian còn lại dưới 10 giây, tự động cộng thêm 10 giây
+            const now = Math.floor(Date.now() / 1000);
+            if (auction.endTime - now < 10) {
+                auction.endTime += 10;
             }
 
-            // Cập nhật lại giao diện và Cập nhật NÚT BẤM DYNAMIC
+            // Giao diện sẽ tự động format lại <t:...:R> với endTime mới
             const updatedEmbed = createBlindAuctionEmbed(auction);
             const updatedComponents = getDynamicButtons(auction.currentBid);
 
@@ -227,7 +231,6 @@ module.exports = {
         const actualValue = auction.item.actualValue;
         const profit = actualValue - winningPrice;
 
-        // Cộng số tiền giá trị thực của vật phẩm vào tài khoản người thắng
         await addBalance(winnerId, actualValue);
 
         let profitMsg = "";
@@ -235,13 +238,13 @@ module.exports = {
 
         if (profit > 0) {
             profitMsg = `📈 **Lời to:** \`+${profit.toLocaleString()}\` <a:diamondgem:1418649012289933434>`;
-            finalColor = '#2ecc71'; // Màu xanh lá
+            finalColor = '#2ecc71';
         } else if (profit === 0) {
             profitMsg = `🤝 **Hòa vốn:** \`0\` <a:diamondgem:1418649012289933434>`;
-            finalColor = '#f1c40f'; // Màu vàng
+            finalColor = '#f1c40f';
         } else {
             profitMsg = `📉 **Lỗ sặc máu:** \`${profit.toLocaleString()}\` <a:diamondgem:1418649012289933434> (Tham thì thâm!)`;
-            finalColor = '#e74c3c'; // Màu đỏ
+            finalColor = '#e74c3c';
         }
 
         const finalEmbed = new EmbedBuilder()
