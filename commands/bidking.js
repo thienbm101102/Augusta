@@ -86,7 +86,7 @@ function createBlindAuctionEmbed(auction) {
     const hypePhrase = HYPE_PHRASES[Math.min(Math.floor(hypeLevel / 2), HYPE_PHRASES.length - 1)];
 
     let desc = `**Chủ xị:** <@${auction.starter}>\n`;
-    desc += `**Báu vật:** 📦 **RƯƠNG MÙ BÍ ẨN**\n\n`;
+    desc += `**Báu vật:** 📦 **HỘP BÍ ẨN**\n\n`;
     
     desc += `**🔥 NHIỆT ĐỘ PHIÊN:** \`[Level ${hypeLevel}]\`\n`;
     desc += `${getHypeMeter(hypeLevel)}\n`;
@@ -105,7 +105,7 @@ function createBlindAuctionEmbed(auction) {
     desc += `\n*Rương này chứa vật phẩm trị giá lên tới 10 TRIỆU. Liệu bạn có dám mạo hiểm? Tỷ lệ LỖ là cực cao!*`;
 
     return new EmbedBuilder()
-        .setTitle(`**<a:VerifiedTwitter:1418649004912148511> ĐẤU GIÁ "SINH TỬ" RƯƠNG MÙ**`)
+        .setTitle(`**<a:VerifiedTwitter:1418649004912148511> ĐẤU GIÁ HỘP BÍ ẨN**`)
         .setDescription(desc)
         .setColor(hypeLevel >= 8 ? '#ff4500' : (hypeLevel >= 5 ? '#e74c3c' : '#95a5a6'))
         .setFooter({ text: 'Chú ý: Cược ở 10 giây cuối sẽ tự động cộng thêm 10 giây!' });
@@ -148,7 +148,7 @@ module.exports = {
         const itemData = getRandomItem();
 
         const suspenseEmbed = new EmbedBuilder()
-            .setTitle('🔮 **ĐANG GIẢI MÃ RƯƠNG BÁU...**')
+            .setTitle('**ĐANG CHUẨN BỊ HỘP BÍ ẨN...**')
             .setDescription('Một khe nứt không gian vừa mở ra. Hệ thống đang trích xuất một báu vật ngẫu nhiên...')
             .setColor('#2c3e50');
 
@@ -255,7 +255,7 @@ module.exports = {
         if (!auction.highestBidder) {
             const embed = new EmbedBuilder()
                 .setTitle('⚖️ KẾT THÚC ĐẤU GIÁ')
-                .setDescription(`Rương mù đã bị ế. Khi mở ra, hệ thống phát hiện đó là ${auction.item.emoji} **${auction.item.name}**! Thật đáng tiếc...`)
+                .setDescription(`Hộp bí ẩn không có chủ nhân. Khi mở ra, hệ thống phát hiện đó là ${auction.item.emoji} **${auction.item.name}**! Thật đáng tiếc...`)
                 .setColor('#95a5a6');
             await auction.message.edit({ embeds: [embed], components: getDynamicButtons(auction.currentBid, true) }).catch(() => {});
             return;
@@ -279,7 +279,7 @@ module.exports = {
         // Cộng tiền cho người thắng
         await addBalance(winnerId, actualValue);
 
-        let resultTitle = '<a:VerifiedTwitter:1418649004912148511> KHUI RƯƠNG BÍ ẨN!';
+        let resultTitle = '<a:VerifiedTwitter:1418649004912148511> KHUI HỘP BÍ ẨN';
         let profitMsg = "";
         let finalColor = "";
 
@@ -303,7 +303,7 @@ module.exports = {
 
         const finalEmbed = new EmbedBuilder()
             .setTitle(resultTitle)
-            .setDescription(`Búa đã gõ! <@${winnerId}> đã chốt rương thảm tử với giá **${winningPrice.toLocaleString()}** <a:diamondgem:1418649012289933434>\n\nMở rương ra, bên trong là:\n\n${auction.item.emoji} **${auction.item.name.toUpperCase()}**\nĐộ hiếm: **[${auction.item.rarity}]**`)
+            .setDescription(`Búa đã gõ! <@${winnerId}> đã chốt hộp bí ẩn với giá **${winningPrice.toLocaleString()}** <a:diamondgem:1418649012289933434>\n\nMở hộp ra, bên trong là:\n\n${auction.item.emoji} **${auction.item.name.toUpperCase()}**\nĐộ hiếm: **[${auction.item.rarity}]**`)
             .addFields(
                 { name: 'Định giá gốc', value: `\`${auction.item.actualValue.toLocaleString()}\`<a:diamondgem:1418649012289933434>`, inline: true },
                 { name: 'Bạo kích', value: isCrit ? `**x${critMultiplier}**` : '\`Không\`', inline: true },
