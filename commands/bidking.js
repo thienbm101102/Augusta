@@ -92,7 +92,7 @@ function createBlindAuctionEmbed(auction) {
     }
     if (hypeLevel >= 8) {
         currentBasePrice = auction.item.basePrice.toLocaleString();
-        hypePhrase = "💰 Chuyên gia đã thẩm định giá sàn của vật phẩm!;
+        hypePhrase = "💰 Chuyên gia đã thẩm định giá sàn của vật phẩm!";
     }
     if (hypeLevel >= 10) {
         hypePhrase = "💥 CHÁY MÁY! KHÔ MÁU ĐI ANH EM ƠIIII!!!";
