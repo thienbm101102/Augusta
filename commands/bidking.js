@@ -4,40 +4,30 @@ const { addBalance, getBalance } = require('../db');
 // 🎲 HỆ THỐNG VẬT PHẨM & GIÁ TRỊ ẨN
 const LOOT_TABLE = [
     // ⚪ Thường (Common) - 50%
-    { name: 'Bình Máu Nhỏ', rarity: 'Thường', color: '#b0c4de', minSell: 1000, maxSell: 3000, weight: 500, emoji: '🧪' },
-    { name: 'Kiếm Gỗ Mục', rarity: 'Thường', color: '#b0c4de', minSell: 1500, maxSell: 4000, weight: 450, emoji: '🗡️' },
+    { name: 'Bình Máu Nhỏ', rarity: 'Thường', color: '#b0c4de', basePrice: 1000, minSell: 1000, maxSell: 3000, weight: 500, emoji: '🧪' },
+    { name: 'Kiếm Gỗ Mục', rarity: 'Thường', color: '#b0c4de', basePrice: 1500, minSell: 1500, maxSell: 4000, weight: 450, emoji: '🗡️' },
     
     // 🔵 Hiếm (Rare) - 30%
-    { name: 'Khiên Sắt Hiệp Sĩ', rarity: 'Hiếm', color: '#3498db', minSell: 10000, maxSell: 25000, weight: 300, emoji: '🛡️' },
-    { name: 'Nhẫn Bạc Tinh Xảo', rarity: 'Hiếm', color: '#3498db', minSell: 15000, maxSell: 35000, weight: 250, emoji: '💍' },
+    { name: 'Khiên Sắt Hiệp Sĩ', rarity: 'Hiếm', color: '#3498db', basePrice: 10000, minSell: 10000, maxSell: 25000, weight: 300, emoji: '🛡️' },
+    { name: 'Nhẫn Bạc Tinh Xảo', rarity: 'Hiếm', color: '#3498db', basePrice: 15000, minSell: 15000, maxSell: 35000, weight: 250, emoji: '💍' },
 
     // 🟣 Sử Thi (Epic) - 15%
-    { name: 'Áo Choàng Bóng Tối', rarity: 'Sử Thi', color: '#9b59b6', minSell: 50000, maxSell: 120000, weight: 120, emoji: '🧥' },
-    { name: 'Kiếm Quang Minh', rarity: 'Sử Thi', color: '#9b59b6', minSell: 80000, maxSell: 150000, weight: 100, emoji: '✨' },
+    { name: 'Áo Choàng Bóng Tối', rarity: 'Sử Thi', color: '#9b59b6', basePrice: 50000, minSell: 50000, maxSell: 120000, weight: 120, emoji: '🧥' },
+    { name: 'Kiếm Quang Minh', rarity: 'Sử Thi', color: '#9b59b6', basePrice: 80000, minSell: 80000, maxSell: 150000, weight: 100, emoji: '✨' },
 
     // 🟡 Huyền Thoại (Legendary) - 4%
-    { name: 'Vương Miện Cổ Đại', rarity: 'Huyền Thoại', color: '#f1c40f', minSell: 200000, maxSell: 600000, weight: 35, emoji: '👑' },
-    { name: 'Gậy Phép Tối Cao', rarity: 'Huyền Thoại', color: '#f1c40f', minSell: 300000, maxSell: 800000, weight: 25, emoji: '🪄' },
+    { name: 'Vương Miện Cổ Đại', rarity: 'Huyền Thoại', color: '#f1c40f', basePrice: 200000, minSell: 200000, maxSell: 600000, weight: 35, emoji: '👑' },
+    { name: 'Gậy Phép Tối Cao', rarity: 'Huyền Thoại', color: '#f1c40f', basePrice: 300000, minSell: 300000, maxSell: 800000, weight: 25, emoji: '🪄' },
 
     // 🔴 Thần Thoại (Mythic) - 1%
-    { name: 'Trứng Rồng Hủy Diệt', rarity: 'Thần Thoại', color: '#ff0000', minSell: 1000000, maxSell: 3000000, weight: 8, emoji: '🐉' },
-    { name: 'Chén Thánh Bất Tử', rarity: 'Thần Thoại', color: '#ff0000', minSell: 3000000, maxSell: 10000000, weight: 2, emoji: '🏺' }
+    { name: 'Trứng Rồng Hủy Diệt', rarity: 'Thần Thoại', color: '#ff0000', basePrice: 1000000, minSell: 1000000, maxSell: 3000000, weight: 8, emoji: '🐉' },
+    { name: 'Chén Thánh Bất Tử', rarity: 'Thần Thoại', color: '#ff0000', basePrice: 3000000, minSell: 3000000, maxSell: 10000000, weight: 2, emoji: '🏺' }
 ];
 
 const activeAuctions = new Map();
 
-// --- TÀI NGUYÊN TẠO HYPE ---
 const HYPE_EMOJIS = ['⬜', '⬛', '🟧', '🟥', '🔥'];
-const HYPE_PHRASES = [
-    "Khởi động nhẹ nhàng... Ai sẽ mở bát đây?",
-    "Đã có người ra giá! Cuộc chơi chính thức bắt đầu!",
-    "Lửa bắt đầu bén! Giá thầu đang tăng lên!",
-    "Sức nóng lan tỏa! Đừng để tuột mất báu vật!",
-    "Nóng kinh khủng! Các đấu sĩ đang khô máu!",
-    "💥 CHÁY MÁY! AI SẼ LÀ ÔNG TRÙM CỦA PHIÊN NÀY?! ĐẨY GIÁ ĐÊ!!!"
-];
 
-// Hàm lấy giao diện thanh nhiệt độ
 function getHypeMeter(level) {
     const meterLength = 10;
     const filledLength = Math.min(level, meterLength);
@@ -46,7 +36,7 @@ function getHypeMeter(level) {
     let emoji = HYPE_EMOJIS[1]; // Đen
     if (level >= 8) emoji = HYPE_EMOJIS[4]; // Lửa
     else if (level >= 5) emoji = HYPE_EMOJIS[3]; // Đỏ
-    else if (level >= 2) emoji = HYPE_EMOJIS[2]; // Cam
+    else if (level >= 3) emoji = HYPE_EMOJIS[2]; // Cam
 
     return emoji.repeat(filledLength) + HYPE_EMOJIS[0].repeat(emptyLength);
 }
@@ -83,10 +73,35 @@ function getDynamicButtons(currentBid, isDisabled = false) {
 
 function createBlindAuctionEmbed(auction) {
     const hypeLevel = Math.min(Math.floor(auction.totalBids / 3), 10); // Mỗi 3 bid tăng 1 level
-    const hypePhrase = HYPE_PHRASES[Math.min(Math.floor(hypeLevel / 2), HYPE_PHRASES.length - 1)];
+
+    // Logic Hé Lộ Thông Tin
+    let currentEmoji = '📦';
+    let currentRarity = '???';
+    let currentColor = '#95a5a6';
+    let currentBasePrice = '???';
+    let hypePhrase = "Khởi động nhẹ nhàng... Hộp vẫn đóng kín bưng!";
+
+    if (hypeLevel >= 3) {
+        currentRarity = auction.item.rarity;
+        currentColor = auction.item.color;
+        hypePhrase = "👀 Nắp rương khẽ mở... Có ánh sáng hắt ra!";
+    }
+    if (hypeLevel >= 5) {
+        currentEmoji = auction.item.emoji;
+        hypePhrase = "🔍 Hình dáng báu vật đã dần hiện rõ!";
+    }
+    if (hypeLevel >= 8) {
+        currentBasePrice = auction.item.basePrice.toLocaleString();
+        hypePhrase = "💰 Chuyên gia đã thẩm định giá sàn của vật phẩm!;
+    }
+    if (hypeLevel >= 10) {
+        hypePhrase = "💥 CHÁY MÁY! KHÔ MÁU ĐI ANH EM ƠIIII!!!";
+    }
 
     let desc = `**Chủ xị:** <@${auction.starter}>\n`;
-    desc += `**Báu vật:** 📦 **HỘP BÍ ẨN**\n\n`;
+    desc += `**Báu vật:** ${currentEmoji} **RƯƠNG BÍ ẨN**\n`;
+    desc += `**Độ hiếm:** \`[${currentRarity}]\`\n`;
+    desc += `**Định giá cơ bản:** \`${currentBasePrice}\` <a:diamondgem:1418649012289933434>\n\n`;
     
     desc += `**🔥 NHIỆT ĐỘ PHIÊN:** \`[Level ${hypeLevel}]\`\n`;
     desc += `${getHypeMeter(hypeLevel)}\n`;
@@ -94,30 +109,24 @@ function createBlindAuctionEmbed(auction) {
 
     desc += `**Thời gian kết thúc:** <t:${auction.endTime}:R>\n`;
     desc += `**Giá thầu hiện tại:** \`${auction.currentBid.toLocaleString()}\` <a:diamondgem:1418649012289933434>\n`;
+    desc += `**👑 NGƯỜI DẪN ĐẦU:** ${auction.highestBidder ? `<@${auction.highestBidder}>` : 'Chưa có ai'}\n`;
     
-    // Nổi bật người dẫn đầu
-    if (auction.highestBidder) {
-        desc += `**👑 NGƯỜI DẪN ĐẦU:** <@${auction.highestBidder}>\n`;
-    } else {
-        desc += `**Người dẫn đầu:** Chưa có ai\n`;
-    }
-    
-    desc += `\n*Rương này chứa vật phẩm trị giá lên tới 10 TRIỆU. Liệu bạn có dám mạo hiểm? Tỷ lệ LỖ là cực cao!*`;
+    desc += `\n*Rương càng nhận được nhiều lượt đẩy giá, bí mật bên trong sẽ càng lộ diện!*`;
 
     return new EmbedBuilder()
-        .setTitle(`**<a:VerifiedTwitter:1418649004912148511> ĐẤU GIÁ HỘP BÍ ẨN**`)
+        .setTitle(`**<a:VerifiedTwitter:1418649004912148511> ĐẤU GIÁ "SINH TỬ"**`)
         .setDescription(desc)
-        .setColor(hypeLevel >= 8 ? '#ff4500' : (hypeLevel >= 5 ? '#e74c3c' : '#95a5a6'))
+        .setColor(currentColor)
         .setFooter({ text: 'Chú ý: Cược ở 10 giây cuối sẽ tự động cộng thêm 10 giây!' });
 }
 
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('bidking')
-        .setDescription('Khai mở rương báu bí ẩn và tổ chức đấu giá mù đầy kích thích!')
+        .setDescription('Khai mở hộp bí ẩn và tổ chức đấu giá mù đầy kích thích!')
         .addIntegerOption(option =>
             option.setName('giakhoidiem')
-                .setDescription('Giá khởi điểm cho rương báu (Mặc định 1,000, Tối thiểu 100)')
+                .setDescription('Giá khởi điểm cho hộp bí ẩn (Mặc định 1,000, Tối thiểu 100)')
                 .setRequired(false)
                 .setMinValue(100)
         )
@@ -162,7 +171,7 @@ module.exports = {
             item: itemData,
             currentBid: startPrice,
             highestBidder: null,
-            totalBids: 0, // Theo dõi tổng số lượt bid
+            totalBids: 0,
             endTime: endTimeUnix,
             timer: null,
             message: reply,
@@ -175,7 +184,6 @@ module.exports = {
 
         await reply.edit({ embeds: [embed], components }).catch(() => {});
 
-        // Đếm ngược ngầm (mượt mà)
         auction.timer = setInterval(async () => {
             const now = Math.floor(Date.now() / 1000);
             if (now >= auction.endTime) {
@@ -225,18 +233,15 @@ module.exports = {
                 await addBalance(userId, -newBid);
             }
 
-            // Cập nhật dữ liệu
             auction.currentBid = newBid;
             auction.highestBidder = userId;
-            auction.totalBids++; // Tăng tổng số lần bid
+            auction.totalBids++; 
 
-            // Anti-snipe
             const now = Math.floor(Date.now() / 1000);
             if (auction.endTime - now < 10) {
                 auction.endTime += 10;
             }
 
-            // Giao diện (Update nhiệt độ)
             const updatedEmbed = createBlindAuctionEmbed(auction);
             const updatedComponents = getDynamicButtons(auction.currentBid);
 
@@ -265,18 +270,16 @@ module.exports = {
         const winningPrice = auction.currentBid;
         let actualValue = auction.item.actualValue;
         
-        // --- XỬ LÝ CƠ CHẾ BẠO KÍCH (CRITICAL) ---
-        // 10% tỷ lệ xảy ra bạo kích (x2 đến x10 giá trị)
+        // CƠ CHẾ BẠO KÍCH (CRITICAL)
         const isCrit = Math.random() < 0.10; 
         let critMultiplier = 1;
         if (isCrit) {
-            critMultiplier = Math.floor(Math.random() * 9) + 2; // TỪ x2 ĐẾN x10
+            critMultiplier = Math.floor(Math.random() * 9) + 2; 
             actualValue = actualValue * critMultiplier;
         }
         
         const profit = actualValue - winningPrice;
 
-        // Cộng tiền cho người thắng
         await addBalance(winnerId, actualValue);
 
         let resultTitle = '<a:VerifiedTwitter:1418649004912148511> KHUI HỘP BÍ ẨN';
@@ -303,12 +306,11 @@ module.exports = {
 
         const finalEmbed = new EmbedBuilder()
             .setTitle(resultTitle)
-            .setDescription(`Búa đã gõ! <@${winnerId}> đã chốt hộp bí ẩn với giá **${winningPrice.toLocaleString()}** <a:diamondgem:1418649012289933434>\n\nMở hộp ra, bên trong là:\n\n${auction.item.emoji} **${auction.item.name.toUpperCase()}**\nĐộ hiếm: **[${auction.item.rarity}]**`)
+            .setDescription(`Búa đã gõ! <@${winnerId}> đã chốt hộp bí ẩn với giá **${winningPrice.toLocaleString()}** <a:diamondgem:1418649012289933434>\n\nMở rương ra, bên trong là:\n\n${auction.item.emoji} **${auction.item.name.toUpperCase()}**\nĐộ hiếm: **[${auction.item.rarity}]**`)
             .addFields(
-                { name: 'Định giá gốc', value: `\`${auction.item.actualValue.toLocaleString()}\`<a:diamondgem:1418649012289933434>`, inline: true },
+                { name: 'Định giá thực tế', value: `\`${(auction.item.actualValue * (isCrit ? critMultiplier : 1)).toLocaleString()}\`<a:diamondgem:1418649012289933434>`, inline: true },
                 { name: 'Bạo kích', value: isCrit ? `**x${critMultiplier}**` : '\`Không\`', inline: true },
-                { name: 'Tổng tiền nhận', value: `\`${actualValue.toLocaleString()}\`<a:diamondgem:1418649012289933434>`, inline: true },
-                { name: '👉 Kết quả', value: profitMsg, inline: false }
+                { name: 'Kết quả', value: profitMsg, inline: false }
             )
             .setColor(finalColor)
             .setFooter({ text: 'Hệ thống đã tự động quy đổi vật phẩm và cộng tiền vào tài khoản của bạn.' });
