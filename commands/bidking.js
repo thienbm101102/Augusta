@@ -306,7 +306,7 @@ module.exports = {
 
         const finalEmbed = new EmbedBuilder()
             .setTitle(resultTitle)
-            .setDescription(`Búa đã gõ! <@${winnerId}> đã chốt hộp bí ẩn với giá **${winningPrice.toLocaleString()}** <a:diamondgem:1418649012289933434>\n\nMở rương ra, bên trong là:\n\n${auction.item.emoji} **${auction.item.name.toUpperCase()}**\nĐộ hiếm: **[${auction.item.rarity}]**`)
+            .setDescription(`Búa đã gõ! <@${winnerId}> đã chốt hộp bí ẩn với giá **${winningPrice.toLocaleString()}** <a:diamondgem:1418649012289933434>\n\nMở hộp ra, bên trong là:\n\n${auction.item.emoji} **${auction.item.name.toUpperCase()}**\nĐộ hiếm: **[${auction.item.rarity}]**`)
             .addFields(
                 { name: 'Định giá thực tế', value: `\`${(auction.item.actualValue * (isCrit ? critMultiplier : 1)).toLocaleString()}\`<a:diamondgem:1418649012289933434>`, inline: true },
                 { name: 'Bạo kích', value: isCrit ? `**x${critMultiplier}**` : '\`Không\`', inline: true },
