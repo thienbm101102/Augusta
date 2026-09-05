@@ -1,22 +1,17 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 const fs = require('fs');
 const path = require('path');
 
-// Tải bộ từ điển tiếng Việt vào bộ nhớ (Sử dụng Set để truy xuất O(1) cực nhanh)
 let validWords = new Set();
 try {
     const dictPath = path.join(__dirname, 'tu_dien.txt');
     const data = fs.readFileSync(dictPath, 'utf8');
-    
-    // Tách dòng, xóa khoảng trắng thừa và chỉ lấy các từ ghép có 2 âm tiết
     const wordsArray = data.split('\n')
         .map(w => w.trim().toLowerCase())
         .filter(w => w.split(' ').length === 2); 
-        
     validWords = new Set(wordsArray);
-    console.log(`[Nối Từ] Đã load thành công ${validWords.size} từ vựng 2 âm tiết.`);
 } catch (error) {
-    console.warn("[Nối Từ] ⚠️ Không tìm thấy file tu_dien.txt. Game sẽ chạy nhưng KHÔNG có tính năng check từ điển.");
+    console.warn("⚠️ Không tìm thấy file tu_dien.txt. Game chạy không từ điển.");
 }
 
 const activeGames = new Map();
@@ -24,111 +19,125 @@ const activeGames = new Map();
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('noitu')
-        .setDescription('Chơi nối từ tiếng Việt với từ điển chuẩn')
-        .addSubcommand(subcmd => 
-            subcmd.setName('start')
-                .setDescription('Bắt đầu ván nối từ mới')
-        )
-        .addSubcommand(subcmd => 
-            subcmd.setName('stop')
-                .setDescription('Dừng ván nối từ hiện tại')
-        ),
+        .setDescription('Chơi nối từ tiếng Việt với giao diện mới'),
         
     async execute(interaction) {
-        const subcmd = interaction.options.getSubcommand();
         const channelId = interaction.channelId;
+        const starterId = interaction.user.id;
         
-        if (subcmd === 'stop') {
-            if (!activeGames.has(channelId)) {
-                return interaction.reply({ content: 'Kênh này hiện không có ván nối từ nào!', ephemeral: true });
-            }
-            const game = activeGames.get(channelId);
-            game.collector.stop('force_stop');
-            activeGames.delete(channelId);
-            return interaction.reply({ content: '🛑 Đã kết thúc trò chơi nối từ!' });
+        if (activeGames.has(channelId)) {
+            return interaction.reply({ content: '❌ Kênh này đang có một ván nối từ diễn ra rồi!', ephemeral: true });
         }
         
-        if (subcmd === 'start') {
-            if (activeGames.has(channelId)) {
-                return interaction.reply({ content: 'Kênh này đang chơi nối từ rồi!', ephemeral: true });
-            }
+        let startWord = 'hòa bình';
+        if (validWords.size > 0) {
+            const wordsArray = Array.from(validWords);
+            startWord = wordsArray[Math.floor(Math.random() * wordsArray.length)];
+        }
+        const syllables = startWord.split(' ');
+        const lastSyllable = syllables[1];
+        
+        const embed = new EmbedBuilder()
+            .setTitle('🇻🇳 ĐẤU TRƯỜNG NỐI TỪ TIẾNG VIỆT')
+            .setDescription(`Chủ phòng: <@${starterId}>\n\nTừ khởi đầu: 🟢 **${startWord.toUpperCase()}**\n\nNgười tiếp theo nối một từ 2 âm tiết bắt đầu bằng chữ:\n# 🎯 ${lastSyllable.toUpperCase()}\n\n*⚠️ Luật: Có nghĩa, không lặp lại, không tự nối của mình.*`)
+            .setColor('#2ecc71')
+            .setThumbnail('https://cdn-icons-png.flaticon.com/512/197/197484.png')
+            .setFooter({ text: `Từ điển: ${validWords.size > 0 ? '✅ Bật' : '❌ Tắt'} | Hết hạn sau 60s nếu không ai nối` });
             
-            // Lấy ngẫu nhiên 1 từ trong bộ từ điển làm từ mồi (nếu có từ điển), nếu không thì dùng từ mặc định
-            let startWord = 'hòa bình';
-            if (validWords.size > 0) {
-                const wordsArray = Array.from(validWords);
-                startWord = wordsArray[Math.floor(Math.random() * wordsArray.length)];
-            }
+        const row = new ActionRowBuilder().addComponents(
+            new ButtonBuilder()
+                .setCustomId(`stop_noitu_${starterId}`)
+                .setLabel('🛑 Dừng Trò Chơi')
+                .setStyle(ButtonStyle.Danger)
+        );
             
-            const syllables = startWord.split(' ');
-            const lastSyllable = syllables[1];
-            
-            const embed = new EmbedBuilder()
-                .setTitle('🔤 TRÒ CHƠI NỐI TỪ BẮT ĐẦU!')
-                .setDescription(`Từ khởi đầu: **${startWord.toUpperCase()}**\n\nNgười tiếp theo hãy gõ một từ có 2 tiếng bắt đầu bằng chữ: **${lastSyllable.toUpperCase()}**\n\n*Luật: Từ có nghĩa, không trùng lặp, không tự nối của mình.*`)
-                .setColor('#3498db')
-                .setFooter({ text: `Từ điển đang hoạt động: ${validWords.size > 0 ? 'BẬT ✅' : 'TẮT ❌'} | Hết hạn sau 60s` });
-                
-            await interaction.reply({ embeds: [embed] });
-            
-            const filter = m => !m.author.bot; 
-            const collector = interaction.channel.createMessageCollector({ filter, time: 60000 });
-            
-            const gameState = {
-                currentWord: startWord,
-                lastSyllable: lastSyllable,
-                lastPlayerId: null,
-                collector: collector,
-                usedWords: new Set([startWord.toLowerCase()])
-            };
-            
-            activeGames.set(channelId, gameState);
-            
-            collector.on('collect', async m => {
-                const content = m.content.trim().toLowerCase();
-                const words = content.split(/\s+/);
-                
-                // Bỏ qua nếu không phải 2 chữ
-                if (words.length !== 2) return;
-                
-                // Bỏ qua nếu sai chữ cái nối
-                if (words[0] !== gameState.lastSyllable) return;
-                
-                // Check tự kỷ
-                if (m.author.id === gameState.lastPlayerId) {
-                    return m.reply('❌ Không được tự nối từ của chính mình!').then(msg => setTimeout(() => msg.delete().catch(() => {}), 3000));
-                }
-                
-                // Check trùng lặp
-                if (gameState.usedWords.has(content)) {
-                    return m.reply('♻️ Từ này đã được sử dụng rồi!').then(msg => setTimeout(() => msg.delete().catch(() => {}), 3000));
-                }
+        const reply = await interaction.reply({ embeds: [embed], components: [row], fetchReply: true });
+        
+        const filter = m => !m.author.bot; 
+        const collector = interaction.channel.createMessageCollector({ filter, time: 60000 });
+        const btnCollector = reply.createMessageComponentCollector({ time: 60000 });
+        
+        const gameState = {
+            currentWord: startWord,
+            lastSyllable: lastSyllable,
+            lastPlayerId: null,
+            usedWords: new Set([startWord.toLowerCase()]),
+            playerScores: new Map() // Theo dõi điểm số
+        };
+        activeGames.set(channelId, gameState);
 
-                // Check TỪ ĐIỂN (Trọng tâm)
-                if (validWords.size > 0 && !validWords.has(content)) {
-                    return m.reply('📚 Từ này vô nghĩa hoặc không có trong từ điển tiếng Việt!').then(msg => setTimeout(() => msg.delete().catch(() => {}), 3000));
-                }
-                
-                // Hợp lệ
-                gameState.currentWord = content;
-                gameState.lastSyllable = words[1];
-                gameState.lastPlayerId = m.author.id;
-                gameState.usedWords.add(content);
-                
-                await m.react('✅').catch(() => {});
-                collector.resetTimer();
-            });
+        // Xử lý nút bấm Dừng
+        btnCollector.on('collect', async i => {
+            if (!i.customId.startsWith('stop_noitu_')) return;
+            if (i.user.id !== starterId) {
+                return i.reply({ content: '❌ Chỉ chủ phòng mới có thể dừng game!', ephemeral: true });
+            }
+            await i.deferUpdate();
+            collector.stop('force_stop');
+            btnCollector.stop();
+        });
+        
+        collector.on('collect', async m => {
+            const content = m.content.trim().toLowerCase();
+            const words = content.split(/\s+/);
             
-            collector.on('end', (collected, reason) => {
-                activeGames.delete(channelId);
-                if (reason === 'time') {
-                    const endEmbed = new EmbedBuilder()
-                        .setTitle('⏳ HẾT GIỜ!')
-                        .setDescription(`Đã 60 giây trôi qua mà không ai nối được chữ **${gameState.lastSyllable.toUpperCase()}**.\n\n🏆 Tổng số từ nối được: **${gameState.usedWords.size}** từ.`)
-                        .setColor('#e74c3c');
-                    interaction.channel.send({ embeds: [endEmbed] }).catch(() => {});
-                }
-            });
-        }
+            if (words.length !== 2) return;
+            if (words[0] !== gameState.lastSyllable) return;
+            
+            if (m.author.id === gameState.lastPlayerId) {
+                return m.reply('🚫 Ế ế! Không được tự kỷ chơi một mình!').then(msg => setTimeout(() => msg.delete().catch(() => {}), 3000));
+            }
+            if (gameState.usedWords.has(content)) {
+                return m.reply(`♻️ Từ **${content.toUpperCase()}** đã có người dùng rồi!`).then(msg => setTimeout(() => msg.delete().catch(() => {}), 3000));
+            }
+            if (validWords.size > 0 && !validWords.has(content)) {
+                return m.reply(`📚 Chữ **${content.toUpperCase()}** không có trong từ điển tiếng Việt!`).then(msg => setTimeout(() => msg.delete().catch(() => {}), 3000));
+            }
+            
+            // Cập nhật trạng thái
+            gameState.currentWord = content;
+            gameState.lastSyllable = words[1];
+            gameState.lastPlayerId = m.author.id;
+            gameState.usedWords.add(content);
+            
+            // Cộng điểm
+            const currentScore = gameState.playerScores.get(m.author.id) || 0;
+            gameState.playerScores.set(m.author.id, currentScore + 1);
+            
+            await m.react('✅').catch(() => {});
+            
+            // Reset thời gian 60s cho cả 2 collector
+            collector.resetTimer();
+            btnCollector.resetTimer();
+        });
+        
+        collector.on('end', (collected, reason) => {
+            activeGames.delete(channelId);
+            
+            // Xếp hạng người chơi
+            let leaderboard = '';
+            if (gameState.playerScores.size > 0) {
+                const sortedScores = [...gameState.playerScores.entries()].sort((a, b) => b[1] - a[1]).slice(0, 5);
+                const medals = ['🥇', '🥈', '🥉', '🏅', '🏅'];
+                leaderboard = sortedScores.map((p, index) => `${medals[index]} <@${p[0]}>: **${p[1]}** từ`).join('\n');
+            } else {
+                leaderboard = '*Chưa có cao thủ nào ghi điểm.*';
+            }
+
+            let endTitle = '⏳ HẾT GIỜ!';
+            let endColor = '#e74c3c';
+            if (reason === 'force_stop') {
+                endTitle = '🛑 TRÒ CHƠI BỊ HỦY BỞI CHỦ PHÒNG';
+                endColor = '#95a5a6';
+            }
+
+            const endEmbed = new EmbedBuilder()
+                .setTitle(endTitle)
+                .setDescription(`Trò chơi kết thúc tại chữ **${gameState.lastSyllable.toUpperCase()}**.\n\n📊 **TỔNG KẾT VÁN ĐẤU:**\n- Tổng số từ nối được: **${gameState.usedWords.size}**\n\n🏆 **BẢNG XẾP HẠNG TOP 5:**\n${leaderboard}`)
+                .setColor(endColor);
+                
+            reply.edit({ components: [] }).catch(() => {}); // Gỡ nút bấm
+            interaction.channel.send({ embeds: [endEmbed] }).catch(() => {});
+        });
     }
 };
