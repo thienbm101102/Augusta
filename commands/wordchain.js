@@ -19,7 +19,7 @@ const activeGames = new Map();
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('wordchain')
-        .setDescription('Chơi Word Chain (Nối chữ Tiếng Anh) giao diện mới'),
+        .setDescription('Chơi Word Chain (Nối chữ Tiếng Anh)'),
         
     async execute(interaction) {
         const channelId = interaction.channelId;
