@@ -38,11 +38,11 @@ module.exports = {
         const lastSyllable = syllables[1];
         
         const embed = new EmbedBuilder()
-            .setTitle('🇻🇳 ĐẤU TRƯỜNG NỐI TỪ TIẾNG VIỆT')
+            .setTitle('ĐẤU TRƯỜNG NỐI TỪ TIẾNG VIỆT')
             .setDescription(`Chủ phòng: <@${starterId}>\n\nTừ khởi đầu: 🟢 **${startWord.toUpperCase()}**\n\nNgười tiếp theo nối một từ 2 âm tiết bắt đầu bằng chữ:\n# 🎯 ${lastSyllable.toUpperCase()}\n\n*⚠️ Luật: Có nghĩa, không lặp lại, không tự nối của mình.*`)
             .setColor('#2ecc71')
-            .setThumbnail('https://cdn-icons-png.flaticon.com/512/197/197484.png')
-            .setFooter({ text: `Từ điển: ${validWords.size > 0 ? '✅ Bật' : '❌ Tắt'} | Hết hạn sau 60s nếu không ai nối` });
+            .setThumbnail('https://image-5.uhdpaper.com/wallpaper/hatsune-miku-error-anime-girl-hd-wallpaper-uhdpaper.com-227@5@o.jpg')
+            .setFooter({ text: `Từ điển: ${validWords.size > 0 ? '✅' : '❌ Tắt'} | Hết hạn sau 60s nếu không ai nối` });
             
         const row = new ActionRowBuilder().addComponents(
             new ButtonBuilder()
@@ -127,7 +127,7 @@ module.exports = {
             let endTitle = '⏳ HẾT GIỜ!';
             let endColor = '#e74c3c';
             if (reason === 'force_stop') {
-                endTitle = '🛑 TRÒ CHƠI BỊ HỦY BỞI CHỦ PHÒNG';
+                endTitle = '🛑 TRÒ CHƠI ĐÃ KẾT THÚC';
                 endColor = '#95a5a6';
             }
 
