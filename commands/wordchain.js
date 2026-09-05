@@ -1,10 +1,11 @@
 const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 const fs = require('fs');
 const path = require('path');
+const { addBalance, getBalance } = require('../db');
 
 let validWords = new Set();
 try {
-    const dictPath = path.join(__dirname, 'en_dict.txt');
+    const dictPath = path.join(__dirname, '../en_dict.txt');
     const data = fs.readFileSync(dictPath, 'utf8');
     const wordsArray = data.split('\n')
         .map(w => w.trim().toLowerCase())
@@ -19,7 +20,7 @@ const activeGames = new Map();
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('wordchain')
-        .setDescription('Chơi Word Chain (Nối chữ Tiếng Anh)'),
+        .setDescription('Chơi Word Chain tiếng Anh'),
         
     async execute(interaction) {
         const channelId = interaction.channelId;
@@ -37,11 +38,11 @@ module.exports = {
         const lastLetter = startWord.slice(-1);
         
         const embed = new EmbedBuilder()
-            .setTitle('ĐẤU TRƯỜNG NỐI TỪ TIẾNG ANH')
-            .setDescription(`Chủ phòng: <@${starterId}>\n\nTừ khởi đầu: 🟢 **${startWord.toUpperCase()}**\n\nNgười tiếp theo hãy gõ một từ Tiếng Anh bắt đầu bằng chữ cái:\n# 🎯 ${lastLetter.toUpperCase()}\n\n*⚠️ Luật: 1 từ duy nhất, có nghĩa, không lặp lại, không tự nối của mình.*`)
+            .setTitle('🇬🇧 ĐẤU TRƯỜNG NỐI TỪ TIẾNG ANH')
+            .setDescription(`Chủ phòng: <@${starterId}>\n\nTừ khởi đầu: 🟢 **${startWord.toUpperCase()}**\n\nNgười tiếp theo hãy gõ một từ Tiếng Anh bắt đầu bằng chữ cái:\n# 🎯 ${lastLetter.toUpperCase()}\n\n*⚠️ Luật: 1 từ duy nhất, có nghĩa, không lặp lại, không tự nối của mình.*\n*💰 Thưởng: +100 tiền/từ đúng | 💎 Top 1 nhận thưởng lớn!*`)
             .setColor('#3498db')
             .setThumbnail('https://image-5.uhdpaper.com/wallpaper/hatsune-miku-error-anime-girl-hd-wallpaper-uhdpaper.com-227@5@o.jpg')
-            .setFooter({ text: `Từ điển: ${validWords.size > 0 ? '✅' : '❌ Tắt'} | Hết hạn sau 60s nếu không ai nối` });
+            .setFooter({ text: `Từ điển: ${validWords.size > 0 ? '✅' : '❌ Tắt'} | Hết hạn sau 60s` });
             
         const row = new ActionRowBuilder().addComponents(
             new ButtonBuilder()
@@ -99,20 +100,41 @@ module.exports = {
             const currentScore = gameState.playerScores.get(m.author.id) || 0;
             gameState.playerScores.set(m.author.id, currentScore + 1);
             
+            // 💰 Cộng 100 tiền cho mỗi từ đúng bằng hàm addBalance chuẩn hệ thống
+            try {
+                await addBalance(m.author.id, 100);
+            } catch (err) {
+                console.error("Lỗi cộng tiền Wordchain:", err);
+            }
+            
             await m.react('✅').catch(() => {});
             
             collector.resetTimer();
             btnCollector.resetTimer();
         });
         
-        collector.on('end', (collected, reason) => {
+        collector.on('end', async (collected, reason) => {
             activeGames.delete(channelId);
             
             let leaderboard = '';
+            let rewardMsg = '';
+            
             if (gameState.playerScores.size > 0) {
-                const sortedScores = [...gameState.playerScores.entries()].sort((a, b) => b[1] - a[1]).slice(0, 5);
+                const sortedScores = [...gameState.playerScores.entries()].sort((a, b) => b[1] - a[1]);
+                
+                // 💎 Cộng thưởng Top 1
+                const top1Id = sortedScores[0][0];
+                try {
+                    await addBalance(top1Id, 100000);
+                } catch (err) {
+                    console.error("Lỗi cộng thưởng Top 1 Wordchain:", err);
+                }
+                
+                rewardMsg = `\n🎉 Chúc mừng <@${top1Id}> đạt Top 1 và nhận được phần thưởng lớn! 💎\n`;
+
+                const top5 = sortedScores.slice(0, 5);
                 const medals = ['🥇', '🥈', '🥉', '🏅', '🏅'];
-                leaderboard = sortedScores.map((p, index) => `${medals[index]} <@${p[0]}>: **${p[1]}** từ`).join('\n');
+                leaderboard = top5.map((p, index) => `${medals[index]} <@${p[0]}>: **${p[1]}** từ`).join('\n');
             } else {
                 leaderboard = '*Chưa có cao thủ nào ghi điểm.*';
             }
@@ -126,7 +148,7 @@ module.exports = {
 
             const endEmbed = new EmbedBuilder()
                 .setTitle(endTitle)
-                .setDescription(`Trò chơi kết thúc. Không ai tìm được từ bắt đầu bằng chữ cái **${gameState.lastLetter.toUpperCase()}**.\n\n📊 **TỔNG KẾT VÁN ĐẤU:**\n- Tổng số từ nối được: **${gameState.usedWords.size}**\n\n🏆 **BẢNG XẾP HẠNG TOP 5:**\n${leaderboard}`)
+                .setDescription(`Trò chơi kết thúc. Không ai tìm được từ bắt đầu bằng chữ cái **${gameState.lastLetter.toUpperCase()}**.\n\n📊 **TỔNG KẾT VÁN ĐẤU:**\n- Tổng số từ nối được: **${gameState.usedWords.size}**\n*(Mỗi từ đúng đã nhận được tiền thưởng)*\n${rewardMsg}\n🏆 **BẢNG XẾP HẠNG TOP 5:**\n${leaderboard}`)
                 .setColor(endColor);
                 
             reply.edit({ components: [] }).catch(() => {}); 
