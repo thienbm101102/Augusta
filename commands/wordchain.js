@@ -38,7 +38,7 @@ module.exports = {
         const lastLetter = startWord.slice(-1);
         
         const embed = new EmbedBuilder()
-            .setTitle('🇬🇧 ĐẤU TRƯỜNG NỐI TỪ TIẾNG ANH')
+            .setTitle('ĐẤU TRƯỜNG NỐI TỪ TIẾNG ANH')
             .setDescription(`Chủ phòng: <@${starterId}>\n\nTừ khởi đầu: 🟢 **${startWord.toUpperCase()}**\n\nNgười tiếp theo hãy gõ một từ Tiếng Anh bắt đầu bằng chữ cái:\n# 🎯 ${lastLetter.toUpperCase()}\n\n*⚠️ Luật: 1 từ duy nhất, có nghĩa, không lặp lại, không tự nối của mình.*\n*💰 Thưởng: +100 tiền/từ đúng | 💎 Top 1 nhận thưởng lớn!*`)
             .setColor('#3498db')
             .setThumbnail('https://image-5.uhdpaper.com/wallpaper/hatsune-miku-error-anime-girl-hd-wallpaper-uhdpaper.com-227@5@o.jpg')
