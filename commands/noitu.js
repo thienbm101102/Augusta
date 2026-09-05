@@ -20,7 +20,7 @@ const activeGames = new Map();
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('noitu')
-        .setDescription('Chơi nối từ tiếng Việt nhận tiền và kim cương'),
+        .setDescription('Chơi nối từ tiếng Việt'),
         
     async execute(interaction) {
         const channelId = interaction.channelId;
