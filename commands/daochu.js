@@ -4,12 +4,8 @@ const path = require('path');
 const { addBalance } = require('../db');
 
 // ==========================================
-// 🎲 THƯ VIỆN & THUẬT TOÁN XÁO TRỘN TỪ (SHUFFLE ENGINE)
+// 🎲 THƯ VIỆN & THUẬT TOÁN XÁO TRỘN TỪ
 // ==========================================
-
-/**
- * Thuật toán Fisher-Yates xáo trộn mảng ngẫu nhiên
- */
 function fisherYatesShuffle(array) {
     const arr = [...array];
     for (let i = arr.length - 1; i > 0; i--) {
@@ -19,49 +15,30 @@ function fisherYatesShuffle(array) {
     return arr;
 }
 
-/**
- * Hàm xáo trộn chữ cái của từ/cụm từ
- * @param {string} text Từ gốc cần đảo
- * @returns {string} Chuỗi ký tự đã xáo trộn
- */
 function scrambleText(text) {
     const cleanText = text.trim().toLowerCase();
-    // Tách tất cả ký tự (bỏ khoảng trắng)
     const chars = cleanText.replace(/\s+/g, '').split('');
     
-    // Xáo trộn cho đến khi khác từ gốc (nếu độ dài > 1)
     let scrambled = fisherYatesShuffle(chars);
     let attempts = 0;
     while (scrambled.join('') === chars.join('') && chars.length > 1 && attempts < 10) {
         scrambled = fisherYatesShuffle(chars);
         attempts++;
     }
-    
-    // Trả về dạng các chữ cái in hoa cách nhau bằng khoảng trắng
     return scrambled.join(' ').toUpperCase();
 }
 
 // ==========================================
-// 📚 DANH SÁCH TỪ DỰ PHÒNG (NẾU KHÔNG CÓ FILE TỪ ĐIỂN)
+// 📚 NẠP TỪ ĐIỂN
 // ==========================================
 const DEFAULT_WORD_LIST = [
     { word: 'truyền thông', hint: 'Quá trình trao đổi, truyền tải thông tin' },
     { word: 'hoàng hôn', hint: 'Thời điểm mặt trời lặn cuối ngày' },
-    { word: 'bình minh', hint: 'Thời điểm mặt trời bắt đầu mọc' },
     { word: 'lập trình', hint: 'Viết mã code tạo ra phần mềm' },
-    { word: 'mặt trăng', hint: 'Vệ tinh tự nhiên duy nhất của Trái Đất' },
     { word: 'kim cương', hint: 'Loại khoáng vật cứng nhất và rất giá trị' },
-    { word: 'phát triển', hint: 'Biến đổi theo hướng tiến bộ, mở rộng' },
-    { word: 'vĩnh cửu', hint: 'Tồn tại mãi mãi không bao giờ kết thúc' },
-    { word: 'hải đăng', hint: 'Ngọn đèn chiếu sáng cho tàu thuyền trên biển' },
-    { word: 'thời gian', hint: 'Thứ trôi qua không bao giờ quay trở lại' },
-    { word: 'vũ trụ', hint: 'Khu vực không gian bao la chứa các thiên hà' },
-    { word: 'kỷ niệm', hint: 'Ký ức về những điều đã qua' },
-    { word: 'anh hùng', hint: 'Người có công lao, chí khí phi thường' },
-    { word: 'sáng tạo', hint: 'Tạo ra những giá trị mới mẻ, độc đáo' }
+    { word: 'phát triển', hint: 'Biến đổi theo hướng tiến bộ, mở rộng' }
 ];
 
-// Nạp thêm từ từ file tu_dien.txt nếu có
 function getRandomWord() {
     try {
         const dictPath = path.join(__dirname, '../tu_dien.txt');
@@ -75,19 +52,17 @@ function getRandomWord() {
                 return { word: randomWord, hint: `Cụm từ gồm ${randomWord.split(' ').length} từ` };
             }
         }
-    } catch (e) {
-        // Sử dụng danh sách mặc định nếu lỗi đọc file
-    }
+    } catch (e) {}
     return DEFAULT_WORD_LIST[Math.floor(Math.random() * DEFAULT_WORD_LIST.length)];
 }
 
 const activeGames = new Map();
-const REWARD_MONEY = 500; // Tiền thưởng khi đoán đúng
+const REWARD_MONEY = 500;
 
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('daochu')
-        .setDescription('Trò chơi Đảo Chữ đoán từ nhận tiền thưởng!'),
+        .setDescription('Chơi Đảo Chữ liên hoàn, game chỉ dừng khi không ai đoán được!'),
 
     async execute(interaction) {
         const channelId = interaction.channelId;
@@ -100,22 +75,25 @@ module.exports = {
             });
         }
 
-        const selectedObj = getRandomWord();
-        const originalWord = selectedObj.word;
-        const scrambled = scrambleText(originalWord);
+        let currentObj = getRandomWord();
+        let gameState = {
+            originalWord: currentObj.word.toLowerCase(),
+            scrambled: scrambleText(currentObj.word),
+            round: 1
+        };
+        activeGames.set(channelId, gameState);
 
         const embed = new EmbedBuilder()
-            .setTitle('🔤 ĐẤU TRƯỜNG ĐẢO CHỮ')
+            .setTitle(`🔤 ĐẤU TRƯỜNG ĐẢO CHỮ - VÒNG ${gameState.round}`)
             .setDescription(
                 `Chủ phòng: <@${starterId}>\n\n` +
                 `Các chữ cái đã bị xáo trộn:\n` +
-                `# 🧩 \`${scrambled}\`\n\n` +
-                `*💡 Gợi ý: ${selectedObj.hint}*\n` +
+                `# 🧩 \`${gameState.scrambled}\`\n\n` +
+                `*💡 Gợi ý: ${currentObj.hint}*\n` +
                 `*💰 Thưởng: **+${REWARD_MONEY.toLocaleString()}** tiền cho người đoán nhanh nhất!*`
             )
             .setColor('#f39c12')
-            .setThumbnail('https://image-5.uhdpaper.com/wallpaper/hatsune-miku-error-anime-girl-hd-wallpaper-uhdpaper.com-227@5@o.jpg')
-            .setFooter({ text: 'Hãy gõ đáp án trực tiếp vào kênh! | Thời gian: 60 giây' });
+            .setFooter({ text: 'Gõ đáp án vào kênh để trả lời | Trò chơi sẽ dừng nếu sau 60s không ai đoán được' });
 
         const row = new ActionRowBuilder().addComponents(
             new ButtonBuilder()
@@ -129,13 +107,6 @@ module.exports = {
         const filter = m => !m.author.bot;
         const collector = interaction.channel.createMessageCollector({ filter, time: 60000 });
         const btnCollector = reply.createMessageComponentCollector({ time: 60000 });
-
-        const gameState = {
-            originalWord: originalWord.toLowerCase(),
-            scrambled: scrambled,
-            winner: null
-        };
-        activeGames.set(channelId, gameState);
 
         // Xử lý nút dừng game
         btnCollector.on('collect', async i => {
@@ -153,35 +124,57 @@ module.exports = {
             const answer = m.content.trim().toLowerCase();
 
             if (answer === gameState.originalWord) {
-                gameState.winner = m.author;
-                
-                // Cộng tiền cho người chiến thắng
+                // 1. Cộng tiền
                 try {
                     await addBalance(m.author.id, REWARD_MONEY);
                 } catch (err) {
                     console.error("Lỗi cộng tiền đảo chữ:", err);
                 }
-
                 await m.react('🎉').catch(() => {});
-                collector.stop('guessed');
+
+                // 2. Thông báo người chiến thắng vòng hiện tại
+                const winEmbed = new EmbedBuilder()
+                    .setDescription(`🎉 Chúc mừng <@${m.author.id}> đã đoán đúng từ **${gameState.originalWord.toUpperCase()}** và nhận **+${REWARD_MONEY.toLocaleString()}** tiền!`)
+                    .setColor('#2ecc71');
+                await interaction.channel.send({ embeds: [winEmbed] }).catch(() => {});
+
+                // 3. Chuẩn bị vòng tiếp theo
+                gameState.round += 1;
+                currentObj = getRandomWord();
+                gameState.originalWord = currentObj.word.toLowerCase();
+                gameState.scrambled = scrambleText(currentObj.word);
+
+                // 4. Gửi từ mới
+                const nextEmbed = new EmbedBuilder()
+                    .setTitle(`ĐẢO CHỮ - VÒNG ${gameState.round}`)
+                    .setDescription(
+                        `Các chữ cái đã bị xáo trộn:\n` +
+                        `# 🧩 \`${gameState.scrambled}\`\n\n` +
+                        `*💡 Gợi ý: ${currentObj.hint}*\n` +
+                        `*💰 Thưởng: **+${REWARD_MONEY.toLocaleString()}** tiền!*`
+                    )
+                    .setColor('#3498db')
+                    .setFooter({ text: 'Thời gian đã được làm mới lại 60 giây!' });
+
+                await interaction.channel.send({ embeds: [nextEmbed] }).catch(() => {});
+
+                // 5. Làm mới lại thời gian (60s) để chờ người đoán từ mới
+                collector.resetTimer();
+                btnCollector.resetTimer();
             }
         });
 
-        // Kết thúc trò chơi
+        // Kết thúc trò chơi khi cạn thời gian hoặc bị chủ phòng hủy
         collector.on('end', async (collected, reason) => {
             activeGames.delete(channelId);
 
-            let endTitle = '⌛ HẾT GIỜ!';
-            let endDescription = `Không ai đoán đúng đáp án lần này.\n\n🔑 Đáp án chính xác là: **${originalWord.toUpperCase()}**`;
+            let endTitle = '⌛ HẾT GIỜ! TRÒ CHƠI KẾT THÚC';
+            let endDescription = `Thời gian đã trôi qua mà không ai đoán được từ này.\n\n🔑 Đáp án chính xác là: **${gameState.originalWord.toUpperCase()}**\n\n📊 Kỷ lục ván này: Chơi đến **Vòng ${gameState.round}**`;
             let endColor = '#e74c3c';
 
-            if (reason === 'guessed' && gameState.winner) {
-                endTitle = '🎉 ĐÃ CÓ NGƯỜI ĐOÁN ĐÚNG!';
-                endDescription = `Chúc mừng <@${gameState.winner.id}> đã đoán chính xác từ **${originalWord.toUpperCase()}**!\n\n💰 Phần thưởng: **+${REWARD_MONEY.toLocaleString()}** tiền đã được cộng vào tài khoản.`;
-                endColor = '#2ecc71';
-            } else if (reason === 'force_stop') {
+            if (reason === 'force_stop') {
                 endTitle = '🛑 TRÒ CHƠI ĐÃ BỊ HỦY';
-                endDescription = `Chủ phòng đã dừng trò chơi.\n🔑 Đáp án đúng là: **${originalWord.toUpperCase()}**`;
+                endDescription = `Chủ phòng đã dừng trò chơi.\n🔑 Đáp án đúng của vòng ${gameState.round} là: **${gameState.originalWord.toUpperCase()}**`;
                 endColor = '#95a5a6';
             }
 
