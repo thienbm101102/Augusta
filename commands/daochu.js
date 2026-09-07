@@ -29,7 +29,7 @@ function scrambleText(text) {
 }
 
 // ==========================================
-// 📚 NẠP TỪ ĐIỂN
+// 📚 NẠP TỪ ĐIỂN (CHỈ LẤY CỤM 2 TỪ)
 // ==========================================
 const DEFAULT_WORD_LIST = [
     { word: 'truyền thông', hint: 'Quá trình trao đổi, truyền tải thông tin' },
@@ -46,10 +46,12 @@ function getRandomWord() {
             const data = fs.readFileSync(dictPath, 'utf8');
             const lines = data.split('\n')
                 .map(l => l.trim().toLowerCase())
-                .filter(l => l.length > 2);
+                // Lọc cực gắt: Chỉ lấy những dòng cắt ra đúng 2 chữ
+                .filter(l => l.split(/\s+/).length === 2); 
+                
             if (lines.length > 0) {
                 const randomWord = lines[Math.floor(Math.random() * lines.length)];
-                return { word: randomWord, hint: `Cụm từ gồm ${randomWord.split(' ').length} từ` };
+                return { word: randomWord, hint: `Cụm từ gồm 2 từ` };
             }
         }
     } catch (e) {}
@@ -62,7 +64,7 @@ const REWARD_MONEY = 500;
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('daochu')
-        .setDescription('Chơi Đảo Chữ liên hoàn, game chỉ dừng khi không ai đoán được!'),
+        .setDescription('Chơi Đảo Chữ liên hoàn (Chế độ 2 từ), game chỉ dừng khi không ai đoán được!'),
 
     async execute(interaction) {
         const channelId = interaction.channelId;
@@ -132,13 +134,13 @@ module.exports = {
                 }
                 await m.react('🎉').catch(() => {});
 
-                // 2. Thông báo người chiến thắng vòng hiện tại
+                // 2. Thông báo người chiến thắng
                 const winEmbed = new EmbedBuilder()
                     .setDescription(`🎉 Chúc mừng <@${m.author.id}> đã đoán đúng từ **${gameState.originalWord.toUpperCase()}** và nhận **+${REWARD_MONEY.toLocaleString()}** tiền!`)
                     .setColor('#2ecc71');
                 await interaction.channel.send({ embeds: [winEmbed] }).catch(() => {});
 
-                // 3. Chuẩn bị vòng tiếp theo
+                // 3. Chuẩn bị vòng tiếp theo (bốc từ mới)
                 gameState.round += 1;
                 currentObj = getRandomWord();
                 gameState.originalWord = currentObj.word.toLowerCase();
@@ -158,13 +160,13 @@ module.exports = {
 
                 await interaction.channel.send({ embeds: [nextEmbed] }).catch(() => {});
 
-                // 5. Làm mới lại thời gian (60s) để chờ người đoán từ mới
+                // 5. Làm mới lại bộ đếm thời gian
                 collector.resetTimer();
                 btnCollector.resetTimer();
             }
         });
 
-        // Kết thúc trò chơi khi cạn thời gian hoặc bị chủ phòng hủy
+        // Kết thúc trò chơi
         collector.on('end', async (collected, reason) => {
             activeGames.delete(channelId);
 
