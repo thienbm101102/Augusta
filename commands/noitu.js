@@ -129,7 +129,7 @@ module.exports = {
                 try {
                     // Nếu addBalance nhận đối số thứ 3 là loại <a:diamondgem:1418649012289933434>/diamond, hoặc dùng model riêng tùy theo cơ chế của addBalance trong ../db
                     // Ở đây gọi addBalance với 100,000 (nếu dùng chung số dư). Nếu bảng Diamond tách riêng, bạn có thể thay bằng hàm tương ứng trong ../db của bạn.
-                    await addBalance(top1Id, 100000); 
+                    await addBalance(top1Id, 10000); 
                 } catch (err) {
                     console.error("Lỗi cộng thưởng Top 1 VN:", err);
                 }
