@@ -31,7 +31,7 @@ module.exports = {
         const getMainMenuEmbed = () => {
             return new EmbedBuilder()
                 .setColor('#5865F2')
-                .setTitle('<a:VerifiedTwitter:1418649004912148511> MUA <a:diamondgem:1418649012289933434> TỰ ĐỘNG')
+                .setTitle('<a:VerifiedTwitter:1418649004912148511> MUA 💎 TỰ ĐỘNG')
                 .setDescription('Chào mừng bạn đến với hệ thống mua 💎 chính thức!\n\nHãy chọn một gói nạp bên dưới để khởi tạo hóa đơn thanh toán quét mã QR tự động hoàn toàn an toàn và nhanh chóng.')
                 .addFields(
                     { 
