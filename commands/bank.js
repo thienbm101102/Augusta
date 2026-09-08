@@ -44,7 +44,7 @@ module.exports = {
             const getBackRow = () => {
                 const backBtn = new ButtonBuilder()
                     .setCustomId(`bank-back-main`)
-                    .setLabel("🔙 Quay lại menu chính")
+                    .setLabel("Quay lại")
                     .setStyle(ButtonStyle.Secondary);
                 return new ActionRowBuilder().addComponents(backBtn);
             };
