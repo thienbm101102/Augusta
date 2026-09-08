@@ -9,7 +9,7 @@ const BANK_CONFIG = {
 };
 
 // --- BANNER SHOP ---
-const BANNER_URL = "https://i.imgur.com/478qmxW.png"; // Bạn có thể thay link ảnh banner tùy ý tại đây
+const BANNER_URL = "https://i.ibb.co/60Qm7L95/camellya-wuthering-waves-game-hd-wallpaper-uhdpaper-com-659-5-r.jpg"; // Bạn có thể thay link ảnh banner tùy ý tại đây
 
 // --- CÁC GÓI MUA KIM CƯƠNG ---
 const PACKAGES = [
@@ -31,7 +31,7 @@ module.exports = {
         const getMainMenuEmbed = () => {
             return new EmbedBuilder()
                 .setColor('#5865F2')
-                .setTitle('💎 TRUNG TÂM NẠP KIM CƯƠNG TỰ ĐỘNG')
+                .setTitle('<a:VerifiedTwitter:1418649004912148511> MUA <a:diamondgem:1418649012289933434> TỰ ĐỘNG')
                 .setDescription('Chào mừng bạn đến với hệ thống nạp thẻ chính thức!\n\nHãy chọn một gói nạp bên dưới để khởi tạo hóa đơn thanh toán quét mã QR tự động hoàn toàn an toàn và nhanh chóng.')
                 .addFields(
                     { 
@@ -46,14 +46,14 @@ module.exports = {
 
         const getMainMenuComponent = () => {
             const options = PACKAGES.map(pkg => ({
-                label: `${pkg.label} (${pkg.diamonds.toLocaleString()} 💎)`,
+                label: `${pkg.label} (${pkg.diamonds.toLocaleString()} <a:diamondgem:1418649012289933434>)`,
                 description: pkg.desc,
                 value: pkg.id
             }));
 
             const selectMenu = new StringSelectMenuBuilder()
                 .setCustomId(`nap-select-${interaction.user.id}`)
-                .setPlaceholder("✨ Bấm vào đây để chọn gói nạp kim cương...")
+                .setPlaceholder("✨ Bấm vào đây để chọn gói <a:diamondgem:1418649012289933434>...")
                 .addOptions(options);
 
             return new ActionRowBuilder().addComponents(selectMenu);
@@ -105,11 +105,11 @@ module.exports = {
 
                 const embed = new EmbedBuilder()
                     .setColor('#FEE75C')
-                    .setTitle('🧾 HÓA ĐƠN THANH TOÁN CHUYỂN KHOẢN')
+                    .setTitle('<a:VerifiedTwitter:1418649004912148511> HÓA ĐƠN THANH TOÁN CHUYỂN KHOẢN')
                     .setDescription('Vui lòng sử dụng ứng dụng ngân hàng quét mã QR bên dưới hoặc chuyển khoản thủ công theo thông tin chi tiết.')
                     .addFields(
                         { name: '📦 Gói dịch vụ', value: `**${selectedPackage.label}**`, inline: true },
-                        { name: '💎 Nhận được', value: `\`${selectedPackage.diamonds.toLocaleString()}\`<a:diamondgem:1418649012289933434>`, inline: true },
+                        { name: '<a:diamondgem:1418649012289933434> Nhận được', value: `\`${selectedPackage.diamonds.toLocaleString()}\`<a:diamondgem:1418649012289933434>`, inline: true },
                         { name: '💰 Số tiền thanh toán', value: `\`${selectedPackage.price.toLocaleString()}\` VNĐ`, inline: true },
                         { name: '────────────────────────', value: '\u200b', inline: false },
                         { name: '🏦 Ngân hàng thụ hưởng', value: `**${BANK_CONFIG.BANK_ID}**`, inline: true },
