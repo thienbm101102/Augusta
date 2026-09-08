@@ -145,7 +145,7 @@ module.exports = {
         
         const finalEmbed = new EmbedBuilder()
             .setColor(winnings > 0 ? '#00ff00' : '#ff0000')
-            .setTitle('<a:VerifiedTwitter:1418649004912148511> Trái Cây May Mắn <a:VerifiedTwitter:1418649004912148511>')
+            .setTitle('<a:VerifiedTwitter:1418649004912148511> Trái Cây May Mắn')
             .setDescription('**Bạn Đã Quay Được**')
             .addFields(
                 { name: 'Kết Quả:', value: `\`\`\`\n${finalReel.join(' ')}\n\`\`\`` },
