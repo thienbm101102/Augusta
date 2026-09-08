@@ -93,7 +93,9 @@ class HorseRacingGame {
             this.betTime--;
             if (this.betTime <= 0) {
                 clearInterval(this.countdownInterval);
-                this.startRace();
+                if (this.state === 'betting') {
+                    this.startRace();
+                }
             } else {
                 const updatedEmbed = this.createBettingEmbed(this.betTime);
                 await this.gameMessage.edit({ embeds: [updatedEmbed] }).catch(() => {});
@@ -126,6 +128,7 @@ class HorseRacingGame {
     }
     
     async startRace() {
+        if (this.state !== 'betting') return;
         this.state = 'racing';
 
         const horseButtons = this.createBettingComponents()[0].setComponents(
@@ -143,9 +146,12 @@ class HorseRacingGame {
                 { name: 'Đường đua:', value: this.getRaceTrack(), inline: false }
             );
 
-        await this.gameMessage.edit({ embeds: [racingEmbed], components: [horseButtons, betButtons] });
+        await this.gameMessage.edit({ embeds: [racingEmbed], components: [horseButtons, betButtons] }).catch(() => {});
 
         this.raceInterval = setInterval(async () => {
+            // Chặn ngay lập tức nếu game không còn ở trạng thái đua
+            if (this.state !== 'racing') return;
+
             let winnerIndex = -1;
             for (let i = 0; i < this.positions.length; i++) {
                 this.positions[i] += Math.random() * 2;
@@ -155,14 +161,19 @@ class HorseRacingGame {
                 }
             }
 
+            // Nếu có ngựa về đích, khóa trạng thái ngay lập tức để vô hiệu hóa các tick chồng chéo khác
+            if (winnerIndex !== -1) {
+                this.state = 'ended'; 
+                clearInterval(this.raceInterval);
+            }
+
             const currentRaceEmbed = new EmbedBuilder(racingEmbed.toJSON())
                 .spliceFields(0, 1, { name: 'Đường đua:', value: this.getRaceTrack(), inline: false });
 
-            await this.gameMessage.edit({ embeds: [currentRaceEmbed] });
+            await this.gameMessage.edit({ embeds: [currentRaceEmbed] }).catch(() => {});
 
             if (winnerIndex !== -1) {
-                clearInterval(this.raceInterval);
-                this.endRace(winnerIndex);
+                await this.endRace(winnerIndex);
             }
         }, 1000);
     }
@@ -175,7 +186,6 @@ class HorseRacingGame {
     }
 
     async endRace(winnerIndex) {
-        this.state = 'ended';
         activeGames.delete(this.channelId);
 
         const winnerName = HORSE_NAMES[winnerIndex];
@@ -209,7 +219,7 @@ class HorseRacingGame {
             )
             .setFooter({ text: 'Chúc bạn may mắn lần sau!' });
 
-        await this.gameMessage.channel.send({ embeds: [finalEmbed] });
+        await this.gameMessage.channel.send({ embeds: [finalEmbed] }).catch(() => {});
     }
 }
 
@@ -242,6 +252,3 @@ module.exports = {
         await game.handleBet(interaction);
     }
 };
-
-
-
