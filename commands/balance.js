@@ -170,24 +170,6 @@ module.exports = {
         );
       }
 
-      const level = Math.floor(userBalance / 100000);
-      const progress = (userBalance % 100000) / 100000;
-
-      ctx.fillStyle = "#333";
-      ctx.roundRect(280, 165, 300, 25, 12);
-      ctx.fill();
-
-      const gradBar = ctx.createLinearGradient(250, 0, 590, 0);
-      gradBar.addColorStop(0, "#BCE6FF");
-      gradBar.addColorStop(1, "#53A6D8");
-      ctx.fillStyle = gradBar;
-      ctx.roundRect(280, 165, 300 * progress, 25, 12);
-      ctx.fill();
-
-      ctx.font = `16px ${FONT_FAMILY}`;
-      ctx.fillStyle = "#fff";
-      ctx.fillText(`Cấp ${level}`, 590, 185);
-
       ctx.font = `14px ${FONT_FAMILY}`;
       ctx.fillStyle = "#888888";
       ctx.fillText("© Copyright © 2025 / ✦ Đơn Giản Là Chơi ✦", 280, 215);
