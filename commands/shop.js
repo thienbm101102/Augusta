@@ -30,7 +30,7 @@ const getItemName = (filename) => {
 module.exports = {
     data: new SlashCommandBuilder()
         .setName("shop")
-        .setDescription("Cửa hàng và quản lý trang phục/danh hiệu hồ sơ"),
+        .setDescription("Cửa hàng và quản lý banner/danh hiệu hồ sơ của bạn"),
 
     async execute(interaction) {
         await interaction.deferReply({ ephemeral: true });
@@ -53,7 +53,7 @@ module.exports = {
         const getBackRow = () => {
             const backBtn = new ButtonBuilder()
                 .setCustomId(`shop-back-main`)
-                .setLabel("🔙 Quay lại menu chính")
+                .setLabel("Quay lại")
                 .setStyle(ButtonStyle.Secondary);
             return new ActionRowBuilder().addComponents(backBtn);
         };
