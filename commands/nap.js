@@ -13,17 +13,17 @@ const BANNER_URL = "https://i.ibb.co/60Qm7L95/camellya-wuthering-waves-game-hd-w
 
 // --- CÁC GÓI MUA KIM CƯƠNG ---
 const PACKAGES = [
-    { id: "pack_1", diamonds: 20000, price: 10000, label: "Gói Khởi Đầu", desc: "10,000 VNĐ = 20,000 <a:diamondgem:1418649012289933434>" },
-    { id: "pack_2", diamonds: 100000, price: 50000, label: "Gói Phổ Biến", desc: "50,000 VNĐ = 100,000 <a:diamondgem:1418649012289933434>" },
-    { id: "pack_3", diamonds: 200000, price: 100000, label: "Gói Tiết Kiệm", desc: "100,000 VNĐ = 200,000 <a:diamondgem:1418649012289933434>" },
-    { id: "pack_4", diamonds: 500000, price: 250000, label: "Gói Đại Gia", desc: "250,000 VNĐ = 500,000 <a:diamondgem:1418649012289933434>" },
-    { id: "pack_5", diamonds: 1000000, price: 500000, label: "Gói Siêu VIP", desc: "500,000 VNĐ = 1,000,000 <a:diamondgem:1418649012289933434>" },
+    { id: "pack_1", diamonds: 20000, price: 10000, label: "Gói Khởi Đầu", desc: "10,000 VNĐ = 20,000 💎" },
+    { id: "pack_2", diamonds: 100000, price: 50000, label: "Gói Phổ Biến", desc: "50,000 VNĐ = 100,000 💎" },
+    { id: "pack_3", diamonds: 200000, price: 100000, label: "Gói Tiết Kiệm", desc: "100,000 VNĐ = 200,000 💎" },
+    { id: "pack_4", diamonds: 500000, price: 250000, label: "Gói Đại Gia", desc: "250,000 VNĐ = 500,000 💎" },
+    { id: "pack_5", diamonds: 1000000, price: 500000, label: "Gói Siêu VIP", desc: "500,000 VNĐ = 1,000,000 💎" },
 ];
 
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('nap')
-        .setDescription('Mở cửa hàng nạp kim cương qua chuyển khoản ngân hàng tự động'),
+        .setDescription('Mở cửa hàng nạp 💎 qua chuyển khoản ngân hàng tự động'),
 
     async execute(interaction) {
         await interaction.deferReply({ ephemeral: true });
@@ -32,7 +32,7 @@ module.exports = {
             return new EmbedBuilder()
                 .setColor('#5865F2')
                 .setTitle('<a:VerifiedTwitter:1418649004912148511> MUA <a:diamondgem:1418649012289933434> TỰ ĐỘNG')
-                .setDescription('Chào mừng bạn đến với hệ thống nạp thẻ chính thức!\n\nHãy chọn một gói nạp bên dưới để khởi tạo hóa đơn thanh toán quét mã QR tự động hoàn toàn an toàn và nhanh chóng.')
+                .setDescription('Chào mừng bạn đến với hệ thống mua 💎 chính thức!\n\nHãy chọn một gói nạp bên dưới để khởi tạo hóa đơn thanh toán quét mã QR tự động hoàn toàn an toàn và nhanh chóng.')
                 .addFields(
                     { 
                         name: '✨ Hướng dẫn giao dịch', 
@@ -53,7 +53,7 @@ module.exports = {
 
             const selectMenu = new StringSelectMenuBuilder()
                 .setCustomId(`nap-select-${interaction.user.id}`)
-                .setPlaceholder("✨ Bấm vào đây để chọn gói <a:diamondgem:1418649012289933434>...")
+                .setPlaceholder("✨ Bấm vào đây để chọn gói 💎")
                 .addOptions(options);
 
             return new ActionRowBuilder().addComponents(selectMenu);
@@ -62,7 +62,7 @@ module.exports = {
         const getBackRow = () => {
             const backBtn = new ButtonBuilder()
                 .setCustomId(`nap-back-main`)
-                .setLabel("🔙 Quay lại danh sách gói nạp")
+                .setLabel("Quay lại")
                 .setStyle(ButtonStyle.Secondary);
             return new ActionRowBuilder().addComponents(backBtn);
         };
