@@ -86,7 +86,7 @@ module.exports = {
         activeGames.set(channelId, gameState);
 
         const embed = new EmbedBuilder()
-            .setTitle(`🔤 ĐẤU TRƯỜNG ĐẢO CHỮ - VÒNG ${gameState.round}`)
+            .setTitle(`ĐẤU TRƯỜNG ĐẢO CHỮ - VÒNG ${gameState.round}`)
             .setDescription(
                 `Chủ phòng: <@${starterId}>\n\n` +
                 `Các chữ cái đã bị xáo trộn:\n` +
