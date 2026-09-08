@@ -39,11 +39,11 @@ module.exports = {
         const lastSyllable = syllables[1];
         
         const embed = new EmbedBuilder()
-            .setTitle('ĐẤU TRƯỜNG NỐI TỪ TIẾNG VIỆT')
-            .setDescription(`Chủ phòng: <@${starterId}>\n\nTừ khởi đầu: 🟢 **${startWord.toUpperCase()}**\n\nNgười tiếp theo nối một từ 2 âm tiết bắt đầu bằng chữ:\n# 🎯 ${lastSyllable.toUpperCase()}\n\n*⚠️ Luật: Có nghĩa, không lặp lại, không tự nối của mình.*\n*💰 Thưởng: +100 tiền/từ đúng | 💎 Top 1 nhận 100,000 kim cương!*`)
+            .setTitle('<a:VerifiedTwitter:1418649004912148511> ĐẤU TRƯỜNG NỐI TỪ TIẾNG VIỆT')
+            .setDescription(`Chủ phòng: <@${starterId}>\n\nTừ khởi đầu: 🟢 **${startWord.toUpperCase()}**\n\nNgười tiếp theo nối một từ 2 âm tiết bắt đầu bằng chữ:\n# 🎯 ${lastSyllable.toUpperCase()}\n\n*⚠️ Luật: Có nghĩa, không lặp lại, không tự nối của mình.*\n*💰 Thưởng: +100 <a:diamondgem:1418649012289933434>/từ đúng | 💎 Top 1 nhận 100,000 kim cương!*`)
             .setColor('#2ecc71')
             .setThumbnail('https://image-5.uhdpaper.com/wallpaper/hatsune-miku-error-anime-girl-hd-wallpaper-uhdpaper.com-227@5@o.jpg')
-            .setFooter({ text: `Từ điển: ${validWords.size > 0 ? '✅' : '❌ Tắt'} | Hết hạn sau 60s` });
+            .setFooter({ text: `Từ điển: ${validWords.size > 0 ? '✅' : '❌'} | Hết hạn sau 60s` });
             
         const row = new ActionRowBuilder().addComponents(
             new ButtonBuilder()
@@ -102,11 +102,11 @@ module.exports = {
             const currentScore = gameState.playerScores.get(m.author.id) || 0;
             gameState.playerScores.set(m.author.id, currentScore + 1);
             
-            // 💰 Cộng 100 tiền cho mỗi từ đúng bằng hàm addBalance chuẩn hệ thống
+            // 💰 Cộng 100 <a:diamondgem:1418649012289933434> cho mỗi từ đúng bằng hàm addBalance chuẩn hệ thống
             try {
                 await addBalance(m.author.id, 100);
             } catch (err) {
-                console.error("Lỗi cộng tiền nối từ VN:", err);
+                console.error("Lỗi cộng <a:diamondgem:1418649012289933434> nối từ VN:", err);
             }
             
             await m.react('✅').catch(() => {});
@@ -124,10 +124,10 @@ module.exports = {
             if (gameState.playerScores.size > 0) {
                 const sortedScores = [...gameState.playerScores.entries()].sort((a, b) => b[1] - a[1]);
                 
-                // 💎 Cộng 100,000 kim cương cho Top 1 (tùy chỉnh hàm addBalance nếu hệ thống của bạn có hỗ trợ thêm tham số loại tiền tệ, hoặc gọi trực tiếp nếu addBalance quản lý chung)
+                // 💎 Cộng 100,000 kim cương cho Top 1 (tùy chỉnh hàm addBalance nếu hệ thống của bạn có hỗ trợ thêm tham số loại <a:diamondgem:1418649012289933434> tệ, hoặc gọi trực tiếp nếu addBalance quản lý chung)
                 const top1Id = sortedScores[0][0];
                 try {
-                    // Nếu addBalance nhận đối số thứ 3 là loại tiền/diamond, hoặc dùng model riêng tùy theo cơ chế của addBalance trong ../db
+                    // Nếu addBalance nhận đối số thứ 3 là loại <a:diamondgem:1418649012289933434>/diamond, hoặc dùng model riêng tùy theo cơ chế của addBalance trong ../db
                     // Ở đây gọi addBalance với 100,000 (nếu dùng chung số dư). Nếu bảng Diamond tách riêng, bạn có thể thay bằng hàm tương ứng trong ../db của bạn.
                     await addBalance(top1Id, 100000); 
                 } catch (err) {
@@ -143,16 +143,16 @@ module.exports = {
                 leaderboard = '*Chưa có cao thủ nào ghi điểm.*';
             }
 
-            let endTitle = '⏳ HẾT GIỜ!';
+            let endTitle = '<a:VerifiedTwitter:1418649004912148511>  HẾT GIỜ!';
             let endColor = '#e74c3c';
             if (reason === 'force_stop') {
-                endTitle = '🛑 TRÒ CHƠI ĐÃ KẾT THÚC';
+                endTitle = '<a:VerifiedTwitter:1418649004912148511>  TRÒ CHƠI ĐÃ KẾT THÚC';
                 endColor = '#95a5a6';
             }
 
             const endEmbed = new EmbedBuilder()
                 .setTitle(endTitle)
-                .setDescription(`Trò chơi kết thúc tại chữ **${gameState.lastSyllable.toUpperCase()}**.\n\n📊 **TỔNG KẾT VÁN ĐẤU:**\n- Tổng số từ nối được: **${gameState.usedWords.size}**\n*(Mỗi từ đúng đã nhận được tiền thưởng)*\n${rewardMsg}\n🏆 **BẢNG XẾP HẠNG TOP 5:**\n${leaderboard}`)
+                .setDescription(`Trò chơi kết thúc tại chữ **${gameState.lastSyllable.toUpperCase()}**.\n\n<a:VerifiedTwitter:1418649004912148511>  **TỔNG KẾT VÁN ĐẤU:**\n- Tổng số từ nối được: **${gameState.usedWords.size}**\n*(Mỗi từ đúng đã nhận được <a:diamondgem:1418649012289933434>)*\n${rewardMsg}\n🏆 **BẢNG XẾP HẠNG TOP 5:**\n${leaderboard}`)
                 .setColor(endColor);
                 
             reply.edit({ components: [] }).catch(() => {}); 
