@@ -33,7 +33,7 @@ module.exports = {
             return new EmbedBuilder()
                 .setColor('#5865F2')
                 .setTitle('<a:VerifiedTwitter:1418649004912148511> Mua Kim Cương Tự Động')
-                .setDescription('Chào mừng bạn đến với hệ thống mua <a:VerifiedTwitter:1418649004912148511> chính thức!\n\nHãy chọn một gói nạp bên dưới để khởi tạo hóa đơn thanh toán quét mã QR tự động hoàn toàn an toàn và nhanh chóng.')
+                .setDescription('Chào mừng bạn đến với hệ thống mua <a:diamondgem:1418649012289933434> chính thức!\n\nHãy chọn một gói nạp bên dưới để khởi tạo hóa đơn thanh toán quét mã QR tự động hoàn toàn an toàn và nhanh chóng.')
                 .addFields(
                     { 
                         name: '✨ Hướng dẫn giao dịch', 
