@@ -125,7 +125,7 @@ module.exports = {
                 // 💎 Cộng thưởng Top 1
                 const top1Id = sortedScores[0][0];
                 try {
-                    await addBalance(top1Id, 100000);
+                    await addBalance(top1Id, 10000);
                 } catch (err) {
                     console.error("Lỗi cộng thưởng Top 1 Wordchain:", err);
                 }
