@@ -13,11 +13,11 @@ const BANNER_URL = "https://i.ibb.co/60Qm7L95/camellya-wuthering-waves-game-hd-w
 
 // --- CÁC GÓI MUA KIM CƯƠNG ---
 const PACKAGES = [
-    { id: "pack_1", diamonds: 20000, price: 10000, label: "Gói Khởi Đầu", desc: "10,000 VNĐ = 20,000 💎" },
-    { id: "pack_2", diamonds: 100000, price: 50000, label: "Gói Phổ Biến", desc: "50,000 VNĐ = 100,000 💎" },
-    { id: "pack_3", diamonds: 200000, price: 100000, label: "Gói Tiết Kiệm", desc: "100,000 VNĐ = 200,000 💎" },
-    { id: "pack_4", diamonds: 500000, price: 250000, label: "Gói Đại Gia", desc: "250,000 VNĐ = 500,000 💎" },
-    { id: "pack_5", diamonds: 1000000, price: 500000, label: "Gói Siêu VIP", desc: "500,000 VNĐ = 1,000,000 💎" },
+    { id: "pack_1", diamonds: 20000, price: 10000, label: "Gói Khởi Đầu", desc: "10,000 VNĐ = 20,000💎" },
+    { id: "pack_2", diamonds: 100000, price: 50000, label: "Gói Phổ Biến", desc: "50,000 VNĐ = 100,000💎" },
+    { id: "pack_3", diamonds: 300000, price: 100000, label: "Gói Tiết Kiệm", desc: "100,000 VNĐ = 300,000💎" },
+    { id: "pack_4", diamonds: 600000, price: 250000, label: "Gói Đại Gia", desc: "250,000 VNĐ = 600,000💎" },
+    { id: "pack_5", diamonds: 1500000, price: 500000, label: "Gói VIP", desc: "500,000 VNĐ = 1,500,000💎" },
 ];
 
 module.exports = {
@@ -33,7 +33,7 @@ module.exports = {
             return new EmbedBuilder()
                 .setColor('#5865F2')
                 .setTitle('<a:VerifiedTwitter:1418649004912148511> MUA 💎 TỰ ĐỘNG')
-                .setDescription('Chào mừng bạn đến với hệ thống mua 💎 chính thức!\n\nHãy chọn một gói nạp bên dưới để khởi tạo hóa đơn thanh toán quét mã QR tự động hoàn toàn an toàn và nhanh chóng.')
+                .setDescription('Chào mừng bạn đến với hệ thống mua <a:diamondgem:1418649012289933434> chính thức!\n\nHãy chọn một gói nạp bên dưới để khởi tạo hóa đơn thanh toán quét mã QR tự động hoàn toàn an toàn và nhanh chóng.')
                 .addFields(
                     { 
                         name: '✨ Hướng dẫn giao dịch', 
@@ -47,7 +47,7 @@ module.exports = {
 
         const getMainMenuComponent = () => {
             const options = PACKAGES.map(pkg => ({
-                label: `${pkg.label} (${pkg.diamonds.toLocaleString()} 💎)`,
+                label: `${pkg.label} (${pkg.diamonds.toLocaleString()}💎)`,
                 description: pkg.desc,
                 value: pkg.id
             }));
@@ -117,8 +117,8 @@ module.exports = {
                             embeds: [
                                 new EmbedBuilder()
                                     .setColor('#5865F2')
-                                    .setTitle('💎 HƯỚNG DẪN CHỌN GÓI')
-                                    .setDescription('Vui lòng quay lại tin nhắn chính ở kênh chat để chọn lại gói nạp kim cương.')
+                                    .setTitle('<a:VerifiedTwitter:1418649004912148511> HƯỚNG DẪN CHỌN GÓI')
+                                    .setDescription('Vui lòng quay lại tin nhắn chính ở kênh chat để chọn lại gói <a:diamondgem:1418649012289933434>.')
                             ],
                             components: []
                         });
