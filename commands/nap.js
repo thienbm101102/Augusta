@@ -94,7 +94,7 @@ module.exports = {
 
                         const embed = new EmbedBuilder()
                             .setColor('#FEE75C')
-                            .setTitle('<a:VerifiedTwitter:1418649004912148511> HÓA ĐƠN THANH TOÁN CHUYỂN KHOẢN')
+                            .setTitle('<a:VerifiedTwitter:1418649004912148511> Hóa Đơn Thanh Toán')
                             .setDescription(`Hóa đơn riêng của <@${userId}>. Vui lòng sử dụng ứng dụng ngân hàng quét mã QR bên dưới.`)
                             .addFields(
                                 { name: '📦 Gói dịch vụ', value: `**${selectedPackage.label}**`, inline: true },
