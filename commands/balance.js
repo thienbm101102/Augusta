@@ -5,7 +5,8 @@ const fs = require("fs");
 const db = require("../db"); // MongoDB helper
 
 const GIFEncoder = require('gifencoder');
-const gifFrames = require('gif-frames');
+// Sử dụng omggif để giải mã GIF an toàn 100% trên Node.js (không dính lỗi document)
+const { GifReader } = require('omggif');
 
 // --- cấu hình đường dẫn tài nguyên ---
 const FONT_FILE = "Roboto-Bold.ttf";
@@ -168,32 +169,34 @@ module.exports = {
       let attachment;
 
       if (isGif && fs.existsSync(bannerPath)) {
-        // Ép gif-frames chạy type 'canvas' tương thích với NodeJS backend
-        const frames = await gifFrames({ 
-          url: bannerPath, 
-          frames: 'all', 
-          outputType: 'canvas',
-          cumulative: true 
-        });
+        // Đọc file GIF bằng omggif để giải mã từng frame thuần túy NodeJS
+        const gifBuffer = fs.readFileSync(bannerPath);
+        const reader = new GifReader(gifBuffer);
 
         const encoder = new GIFEncoder(canvas.width, canvas.height);
         encoder.start();
         encoder.setRepeat(0);
         encoder.setQuality(15);
 
-        for (const frame of frames) {
-          const delay = frame.frameInfo.delay * 10 || 100;
+        // Tạo một canvas tạm để vẽ các frame GIF gốc
+        const tempCanvas = Canvas.createCanvas(reader.width, reader.height);
+        const tempCtx = tempCanvas.getContext('2d');
+        const frameData = tempCtx.createImageData(reader.width, reader.height);
+
+        for (let i = 0; i < reader.numFrames(); i++) {
+          const info = reader.frameInfo(i);
+          const delay = info.delay * 10 || 100;
           encoder.setDelay(delay);
 
+          // Giải mã pixel của frame GIF vào mảng
+          reader.decodeAndBlitFrameRGBA(i, frameData.data);
+          tempCtx.putImageData(frameData, 0, 0);
+
+          // Xóa canvas chính và vẽ nền GIF lên, sau đó đè thông tin lên trên
           ctx.clearRect(0, 0, canvas.width, canvas.height);
-          
-          // Vẽ frame GIF nền
-          const frameImage = frame.getImage();
-          ctx.drawImage(frameImage, 0, 0, canvas.width, canvas.height);
+          ctx.drawImage(tempCanvas, 0, 0, canvas.width, canvas.height);
 
-          // Vẽ thông tin đè lên
           drawOverlay(ctx);
-
           encoder.addFrame(ctx);
         }
 
