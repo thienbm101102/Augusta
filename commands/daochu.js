@@ -46,7 +46,6 @@ function getRandomWord() {
             const data = fs.readFileSync(dictPath, 'utf8');
             const lines = data.split('\n')
                 .map(l => l.trim().toLowerCase())
-                // Lọc cực gắt: Chỉ lấy những dòng cắt ra đúng 2 chữ
                 .filter(l => l.split(/\s+/).length === 2); 
                 
             if (lines.length > 0) {
@@ -81,7 +80,8 @@ module.exports = {
         let gameState = {
             originalWord: currentObj.word.toLowerCase(),
             scrambled: scrambleText(currentObj.word),
-            round: 1
+            round: 1,
+            isTransitioning: false // KHÓA ĐỒNG BỘ: Ngăn lỗi người thứ 2 ăn hôi
         };
         activeGames.set(channelId, gameState);
 
@@ -92,7 +92,7 @@ module.exports = {
                 `Các chữ cái đã bị xáo trộn:\n` +
                 `# 🧩 \`${gameState.scrambled}\`\n\n` +
                 `*💡 Gợi ý: ${currentObj.hint}*\n` +
-                `*💰 Thưởng: **+${REWARD_MONEY.toLocaleString()}** tiền cho người đoán nhanh nhất!*`
+                `*💰 Thưởng: **+${REWARD_MONEY.toLocaleString()}** <a:diamondgem:1418649012289933434> cho người đoán nhanh nhất!*`
             )
             .setColor('#f39c12')
             .setFooter({ text: 'Gõ đáp án vào kênh để trả lời | Trò chơi sẽ dừng nếu sau 60s không ai đoán được' });
@@ -123,20 +123,26 @@ module.exports = {
 
         // Lắng nghe câu trả lời
         collector.on('collect', async m => {
+            // Nếu bot đang trong quá trình chuyển vòng, bỏ qua mọi tin nhắn gửi lên
+            if (gameState.isTransitioning) return;
+
             const answer = m.content.trim().toLowerCase();
 
             if (answer === gameState.originalWord) {
-                // 1. Cộng tiền
+                // Bật khóa lên ngay lập tức để chặn người thứ 2
+                gameState.isTransitioning = true;
+
+                // 1. Cộng <a:diamondgem:1418649012289933434>
                 try {
                     await addBalance(m.author.id, REWARD_MONEY);
                 } catch (err) {
-                    console.error("Lỗi cộng tiền đảo chữ:", err);
+                    console.error("Lỗi cộng <a:diamondgem:1418649012289933434> đảo chữ:", err);
                 }
                 await m.react('🎉').catch(() => {});
 
                 // 2. Thông báo người chiến thắng
                 const winEmbed = new EmbedBuilder()
-                    .setDescription(`🎉 Chúc mừng <@${m.author.id}> đã đoán đúng từ **${gameState.originalWord.toUpperCase()}** và nhận **+${REWARD_MONEY.toLocaleString()}** tiền!`)
+                    .setDescription(`🎉 Chúc mừng <@${m.author.id}> đã đoán đúng từ **${gameState.originalWord.toUpperCase()}** và nhận **+${REWARD_MONEY.toLocaleString()}** <a:diamondgem:1418649012289933434>!`)
                     .setColor('#2ecc71');
                 await interaction.channel.send({ embeds: [winEmbed] }).catch(() => {});
 
@@ -148,12 +154,12 @@ module.exports = {
 
                 // 4. Gửi từ mới
                 const nextEmbed = new EmbedBuilder()
-                    .setTitle(`ĐẢO CHỮ - VÒNG ${gameState.round}`)
+                    .setTitle(`<a:VerifiedTwitter:1418649004912148511> ĐẢO CHỮ - VÒNG ${gameState.round}`)
                     .setDescription(
                         `Các chữ cái đã bị xáo trộn:\n` +
                         `# 🧩 \`${gameState.scrambled}\`\n\n` +
                         `*💡 Gợi ý: ${currentObj.hint}*\n` +
-                        `*💰 Thưởng: **+${REWARD_MONEY.toLocaleString()}** tiền!*`
+                        `*💰 Thưởng: **+${REWARD_MONEY.toLocaleString()}** <a:diamondgem:1418649012289933434>!*`
                     )
                     .setColor('#3498db')
                     .setFooter({ text: 'Thời gian đã được làm mới lại 60 giây!' });
@@ -163,6 +169,9 @@ module.exports = {
                 // 5. Làm mới lại bộ đếm thời gian
                 collector.resetTimer();
                 btnCollector.resetTimer();
+
+                // Quá trình chuẩn bị xong, mở khóa để nhận đáp án cho vòng mới
+                gameState.isTransitioning = false;
             }
         });
 
