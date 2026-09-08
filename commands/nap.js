@@ -15,9 +15,9 @@ const BANNER_URL = "https://i.ibb.co/60Qm7L95/camellya-wuthering-waves-game-hd-w
 const PACKAGES = [
     { id: "pack_1", diamonds: 20000, price: 10000, label: "Gói Khởi Đầu", desc: "10,000 VNĐ = 20,000💎" },
     { id: "pack_2", diamonds: 100000, price: 50000, label: "Gói Phổ Biến", desc: "50,000 VNĐ = 100,000💎" },
-    { id: "pack_3", diamonds: 300000, price: 100000, label: "Gói Tiết Kiệm", desc: "100,000 VNĐ = 300,000💎" },
-    { id: "pack_4", diamonds: 600000, price: 250000, label: "Gói Đại Gia", desc: "250,000 VNĐ = 600,000💎" },
-    { id: "pack_5", diamonds: 1500000, price: 500000, label: "Gói VIP", desc: "500,000 VNĐ = 1,500,000💎" },
+    { id: "pack_3", diamonds: 200000, price: 100000, label: "Gói Tiết Kiệm", desc: "100,000 VNĐ = 200,000💎" },
+    { id: "pack_4", diamonds: 500000, price: 250000, label: "Gói Đại Gia", desc: "250,000 VNĐ = 500,000💎" },
+    { id: "pack_5", diamonds: 1000000, price: 500000, label: "Gói Siêu VIP", desc: "500,000 VNĐ = 1,000,000💎" },
 ];
 
 module.exports = {
@@ -32,8 +32,8 @@ module.exports = {
         const getMainMenuEmbed = () => {
             return new EmbedBuilder()
                 .setColor('#5865F2')
-                .setTitle('**<a:VerifiedTwitter:1418649004912148511> Mua Kim Cương Tự Động**')
-                .setDescription('Chào mừng bạn đến với hệ thống mua <a:diamondgem:1418649012289933434> chính thức!\n\nHãy chọn một gói nạp bên dưới để khởi tạo hóa đơn thanh toán quét mã QR tự động hoàn toàn an toàn và nhanh chóng.')
+                .setTitle('<a:VerifiedTwitter:1418649004912148511> Mua Kim Cương Tự Động')
+                .setDescription('Chào mừng bạn đến với hệ thống mua <a:VerifiedTwitter:1418649004912148511> chính thức!\n\nHãy chọn một gói nạp bên dưới để khởi tạo hóa đơn thanh toán quét mã QR tự động hoàn toàn an toàn và nhanh chóng.')
                 .addFields(
                     { 
                         name: '✨ Hướng dẫn giao dịch', 
@@ -47,7 +47,7 @@ module.exports = {
 
         const getMainMenuComponent = () => {
             const options = PACKAGES.map(pkg => ({
-                label: `${pkg.label} (${pkg.diamonds.toLocaleString()}💎)`,
+                label: `${pkg.label} (${pkg.diamonds.toLocaleString()} 💎)`,
                 description: pkg.desc,
                 value: pkg.id
             }));
@@ -66,7 +66,7 @@ module.exports = {
             components: [getMainMenuComponent()]
         });
 
-        // Đăng ký bộ lắng nghe sự kiện toàn cục cho client để không bao giờ bị hết hạn token chết
+        // Đăng ký bộ lắng nghe sự kiện toàn cục chống chết token
         if (!interaction.client.isNapListenerLoaded) {
             interaction.client.isNapListenerLoaded = true;
 
@@ -74,7 +74,8 @@ module.exports = {
                 try {
                     // Xử lý menu chọn gói nạp
                     if (i.isStringSelectMenu() && i.customId === 'nap_select_menu') {
-                        await i.deferReply({ ephemeral: true }); // Tạo phản hồi riêng tư cho người bấm
+                        // KHÓA GỐC 3 GIÂY: Phản hồi ngay lập tức để Discord không bao giờ báo lỗi timeout
+                        await i.deferReply({ ephemeral: true });
 
                         const userId = i.user.id;
                         const choice = i.values[0];
@@ -93,7 +94,7 @@ module.exports = {
 
                         const embed = new EmbedBuilder()
                             .setColor('#FEE75C')
-                            .setTitle('**<a:VerifiedTwitter:1418649004912148511> Hóa Đơn Thanh Toán**')
+                            .setTitle('<a:VerifiedTwitter:1418649004912148511> HÓA ĐƠN THANH TOÁN CHUYỂN KHOẢN')
                             .setDescription(`Hóa đơn riêng của <@${userId}>. Vui lòng sử dụng ứng dụng ngân hàng quét mã QR bên dưới.`)
                             .addFields(
                                 { name: '📦 Gói dịch vụ', value: `**${selectedPackage.label}**`, inline: true },
@@ -108,23 +109,23 @@ module.exports = {
                             .setImage(qrUrl)
                             .setFooter({ text: '⚠️ Lưu ý tuyệt đối không sửa đổi nội dung chuyển khoản để tránh thất lạc giao dịch!' });
 
-                        return i.editReply({ embeds: [embed], components: [row] });
+                        return await i.editReply({ embeds: [embed], components: [row] });
                     }
 
-                    // Xử lý nút quay lại trong khung riêng tư của user
+                    // Xử lý nút quay lại
                     if (i.isButton() && i.customId === 'nap_back_btn') {
                         await i.update({
                             embeds: [
                                 new EmbedBuilder()
                                     .setColor('#5865F2')
-                                    .setTitle('<a:VerifiedTwitter:1418649004912148511> HƯỚNG DẪN CHỌN GÓI')
-                                    .setDescription('Vui lòng quay lại tin nhắn chính ở kênh chat để chọn lại gói <a:diamondgem:1418649012289933434>.')
+                                    .setTitle('<a:VerifiedTwitter:1418649004912148511> Hướng Dẫn Chọn Gói')
+                                    .setDescription('Vui lòng quay lại khung tin nhắn chính ở kênh chat để chọn lại gói <a:diamondgem:1418649012289933434>.')
                             ],
                             components: []
                         });
                     }
                 } catch (err) {
-                    // Bỏ qua lỗi nhỏ nếu tương tác quá hạn cũ
+                    // Bỏ qua các ngoại lệ nhỏ từ token cũ để tránh crash bot
                 }
             });
         }
