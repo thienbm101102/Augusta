@@ -14,7 +14,7 @@ module.exports = {
     const senderBalance = await getBalance(interaction.user.id);
 
     if (amount <= 0 || senderBalance < amount) {
-      return interaction.reply({ content: '<a:AbbyShocked:1393909368138895411> Số <a:diamondgem:1418649012289933434> không hợp lệ!', ephemeral: true });
+      return interaction.reply({ content: 'Số <a:diamondgem:1418649012289933434> không hợp lệ!', ephemeral: true });
     }
 
     await addBalance(interaction.user.id, -amount);
@@ -28,7 +28,7 @@ module.exports = {
     const embed = new EmbedBuilder()
       .setColor('Blue')
       .setTitle('**<a:VerifiedTwitter:1418649004912148511> Giao Dịch Thành Công**')
-      .setDescription(`<a:PenguRich:1407778801936765050> **|** **${senderMember.displayName}** đã tặng **${amount.toLocaleString()}**<a:diamondgem:1418649012289933434> cho **${receiverMember.displayName}**!`)
+      .setDescription(`**${senderMember.displayName}** đã tặng **${amount.toLocaleString()}**<a:diamondgem:1418649012289933434> cho **${receiverMember.displayName}**!`)
       .setTimestamp();
     return interaction.reply({ embeds: [embed] });
   }
