@@ -81,7 +81,7 @@ module.exports = {
             const row = new ActionRowBuilder().addComponents(selectMenu);
 
             await interaction.editReply({
-                content: "<a:AbbyCheers:1393909248076943380> Chọn background bạn muốn sử dụng:",
+                content: "<a:AbbyOK:1342386280809627698> Chọn background bạn muốn sử dụng:",
                 components: [row]
             });
 
@@ -96,7 +96,7 @@ module.exports = {
                 userDoc.banner = bannerName;
                 await userDoc.save();
                 await i.editReply({
-                    content: `<a:AbbyHappy:1393909327848538122> Hồ sơ của bạn đã được đổi thành **${getItemName(bannerName)}**`,
+                    content: `<a:AbbyOK:1342386280809627698> Hồ sơ của bạn đã được đổi thành **${getItemName(bannerName)}**`,
                     components: []
                 });
                 collector.stop();
@@ -133,7 +133,7 @@ module.exports = {
             const row = new ActionRowBuilder().addComponents(selectMenu);
 
             await interaction.editReply({
-                content: "<a:AbbyCheers:1393909248076943380> Chọn danh hiệu bạn muốn sử dụng:",
+                content: "<a:AbbyOK:1342386280809627698> Chọn danh hiệu bạn muốn sử dụng:",
                 components: [row]
             });
 
@@ -148,7 +148,7 @@ module.exports = {
                 userDoc.badge = badgeName;
                 await userDoc.save();
                 await i.editReply({
-                    content: `<a:AbbyHappy:1393909327848538122> Hồ sơ của bạn đã được đổi thành **${getItemName(badgeName)}**`,
+                    content: `<a:AbbyOK:1342386280809627698> Hồ sơ của bạn đã được đổi thành **${getItemName(badgeName)}**`,
                     components: []
                 });
                 collector.stop();
@@ -194,7 +194,7 @@ module.exports = {
         const row = new ActionRowBuilder().addComponents(selectMenu);
 
         await interaction.editReply({
-            content: `<a:AbbyCheers:1393909248076943380> Chọn vật phẩm bạn muốn xem hoặc mua:`,
+            content: `<a:AbbyOK:1342386280809627698> Chọn vật phẩm bạn muốn xem hoặc mua:`,
             components: [row]
         });
 
@@ -272,7 +272,7 @@ module.exports = {
                 await currentUserDoc.save();
 
                 await i.editReply({
-                    content: `<a:AbbyHappy:1393909327848538122> Bạn đã mua thành công **${getItemName(selectedItem)}** với giá ${itemPrice.toLocaleString()} xu!`,
+                    content: `<a:AbbyOK:1342386280809627698> Bạn đã mua thành công **${getItemName(selectedItem)}** với giá ${itemPrice.toLocaleString()} xu!`,
                     components: [],
                     files: []
                 });
