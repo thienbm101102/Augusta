@@ -63,7 +63,7 @@ const REWARD_MONEY = 500;
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('daochu')
-        .setDescription('Chơi Đảo Chữ liên hoàn (Chế độ 2 từ), game chỉ dừng khi không ai đoán được!'),
+        .setDescription('Chơi Vua Tiếng Việt chỉ dừng khi không ai đoán được!'),
 
     async execute(interaction) {
         const channelId = interaction.channelId;
@@ -86,7 +86,7 @@ module.exports = {
         activeGames.set(channelId, gameState);
 
         const embed = new EmbedBuilder()
-            .setTitle(`<a:VerifiedTwitter:1418649004912148511> ĐẤU TRƯỜNG ĐẢO CHỮ - VÒNG ${gameState.round}`)
+            .setTitle(`**<a:VerifiedTwitter:1418649004912148511> Vua Tiếng Việt - Vòng ${gameState.round}**`)
             .setDescription(
                 `Chủ phòng: <@${starterId}>\n\n` +
                 `Các chữ cái đã bị xáo trộn:\n` +
@@ -154,7 +154,7 @@ module.exports = {
 
                 // 4. Gửi từ mới
                 const nextEmbed = new EmbedBuilder()
-                    .setTitle(`<a:VerifiedTwitter:1418649004912148511> ĐẢO CHỮ - VÒNG ${gameState.round}`)
+                    .setTitle(`**<a:VerifiedTwitter:1418649004912148511> Vua Tiếng Việt - Vòng ${gameState.round}**`)
                     .setDescription(
                         `Các chữ cái đã bị xáo trộn:\n` +
                         `# 🧩 \`${gameState.scrambled}\`\n\n` +
@@ -179,12 +179,12 @@ module.exports = {
         collector.on('end', async (collected, reason) => {
             activeGames.delete(channelId);
 
-            let endTitle = '<a:VerifiedTwitter:1418649004912148511> HẾT GIỜ! TRÒ CHƠI KẾT THÚC';
+            let endTitle = '**<a:VerifiedTwitter:1418649004912148511> Hết Giờ! Trò Chơi Kết Thúc**';
             let endDescription = `Thời gian đã trôi qua mà không ai đoán được từ này.\n\n🔑 Đáp án chính xác là: **${gameState.originalWord.toUpperCase()}**\n\n<a:VerifiedTwitter:1418649004912148511>  Kỷ lục ván này: Chơi đến **Vòng ${gameState.round}**`;
             let endColor = '#e74c3c';
 
             if (reason === 'force_stop') {
-                endTitle = '<a:VerifiedTwitter:1418649004912148511> TRÒ CHƠI ĐÃ BỊ HỦY';
+                endTitle = '**<a:VerifiedTwitter:1418649004912148511> Trò Chơi Đã Bị Hủy**';
                 endDescription = `Chủ phòng đã dừng trò chơi.\n🔑 Đáp án đúng của vòng ${gameState.round} là: **${gameState.originalWord.toUpperCase()}**`;
                 endColor = '#95a5a6';
             }
