@@ -64,7 +64,7 @@ function updateEmbed(game) {
         return game.guessedLetters.includes(charNoDiacritics) ? char : '`_`';
     }).join(' ');
 
-    const wrongGuessesDisplay = '<a:AbbyCry:1393909295665643540> '.repeat(game.incorrectGuesses) + '<a:AbbyCheer:1393909243840827432> '.repeat(MAX_INCORRECT_GUESSES - game.incorrectGuesses);
+    const wrongGuessesDisplay = '<a:AbbyCry:1313064369004740608> '.repeat(game.incorrectGuesses) + '<a:AbbyWOW:1313064781036523591> '.repeat(MAX_INCORRECT_GUESSES - game.incorrectGuesses);
     const embed = new EmbedBuilder()
         .setColor('#e74c3c')
         .setTitle('<a:VerifiedTwitter:1418649004912148511> **Đoán Từ**')
