@@ -47,17 +47,17 @@ module.exports = {
                 const debt = await getDebt(userId);
 
                 if (debt > 0) {
-                    return interaction.reply({ content: `<a:AbbyAnnoyed:1393909340914845706> Bạn đang có nợ là **${debt.toLocaleString()}**<a:diamondgem:1418649012289933434>. Vui lòng trả hết nợ để vay tiếp!`, ephemeral: true });
+                    return interaction.reply({ content: `Bạn đang có nợ là **${debt.toLocaleString()}**<a:diamondgem:1418649012289933434>. Vui lòng trả hết nợ để vay tiếp!`, ephemeral: true });
                 }
 
                 if (lastLoanDate && now - lastLoanDate < LOAN_COOLDOWN) {
                     const remainingTime = LOAN_COOLDOWN - (now - lastLoanDate);
                     const remainingHours = Math.ceil(remainingTime / (1000 * 60 * 60));
-                    return interaction.reply({ content: `<a:AbbyAnnoyed:1393909340914845706> Bạn chỉ có thể vay tiền mỗi **24 giờ**. Vui lòng chờ **${remainingHours} giờ** nữa!`, ephemeral: true });
+                    return interaction.reply({ content: `Bạn chỉ có thể vay tiền mỗi **24 giờ**. Vui lòng chờ **${remainingHours} giờ** nữa!`, ephemeral: true });
                 }
 
                 if (amount <= 0 || amount > MAX_LOAN_AMOUNT) {
-                    return interaction.reply({ content: `<a:AbbyAnnoyed:1393909340914845706> Số tiền vay phải lớn hơn 0 và không quá **${MAX_LOAN_AMOUNT.toLocaleString()}**<a:diamondgem:1418649012289933434>.`, ephemeral: true });
+                    return interaction.reply({ content: `Số tiền vay phải lớn hơn 0 và không quá **${MAX_LOAN_AMOUNT.toLocaleString()}**<a:diamondgem:1418649012289933434>.`, ephemeral: true });
                 }
 
                 const debtWithInterest = Math.floor(amount + amount * INTEREST_RATE);
