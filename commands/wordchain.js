@@ -20,14 +20,14 @@ const activeGames = new Map();
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('wordchain')
-        .setDescription('Chơi Word Chain tiếng Anh'),
+        .setDescription('Chơi nối từ tiếng Anh'),
         
     async execute(interaction) {
         const channelId = interaction.channelId;
         const starterId = interaction.user.id;
         
         if (activeGames.has(channelId)) {
-            return interaction.reply({ content: '❌ Kênh này đang có một ván Word Chain diễn ra rồi!', ephemeral: true });
+            return interaction.reply({ content: '❌ Kênh này đang có một ván diễn ra rồi!', ephemeral: true });
         }
         
         let startWord = 'discord';
