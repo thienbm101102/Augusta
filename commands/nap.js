@@ -13,11 +13,11 @@ const BANNER_URL = "https://i.ibb.co/60Qm7L95/camellya-wuthering-waves-game-hd-w
 
 // --- CÁC GÓI MUA KIM CƯƠNG ---
 const PACKAGES = [
-    { id: "pack_1", diamonds: 20000, price: 10000, label: "Gói Khởi Đầu", desc: "10,000 VNĐ = 20,000 💎" },
-    { id: "pack_2", diamonds: 100000, price: 50000, label: "Gói Phổ Biến", desc: "50,000 VNĐ = 100,000 💎" },
-    { id: "pack_3", diamonds: 200000, price: 100000, label: "Gói Tiết Kiệm", desc: "100,000 VNĐ = 200,000 💎" },
-    { id: "pack_4", diamonds: 500000, price: 250000, label: "Gói Đại Gia", desc: "250,000 VNĐ = 500,000 💎" },
-    { id: "pack_5", diamonds: 1000000, price: 500000, label: "Gói Siêu VIP", desc: "500,000 VNĐ = 1,000,000 💎" },
+    { id: "pack_1", diamonds: 20000, price: 10000, label: "Gói Khởi Đầu", desc: "10,000 VNĐ = 20,000💎" },
+    { id: "pack_2", diamonds: 100000, price: 50000, label: "Gói Phổ Biến", desc: "50,000 VNĐ = 100,000💎" },
+    { id: "pack_3", diamonds: 200000, price: 100000, label: "Gói Tiết Kiệm", desc: "100,000 VNĐ = 200,000💎" },
+    { id: "pack_4", diamonds: 500000, price: 250000, label: "Gói Đại Gia", desc: "250,000 VNĐ = 500,000💎" },
+    { id: "pack_5", diamonds: 1000000, price: 500000, label: "Gói Siêu VIP", desc: "500,000 VNĐ = 1,000,000💎" },
 ];
 
 module.exports = {
