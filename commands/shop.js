@@ -33,24 +33,32 @@ module.exports = {
     async execute(interaction) {
         await interaction.deferReply({ ephemeral: true });
 
-        const userDoc = await db.getUser(interaction.user.id);
+        // Hàm tạo menu chính
+        const getMainMenuComponent = () => {
+            const mainSelect = new StringSelectMenuBuilder()
+                .setCustomId(`shop-main-${interaction.user.id}`)
+                .setPlaceholder("📌 Chọn chức năng bạn muốn thực hiện")
+                .addOptions([
+                    { label: "🛒 Mua Banner", value: "buy_banners", description: "Xem và mua các banner trang trí hồ sơ" },
+                    { label: "🏷️ Mua Danh Hiệu", value: "buy_badges", description: "Xem và mua các danh hiệu độc đáo" },
+                    { label: "🖼️ Đổi Banner", value: "set_banner", description: "Chọn banner đã sở hữu để sử dụng" },
+                    { label: "✨ Đổi Danh Hiệu", value: "set_badge", description: "Chọn danh hiệu đã sở hữu để sử dụng" },
+                ]);
+            return new ActionRowBuilder().addComponents(mainSelect);
+        };
 
-        // Tạo menu chính để người dùng chọn danh mục
-        const mainSelect = new StringSelectMenuBuilder()
-            .setCustomId(`shop-main-${interaction.user.id}`)
-            .setPlaceholder("📌 Chọn chức năng bạn muốn thực hiện")
-            .addOptions([
-                { label: "🛒 Mua Banner", value: "buy_banners", description: "Xem và mua các banner trang trí hồ sơ" },
-                { label: "🏷️ Mua Danh Hiệu", value: "buy_badges", description: "Xem và mua các danh hiệu độc đáo" },
-                { label: "🖼️ Đổi Banner", value: "set_banner", description: "Chọn banner đã sở hữu để sử dụng" },
-                { label: "✨ Đổi Danh Hiệu", value: "set_badge", description: "Chọn danh hiệu đã sở hữu để sử dụng" },
-            ]);
-
-        const row = new ActionRowBuilder().addComponents(mainSelect);
+        // Nút quay lại menu chính
+        const getBackRow = () => {
+            const backBtn = new ButtonBuilder()
+                .setCustomId(`shop-back-main`)
+                .setLabel("🔙 Quay lại menu chính")
+                .setStyle(ButtonStyle.Secondary);
+            return new ActionRowBuilder().addComponents(backBtn);
+        };
 
         const responseMessage = await interaction.editReply({
             content: "👋 Chào mừng bạn đến với **Cửa Hàng & Tủ Đồ**. Vui lòng chọn danh mục bên dưới:",
-            components: [row]
+            components: [getMainMenuComponent()]
         });
 
         const collector = responseMessage.createMessageComponentCollector({
@@ -59,15 +67,26 @@ module.exports = {
         });
 
         collector.on("collect", async (i) => {
-            const choice = i.values ? i.values[0] : null;
             const userDocLatest = await db.getUser(interaction.user.id);
             const ownedBanners = userDocLatest.ownedBanners || [];
             const ownedBadges = userDocLatest.ownedBadges || [];
 
+            // Nút quay lại menu chính
+            if (i.customId === "shop-back-main" || (i.values && i.values[0] === "main_menu")) {
+                await i.update({
+                    content: "👋 Chào mừng bạn đến với **Cửa Hàng & Tủ Đồ**. Vui lòng chọn danh mục bên dưới:",
+                    components: [getMainMenuComponent()],
+                    files: []
+                });
+                return;
+            }
+
+            const choice = i.values ? i.values[0] : null;
+
             // 1. XỬ LÝ MUA BANNER HOẶC BADGE
             if (choice === "buy_banners" || choice === "buy_badges") {
                 if (!fs.existsSync(shopPath)) {
-                    return i.update({ content: "Cửa hàng đang đóng, không có vật phẩm nào để bán.", components: [] });
+                    return i.update({ content: "Cửa hàng đang đóng, không có vật phẩm nào để bán.", components: [getBackRow()] });
                 }
 
                 const shopItems = JSON.parse(fs.readFileSync(shopPath, "utf8"));
@@ -77,7 +96,10 @@ module.exports = {
                 const availableItems = Object.keys(items).filter(item => !ownedItems.includes(item));
 
                 if (availableItems.length === 0) {
-                    return i.update({ content: `Bạn đã mua hết các ${isBanner ? "banner" : "danh hiệu"} trong cửa hàng rồi! 🎉`, components: [] });
+                    return i.update({ 
+                        content: `Bạn đã mua hết các ${isBanner ? "banner" : "danh hiệu"} trong cửa hàng rồi! 🎉`, 
+                        components: [getBackRow()] 
+                    });
                 }
 
                 const options = availableItems.map(item => ({
@@ -92,11 +114,12 @@ module.exports = {
 
                 return i.update({
                     content: `🛒 **Danh sách ${isBanner ? "Banner" : "Danh Hiệu"} có thể mua:**`,
-                    components: [new ActionRowBuilder().addComponents(itemSelect)]
+                    components: [new ActionRowBuilder().addComponents(itemSelect), getBackRow()],
+                    files: []
                 });
             }
 
-            // 2. XỬ LÝ ĐỔI BANNER ĐANG DÙNG
+            // 2. XỬ LÝ ĐỔI BANNER
             if (choice === "set_banner") {
                 const availableBanners = [...new Set(["banner.png", ...ownedBanners])];
                 const options = availableBanners.map(f => ({
@@ -112,14 +135,18 @@ module.exports = {
 
                 return i.update({
                     content: "🖼️ Chọn banner bạn muốn sử dụng cho hồ sơ:",
-                    components: [new ActionRowBuilder().addComponents(bannerSelect)]
+                    components: [new ActionRowBuilder().addComponents(bannerSelect), getBackRow()],
+                    files: []
                 });
             }
 
-            // 3. XỬ LÝ ĐỔI DANH HIỆU ĐANG DÙNG
+            // 3. XỬ LÝ ĐỔI DANH HIỆU
             if (choice === "set_badge") {
                 if (ownedBadges.length === 0) {
-                    return i.update({ content: "Bạn chưa sở hữu danh hiệu nào! Hãy ghé mục mua danh hiệu trước nhé.", components: [] });
+                    return i.update({ 
+                        content: "Bạn chưa sở hữu danh hiệu nào! Hãy ghé mục mua danh hiệu trước nhé.", 
+                        components: [getBackRow()] 
+                    });
                 }
 
                 const options = ownedBadges.map(f => ({
@@ -135,15 +162,16 @@ module.exports = {
 
                 return i.update({
                     content: "✨ Chọn danh hiệu bạn muốn hiển thị trên hồ sơ:",
-                    components: [new ActionRowBuilder().addComponents(badgeSelect)]
+                    components: [new ActionRowBuilder().addComponents(badgeSelect), getBackRow()],
+                    files: []
                 });
             }
 
-            // 4. XỬ LÝ KHI CHỌN MUA 1 VẬT PHẨM CỤ THỂ
+            // 4. XỬ LÝ KHI CHỌN XEM CHI TIẾT 1 MÓN ĐỂ MUA
             if (i.customId === `shop-buy-item-${interaction.user.id}`) {
                 await i.deferUpdate();
                 const parts = i.values[0].split("_");
-                const type = parts[2]; // banner hoặc badge
+                const type = parts[2]; 
                 const selectedItem = parts.slice(3).join("_");
 
                 const shopItems = JSON.parse(fs.readFileSync(shopPath, "utf8"));
@@ -160,8 +188,8 @@ module.exports = {
                     .setDisabled(userDocLatest.balance < itemPrice);
 
                 const backButton = new ButtonBuilder()
-                    .setCustomId(`shop-back`)
-                    .setLabel("Quay lại")
+                    .setCustomId(`shop-back-main`)
+                    .setLabel("🔙 Quay lại menu chính")
                     .setStyle(ButtonStyle.Secondary);
 
                 const actionRow = new ActionRowBuilder().addComponents(buyButton, backButton);
@@ -181,7 +209,7 @@ module.exports = {
                 const itemPrice = shopItems[type === "banner" ? "banners" : "badges"][selectedItem];
 
                 if (userDocLatest.balance < itemPrice) {
-                    return i.editReply({ content: "❌ Bạn không đủ tiền để mua vật phẩm này!", components: [], files: [] });
+                    return i.editReply({ content: "❌ Bạn không đủ tiền để mua vật phẩm này!", components: [getBackRow()], files: [] });
                 }
 
                 await db.deductBalance(i.user.id, itemPrice);
@@ -198,12 +226,12 @@ module.exports = {
 
                 return i.editReply({
                     content: `<a:AbbyOK:1342386280809627698> Bạn đã mua và trang bị thành công **${getItemName(selectedItem)}**!`,
-                    components: [],
+                    components: [getBackRow()],
                     files: []
                 });
             }
 
-            // 6. XỬ LÝ LƯU THAY ĐỔI BANNER / BADGE ĐANG MẶC
+            // 6. LƯU THAY ĐỔI BANNER ĐANG MẶC
             if (i.values && i.values[0].startsWith("set_b_")) {
                 await i.deferUpdate();
                 const bannerName = i.values[0].replace("set_b_", "");
@@ -211,10 +239,12 @@ module.exports = {
                 await userDocLatest.save();
                 return i.editReply({
                     content: `<a:AbbyOK:1342386280809627698> Đã chuyển sang sử dụng banner: **${getItemName(bannerName)}**`,
-                    components: []
+                    components: [getBackRow()],
+                    files: []
                 });
             }
 
+            // 7. LƯU THAY ĐỔI BADGE ĐANG MẶC
             if (i.values && i.values[0].startsWith("set_d_")) {
                 await i.deferUpdate();
                 const badgeName = i.values[0].replace("set_d_", "");
@@ -222,7 +252,8 @@ module.exports = {
                 await userDocLatest.save();
                 return i.editReply({
                     content: `<a:AbbyOK:1342386280809627698> Đã trang bị thành công danh hiệu: **${getItemName(badgeName)}**`,
-                    components: []
+                    components: [getBackRow()],
+                    files: []
                 });
             }
         });
