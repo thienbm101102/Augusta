@@ -32,7 +32,7 @@ module.exports = {
         const getMainMenuEmbed = () => {
             return new EmbedBuilder()
                 .setColor('#5865F2')
-                .setTitle('<a:VerifiedTwitter:1418649004912148511> MUA 💎 TỰ ĐỘNG')
+                .setTitle('**<a:VerifiedTwitter:1418649004912148511> Mua Kim Cương Tự Động**')
                 .setDescription('Chào mừng bạn đến với hệ thống mua <a:diamondgem:1418649012289933434> chính thức!\n\nHãy chọn một gói nạp bên dưới để khởi tạo hóa đơn thanh toán quét mã QR tự động hoàn toàn an toàn và nhanh chóng.')
                 .addFields(
                     { 
@@ -93,7 +93,7 @@ module.exports = {
 
                         const embed = new EmbedBuilder()
                             .setColor('#FEE75C')
-                            .setTitle('<a:VerifiedTwitter:1418649004912148511> HÓA ĐƠN THANH TOÁN CHUYỂN KHOẢN')
+                            .setTitle('**<a:VerifiedTwitter:1418649004912148511> Hóa Đơn Thanh Toán**')
                             .setDescription(`Hóa đơn riêng của <@${userId}>. Vui lòng sử dụng ứng dụng ngân hàng quét mã QR bên dưới.`)
                             .addFields(
                                 { name: '📦 Gói dịch vụ', value: `**${selectedPackage.label}**`, inline: true },
