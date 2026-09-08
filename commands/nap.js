@@ -1,20 +1,23 @@
-const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, StringSelectMenuBuilder, ButtonBuilder, ButtonStyle, AttachmentBuilder } = require('discord.js');
+const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, StringSelectMenuBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 
 // --- CẤU HÌNH THÔNG TIN NGÂN HÀNG CỦA SHOP ---
 const BANK_CONFIG = {
-    BANK_ID: "SACOMBANK",               // Mã ngân hàng (VD: VCB, MB, Techcombank, ACB,...)
+    BANK_ID: "SACOMBANK",               // Mã ngân hàng (VD: VCB, MB, Techcombank, SACOMBANK,...)
     ACCOUNT_NO: "10112002",    // Số tài khoản nhận tiền của bạn
-    ACCOUNT_NAME: "BUI MINH THIEN", // Tên chủ tài khoản (Không dấu hoặc có dấu viết hoa)
+    ACCOUNT_NAME: "BUI MINH THIEN", // Tên chủ tài khoản
     TEMPLATE: "compact2"         // Kiểu hiển thị QR (compact2, print, qr_only)
 };
 
+// --- BANNER SHOP ---
+const BANNER_URL = "https://i.imgur.com/478qmxW.png"; // Bạn có thể thay link ảnh banner tùy ý tại đây
+
 // --- CÁC GÓI MUA KIM CƯƠNG ---
 const PACKAGES = [
-    { id: "pack_1", diamonds: 20000, price: 10000, label: "20,000 Kim Cương", desc: "10,000 VNĐ - Gói khởi đầu" },
-    { id: "pack_2", diamonds: 100000, price: 50000, label: "100,000 Kim Cương", desc: "50,000 VNĐ - Phổ biến" },
-    { id: "pack_3", diamonds: 200000, price: 100000, label: "200,000 Kim Cương", desc: "100,000 VNĐ - Tiết kiệm nhất" },
-    { id: "pack_4", diamonds: 500000, price: 250000, label: "500,000 Kim Cương", desc: "250,000 VNĐ - Đại gia" },
-    { id: "pack_5", diamonds: 1000000, price: 500000, label: "1,000,000 Kim Cương", desc: "500,000 VNĐ - Siêu VIP" },
+    { id: "pack_1", diamonds: 20000, price: 10000, label: "Gói Khởi Đầu", desc: "10,000 VNĐ = 20,000 Kim Cương" },
+    { id: "pack_2", diamonds: 100000, price: 50000, label: "Gói Phổ Biến", desc: "50,000 VNĐ = 100,000 Kim Cương" },
+    { id: "pack_3", diamonds: 200000, price: 100000, label: "Gói Tiết Kiệm", desc: "100,000 VNĐ = 200,000 Kim Cương" },
+    { id: "pack_4", diamonds: 500000, price: 250000, label: "Gói Đại Gia", desc: "250,000 VNĐ = 500,000 Kim Cương" },
+    { id: "pack_5", diamonds: 1000000, price: 500000, label: "Gói Siêu VIP", desc: "500,000 VNĐ = 1,000,000 Kim Cương" },
 ];
 
 module.exports = {
@@ -25,16 +28,32 @@ module.exports = {
     async execute(interaction) {
         await interaction.deferReply({ ephemeral: true });
 
+        const getMainMenuEmbed = () => {
+            return new EmbedBuilder()
+                .setColor('#5865F2')
+                .setTitle('💎 TRUNG TÂM NẠP KIM CƯƠNG TỰ ĐỘNG')
+                .setDescription('Chào mừng bạn đến với hệ thống nạp thẻ chính thức!\n\nHãy chọn một gói nạp bên dưới để khởi tạo hóa đơn thanh toán quét mã QR tự động hoàn toàn an toàn và nhanh chóng.')
+                .addFields(
+                    { 
+                        name: '✨ Hướng dẫn giao dịch', 
+                        value: '1️⃣ Chọn gói kim cương phù hợp trong menu.\n2️⃣ Quét mã QR chuyển khoản qua App ngân hàng.\n3️⃣ Hệ thống sẽ tự động xác thực và cộng tiền.', 
+                        inline: false 
+                    }
+                )
+                .setImage(BANNER_URL)
+                .setFooter({ text: 'Hệ thống bảo mật 24/7 • Giao dịch tự động', iconURL: interaction.client.user.displayAvatarURL() });
+        };
+
         const getMainMenuComponent = () => {
             const options = PACKAGES.map(pkg => ({
-                label: pkg.label,
+                label: `${pkg.label} (${pkg.diamonds.toLocaleString()} 💎)`,
                 description: pkg.desc,
                 value: pkg.id
             }));
 
             const selectMenu = new StringSelectMenuBuilder()
                 .setCustomId(`nap-select-${interaction.user.id}`)
-                .setPlaceholder("💎 Chọn gói kim cương bạn muốn nạp")
+                .setPlaceholder("✨ Bấm vào đây để chọn gói nạp kim cương...")
                 .addOptions(options);
 
             return new ActionRowBuilder().addComponents(selectMenu);
@@ -43,30 +62,29 @@ module.exports = {
         const getBackRow = () => {
             const backBtn = new ButtonBuilder()
                 .setCustomId(`nap-back-main`)
-                .setLabel("🔙 Quay lại danh sách gói")
+                .setLabel("🔙 Quay lại danh sách gói nạp")
                 .setStyle(ButtonStyle.Secondary);
             return new ActionRowBuilder().addComponents(backBtn);
         };
 
         const responseMessage = await interaction.editReply({
-            content: "💎 **HỆ THỐNG NẠP KIM CƯƠNG TỰ ĐỘNG**\nVui lòng chọn gói nạp phù hợp bên dưới để nhận mã QR thanh toán:",
+            embeds: [getMainMenuEmbed()],
             components: [getMainMenuComponent()]
         });
 
         const collector = responseMessage.createMessageComponentCollector({
             filter: i => i.user.id === interaction.user.id,
-            time: 120_000, // Cho phép thao tác trong 2 phút
+            time: 120_000, // Hết hạn sau 2 phút không thao tác
         });
 
         collector.on("collect", async (i) => {
             const userId = interaction.user.id;
 
-            // Xử lý nút quay lại
+            // Xử lý nút quay lại menu chính
             if (i.customId === "nap-back-main" || (i.values && i.values[0] === "main_menu")) {
                 await i.update({
-                    content: "💎 **HỆ THỐNG NẠP KIM CƯƠNG TỰ ĐỘNG**\nVui lòng chọn gói nạp phù hợp bên dưới để nhận mã QR thanh toán:",
+                    embeds: [getMainMenuEmbed()],
                     components: [getMainMenuComponent()],
-                    embeds: [],
                     files: []
                 });
                 return;
@@ -79,30 +97,30 @@ module.exports = {
             if (selectedPackage) {
                 await i.deferUpdate();
 
-                // Cú pháp chuyển khoản chuẩn (VD: NAP <DiscordID> <Gói>)
+                // Cú pháp nội dung chuyển khoản chuẩn định danh
                 const memo = `NAP ${userId} ${selectedPackage.id}`;
                 
-                // Sử dụng API công khai VietQR để tạo mã QR chính xác tuyệt đối
+                // Link tạo mã QR VietQR tự động
                 const qrUrl = `https://img.vietqr.io/image/${BANK_CONFIG.BANK_ID}-${BANK_CONFIG.ACCOUNT_NO}-${BANK_CONFIG.TEMPLATE}.png?amount=${selectedPackage.price}&addInfo=${encodeURIComponent(memo)}&accountName=${encodeURIComponent(BANK_CONFIG.ACCOUNT_NAME)}`;
 
                 const embed = new EmbedBuilder()
-                    .setTitle('**<a:VerifiedTwitter:1418649004912148511> HÓA ĐƠN THANH TOÁN QUÉT MÃ QR**')
-                    .setDescription('Quét mã QR bên dưới bằng ứng dụng ngân hàng của bạn để thanh toán nhanh chóng.')
+                    .setColor('#FEE75C')
+                    .setTitle('🧾 HÓA ĐƠN THANH TOÁN CHUYỂN KHOẢN')
+                    .setDescription('Vui lòng sử dụng ứng dụng ngân hàng quét mã QR bên dưới hoặc chuyển khoản thủ công theo thông tin chi tiết.')
                     .addFields(
-                        { name: '📦 Gói sản phẩm', value: `**${selectedPackage.label}**`, inline: true },
-                        { name: '💰 Số tiền cần chuyển', value: `\`${selectedPackage.price.toLocaleString()}\` VNĐ`, inline: true },
-                        { name: '\u200b', value: '\u200b', inline: false },
-                        { name: '🏦 Ngân hàng', value: `**${BANK_CONFIG.BANK_ID}**`, inline: true },
+                        { name: '📦 Gói dịch vụ', value: `**${selectedPackage.label}**`, inline: true },
+                        { name: '💎 Nhận được', value: `\`${selectedPackage.diamonds.toLocaleString()}\`<a:diamondgem:1418649012289933434>`, inline: true },
+                        { name: '💰 Số tiền thanh toán', value: `\`${selectedPackage.price.toLocaleString()}\` VNĐ`, inline: true },
+                        { name: '────────────────────────', value: '\u200b', inline: false },
+                        { name: '🏦 Ngân hàng thụ hưởng', value: `**${BANK_CONFIG.BANK_ID}**`, inline: true },
                         { name: '💳 Số tài khoản', value: `\`${BANK_CONFIG.ACCOUNT_NO}\``, inline: true },
                         { name: '👤 Chủ tài khoản', value: `**${BANK_CONFIG.ACCOUNT_NAME}**`, inline: false },
                         { name: '📝 Nội dung chuyển khoản (BẮT BUỘC)', value: `\`\`\`${memo}\`\`\``, inline: false }
                     )
-                    .setColor('#e74c3c')
                     .setImage(qrUrl)
-                    .setFooter({ text: 'Lưu ý: Nhập đúng nội dung chuyển khoản để hệ thống tự động cộng kim cương!' });
+                    .setFooter({ text: '⚠️ Lưu ý tuyệt đối không sửa đổi nội dung chuyển khoản để tránh thất lạc giao dịch!' });
 
                 return i.editReply({
-                    content: "",
                     embeds: [embed],
                     components: [getBackRow()]
                 });
@@ -111,7 +129,11 @@ module.exports = {
 
         collector.on("end", async (_, reason) => {
             if (reason === "time") {
-                await interaction.editReply({ content: "⏳ Phiên giao dịch nạp tiền đã hết hạn.", components: [], embeds: [] }).catch(() => {});
+                const expiredEmbed = new EmbedBuilder()
+                    .setColor('#ED4245')
+                    .setTitle('⏳ Phiên giao dịch đã hết hạn')
+                    .setDescription('Đã quá thời gian chờ thanh toán. Vui lòng sử dụng lại lệnh `/nap` nếu bạn vẫn muốn tiếp tục.');
+                await interaction.editReply({ embeds: [expiredEmbed], components: [] }).catch(() => {});
             }
         });
     }
