@@ -38,7 +38,7 @@ module.exports = {
         const lastLetter = startWord.slice(-1);
         
         const embed = new EmbedBuilder()
-            .setTitle('<a:VerifiedTwitter:1418649004912148511> ĐẤU TRƯỜNG NỐI TỪ TIẾNG ANH')
+            .setTitle('**<a:VerifiedTwitter:1418649004912148511> Nối Từ Tiếng Anh**')
             .setDescription(`Chủ phòng: <@${starterId}>\n\nTừ khởi đầu: 🟢 **${startWord.toUpperCase()}**\n\nNgười tiếp theo hãy gõ một từ Tiếng Anh bắt đầu bằng chữ cái:\n# 🎯 ${lastLetter.toUpperCase()}\n\n*⚠️ Luật: 1 từ duy nhất, có nghĩa, không lặp lại, không tự nối của mình.*\n*💰 Thưởng: 100 <a:diamondgem:1418649012289933434>/từ đúng - Top 1 nhận 10000 <a:diamondgem:1418649012289933434>!*`)
             .setColor('#3498db')
             .setThumbnail('https://i.ibb.co/WNXqbsGT/rtx-on-wuwa.gif')
@@ -139,10 +139,10 @@ module.exports = {
                 leaderboard = '*Chưa có cao thủ nào ghi điểm.*';
             }
 
-            let endTitle = '<a:VerifiedTwitter:1418649004912148511> HẾT GIỜ!';
+            let endTitle = '**<a:VerifiedTwitter:1418649004912148511> Hết Giờ!**';
             let endColor = '#e74c3c';
             if (reason === 'force_stop') {
-                endTitle = '<a:VerifiedTwitter:1418649004912148511> TRÒ CHƠI KẾT THÚC';
+                endTitle = '**<a:VerifiedTwitter:1418649004912148511> Trò Chơi Kết Thúc**';
                 endColor = '#95a5a6';
             }
 
