@@ -12,6 +12,8 @@ const getItemName = (filename) => {
         "banner2.png": "Bước Vào Giấc Mơ",
         "banner3.png": "Công Viên Mộng Mơ",
         "banner4.png": "Mãi Bên Nhau Bạn Nhé",
+        "banner5.png": "Kimetsu no Yaiba",
+        "banner8.gif": "Cyberpunk: Edgerunners",
         "vannguoime.png": "Danh hiệu: Vạn Người Mê",
         "daigia.png": "Danh hiệu: Đại Gia",
         "uyviencakhia.png": "Danh hiệu: Ủy Viên Cà Khịa",
