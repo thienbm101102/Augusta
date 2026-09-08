@@ -54,7 +54,7 @@ module.exports = {
 
             const selectMenu = new StringSelectMenuBuilder()
                 .setCustomId(`nap_select_menu`)
-                .setPlaceholder("✨ Bấm vào đây để chọn gói 💎")
+                .setPlaceholder("✨ Bấm vào đây để chọn gói")
                 .addOptions(options);
 
             return new ActionRowBuilder().addComponents(selectMenu);
