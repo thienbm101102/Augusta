@@ -95,6 +95,7 @@ module.exports = {
                 `*💰 Thưởng: **+${REWARD_MONEY.toLocaleString()}** <a:diamondgem:1418649012289933434> cho người đoán nhanh nhất!*`
             )
             .setColor('#f39c12')
+            .setThumbnail('https://i.ibb.co/WNXqbsGT/rtx-on-wuwa.gif')
             .setFooter({ text: 'Gõ đáp án vào kênh để trả lời | Trò chơi sẽ dừng nếu sau 60s không ai đoán được' });
 
         const row = new ActionRowBuilder().addComponents(
