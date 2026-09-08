@@ -23,7 +23,7 @@ const PACKAGES = [
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('nap')
-        .setDescription('Mở cửa hàng nạp 💎 qua chuyển khoản ngân hàng tự động'),
+        .setDescription('Mở cửa hàng mua 💎 qua chuyển khoản ngân hàng tự động'),
 
     async execute(interaction) {
         await interaction.deferReply({ ephemeral: true });
