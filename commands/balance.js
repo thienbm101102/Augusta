@@ -117,53 +117,58 @@ module.exports = {
           );
         }
 
-        context.font = `bold 32px ${FONT_FAMILY}`;
-        context.fillStyle = "#ffffff";
+        // 5. Vẽ Tên người dùng
+        let fontSize = 32;
+        ctx.font = `${fontSize}px ${FONT_FAMILY}`;
         const nameText = targetUser.displayName;
         const maxWidth = 260;
-        let fontSize = 32;
-        while (context.measureText(nameText).width > maxWidth && fontSize > 20) {
+        while (ctx.measureText(nameText).width > maxWidth && fontSize > 20) {
           fontSize--;
-          context.font = `bold ${fontSize}px ${FONT_FAMILY}`;
+          ctx.font = `${fontSize}px ${FONT_FAMILY}`;
         }
-        context.fillText(nameText, 280, 70);
+        ctx.fillText(nameText, 280, 70);
 
+        // 6. Vẽ Badge (Huy hiệu) nếu có
         if (badgeImg) {
-          const nameMetrics = context.measureText(nameText);
+          const nameMetrics = ctx.measureText(nameText);
           const badgeX = 280 + nameMetrics.width + 2;
           const badgeY = 75 - badgeImg.height + 5;
-          context.drawImage(badgeImg, badgeX, badgeY, badgeImg.width, badgeImg.height);
+          ctx.drawImage(badgeImg, badgeX, badgeY, badgeImg.width, badgeImg.height);
         }
 
-        context.font = `20px ${FONT_FAMILY}`;
-        context.fillStyle = "#cccccc";
-        context.fillText("Số dư của bạn:", 280, 110);
+        // 7. Chữ "Số dư của bạn"
+        ctx.font = `20px ${FONT_FAMILY}`;
+        ctx.fillStyle = "#cccccc";
+        ctx.fillText("Số dư của bạn:", 280, 110);
 
-        const gradient = context.createLinearGradient(200, 0, 600, 0);
+        // 8. Vẽ số tiền (Gradient đẹp mắt)
+        const gradient = ctx.createLinearGradient(200, 0, 600, 0);
         gradient.addColorStop(0, "#FFD700");
         gradient.addColorStop(1, "#FFA500");
-        context.fillStyle = gradient;
-        context.lineWidth = 4;
-        context.strokeStyle = "rgba(0,0,0,0.6)";
-        context.shadowColor = "rgba(0,0,0,0.7)";
-        context.shadowBlur = 8;
-        context.font = `bold 30px ${FONT_FAMILY}`;
-        context.fillText(`${userBalance.toLocaleString()}`, 280, 145);
-        context.shadowBlur = 0;
+        ctx.fillStyle = gradient;
+        ctx.lineWidth = 4;
+        ctx.strokeStyle = "rgba(0,0,0,0.6)";
+        ctx.shadowColor = "rgba(0,0,0,0.7)";
+        ctx.shadowBlur = 8;
+        ctx.font = `30px ${FONT_FAMILY}`; // Đã bỏ chữ bold vì file font đã là bold sẵn
+        ctx.fillText(`${userBalance.toLocaleString()}`, 280, 145);
+        ctx.shadowBlur = 0;
 
+        // 9. Icon Tiền
         if (coinImg) {
-          context.drawImage(
+          ctx.drawImage(
             coinImg,
-            230 + context.measureText(userBalance.toLocaleString()).width + 55,
+            230 + ctx.measureText(userBalance.toLocaleString()).width + 55,
             120,
             25,
             25
           );
         }
 
-        context.font = `14px ${FONT_FAMILY}`;
-        context.fillStyle = "#888888";
-        context.fillText("© Copyright © 2025 / ✦ Đơn Giản Là Chơi ✦", 280, 215);
+        // 10. Chữ bản quyền
+        ctx.font = `14px ${FONT_FAMILY}`;
+        ctx.fillStyle = "#888888";
+        ctx.fillText("© Copyright © 2025 / ✦ Đơn Giản Là Chơi ✦", 280, 215);
       };
 
       let attachment;
