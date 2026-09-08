@@ -4,7 +4,6 @@ const path = require("path");
 const fs = require("fs");
 const db = require("../db"); // MongoDB helper
 
-// Import thêm thư viện xử lý GIF
 const GIFEncoder = require('gifencoder');
 const gifFrames = require('gif-frames');
 
@@ -51,7 +50,6 @@ module.exports = {
         .setRequired(false)
     ),
   async execute(interaction) {
-    // 1. Chặn lỗi timeout 10062
     await interaction.deferReply();
 
     try {
@@ -62,17 +60,14 @@ module.exports = {
       const canvas = Canvas.createCanvas(700, 250);
       const ctx = canvas.getContext("2d");
 
-      // Banner path
-      const bannerFile = userData.banner || "banner.png"; // Nếu user có banner.gif thì đổi thành gif
+      const bannerFile = userData.banner || "banner.png"; 
       const bannerPath = path.join(__dirname, "../assets/banners", bannerFile);
       const isGif = bannerFile.toLowerCase().endsWith('.gif');
 
-      // --- PRELOAD TÀI NGUYÊN TĨNH (Avatar, Khung, Badge, Icon) ---
-      // Tải avatar
+      // --- PRELOAD TÀI NGUYÊN TĨNH ---
       const avatarUrl = targetUser.displayAvatarURL({ extension: "png", size: 256 });
       const avatarImg = await Canvas.loadImage(avatarUrl);
 
-      // Xác định Khung (Frame)
       let frameFile = "bronze.png";
       if (userBalance >= 600000) frameFile = "challenger.png";
       else if (userBalance >= 500000) frameFile = "grandmaster.png";
@@ -85,18 +80,14 @@ module.exports = {
       const framePath = path.join(__dirname, "../assets/frames", frameFile);
       const frameImg = fs.existsSync(framePath) ? await Canvas.loadImage(framePath) : null;
 
-      // Xác định Badge
       const badgeFile = userData.badge;
       const badgePath = badgeFile ? path.join(__dirname, "../assets/badges", badgeFile) : null;
       const badgeImg = (badgePath && fs.existsSync(badgePath)) ? await Canvas.loadImage(badgePath) : null;
 
-      // Xác định Icon Tiền
       const coinPath = path.join(__dirname, "../assets/icons/diamond.png");
       const coinImg = fs.existsSync(coinPath) ? await Canvas.loadImage(coinPath) : null;
 
-      // --- HÀM VẼ OVERLAY (Dùng chung cho cả ảnh tĩnh và ảnh động) ---
       const drawOverlay = (context) => {
-        // Vẽ box nền đen mờ
         context.fillStyle = "rgba(0,0,0,0.6)";
         context.roundRect(20, 20, 660, 210, 25);
         context.fill();
@@ -105,7 +96,6 @@ module.exports = {
         const ay = 125;
         const avatarR = 60;
 
-        // Vẽ Avatar
         context.save();
         context.beginPath();
         context.arc(ax, ay, avatarR, 0, Math.PI * 2);
@@ -114,7 +104,6 @@ module.exports = {
         context.drawImage(avatarImg, ax - avatarR, ay - avatarR, avatarR * 2, avatarR * 2);
         context.restore();
 
-        // Vẽ Khung (Frame)
         if (frameImg) {
           const framePadding = 100;
           const frameOffsetY = 95;
@@ -127,7 +116,6 @@ module.exports = {
           );
         }
 
-        // Vẽ Tên người dùng
         context.font = `bold 32px ${FONT_FAMILY}`;
         context.fillStyle = "#ffffff";
         const nameText = targetUser.displayName;
@@ -139,7 +127,6 @@ module.exports = {
         }
         context.fillText(nameText, 280, 70);
 
-        // Vẽ Badge
         if (badgeImg) {
           const nameMetrics = context.measureText(nameText);
           const badgeX = 280 + nameMetrics.width + 2;
@@ -147,12 +134,10 @@ module.exports = {
           context.drawImage(badgeImg, badgeX, badgeY, badgeImg.width, badgeImg.height);
         }
 
-        // Chữ "Số dư của bạn"
         context.font = `20px ${FONT_FAMILY}`;
         context.fillStyle = "#cccccc";
         context.fillText("Số dư của bạn:", 280, 110);
 
-        // Vẽ số dư (Text Gradient)
         const gradient = context.createLinearGradient(200, 0, 600, 0);
         gradient.addColorStop(0, "#FFD700");
         gradient.addColorStop(1, "#FFA500");
@@ -165,7 +150,6 @@ module.exports = {
         context.fillText(`${userBalance.toLocaleString()}`, 280, 145);
         context.shadowBlur = 0;
 
-        // Vẽ Icon Tiền
         if (coinImg) {
           context.drawImage(
             coinImg,
@@ -176,38 +160,40 @@ module.exports = {
           );
         }
 
-        // Chữ bản quyền
         context.font = `14px ${FONT_FAMILY}`;
         context.fillStyle = "#888888";
         context.fillText("© Copyright © 2025 / ✦ Đơn Giản Là Chơi ✦", 280, 215);
       };
 
-      // --- XỬ LÝ ẢNH NỀN ---
       let attachment;
 
       if (isGif && fs.existsSync(bannerPath)) {
-        // --- XỬ LÝ ẢNH ĐỘNG (GIF) ---
+        // Ép gif-frames chạy type 'canvas' tương thích với NodeJS backend
+        const frames = await gifFrames({ 
+          url: bannerPath, 
+          frames: 'all', 
+          outputType: 'canvas',
+          cumulative: true 
+        });
+
         const encoder = new GIFEncoder(canvas.width, canvas.height);
         encoder.start();
-        encoder.setRepeat(0); // Lặp lại vô hạn
-        encoder.setQuality(10); // Chất lượng ảnh (1-10, 1 là cao nhất nhưng xuất chậm)
-
-        // Phân tách GIF nền thành từng frame
-        const frames = await gifFrames({ url: bannerPath, frames: 'all', outputType: 'canvas' });
+        encoder.setRepeat(0);
+        encoder.setQuality(15);
 
         for (const frame of frames) {
-          // Lấy độ trễ của frame (gif-frames trả về đơn vị 1/100s -> nhân 10 để ra ms)
-          const delay = frame.frameInfo.delay * 10 || 100; 
+          const delay = frame.frameInfo.delay * 10 || 100;
           encoder.setDelay(delay);
 
-          // Xóa canvas cũ và vẽ frame nền mới
           ctx.clearRect(0, 0, canvas.width, canvas.height);
-          ctx.drawImage(frame.getImage(), 0, 0, canvas.width, canvas.height);
+          
+          // Vẽ frame GIF nền
+          const frameImage = frame.getImage();
+          ctx.drawImage(frameImage, 0, 0, canvas.width, canvas.height);
 
-          // Vẽ các thông tin (Avatar, Text, v.v.) đè lên frame nền
+          // Vẽ thông tin đè lên
           drawOverlay(ctx);
 
-          // Thêm frame đã hoàn thiện vào encoder
           encoder.addFrame(ctx);
         }
 
@@ -215,7 +201,6 @@ module.exports = {
         attachment = new AttachmentBuilder(encoder.out.getData(), { name: "taisan.gif" });
 
       } else {
-        // --- XỬ LÝ ẢNH TĨNH (PNG/JPG) NHƯ CŨ ---
         if (fs.existsSync(bannerPath)) {
           const banner = await Canvas.loadImage(bannerPath);
           ctx.drawImage(banner, 0, 0, canvas.width, canvas.height);
@@ -228,7 +213,6 @@ module.exports = {
         attachment = new AttachmentBuilder(canvas.toBuffer("image/png"), { name: "taisan.png" });
       }
 
-      // Trả kết quả về cho người dùng
       await interaction.editReply({ files: [attachment] });
 
     } catch (error) {
