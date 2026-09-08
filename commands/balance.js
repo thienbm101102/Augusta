@@ -16,8 +16,8 @@ const FONT_FAMILY = "Roboto";
 try {
   const fontPath = path.join(__dirname, "../assets/fonts", FONT_FILE);
   if (fs.existsSync(fontPath)) {
-    Canvas.registerFont(fontPath, { family: FONT_FAMILY });
-    console.log(`✅ Loaded font: ${fontPath} as "${FONT_FAMILY}"`);
+    Canvas.registerFont(fontPath, { family: FONT_FAMILY, weight: 'bold' });
+    console.log(`✅ Loaded font: ${fontPath} as "${FONT_FAMILY}" (Bold)`);
   } else {
     console.log(`⚠️ Font not found: ${fontPath} -> fallback to Sans`);
   }
