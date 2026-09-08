@@ -30,7 +30,7 @@
     "tweetnacl": "^1.0.3",
     "uuid": "^11.1.0",
     "ytdl-core": "^4.11.5",
-    "gif-frames": "^1.0.1",
+    "omggif": "^1.0.10",
     "gifencoder": "^2.0.1"
   }
 }
