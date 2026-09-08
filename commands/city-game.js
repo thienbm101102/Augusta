@@ -294,7 +294,7 @@ module.exports = {
                     )
                     .setColor('#3498db')
                     .setThumbnail(interaction.user.displayAvatarURL())
-                    .setFooter({ text: '© Copyright © 2025「✦ Đơn Giản Là "Chơi" ✦」', iconURL: 'https://cdn.discordapp.com/avatars/1404793124991139850/3872c60a1f62ff82c9b31fc4265e2aee.webp' });
+                    .setFooter({ text: '© Copyright © 2025「✦ Đơn Giản Là "Chơi" ✦」', iconURL: interaction.client.user.displayAvatarURL() });
                 return interaction.reply({ embeds: [embed] });
             }
 
