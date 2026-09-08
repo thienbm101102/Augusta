@@ -48,7 +48,7 @@ module.exports = {
 
         const getMainMenuComponent = () => {
             const options = PACKAGES.map(pkg => ({
-                label: `${pkg.label} (${pkg.diamonds.toLocaleString()} 💎)`,
+                label: `${pkg.label}`,
                 description: pkg.desc,
                 value: pkg.id
             }));
