@@ -179,12 +179,12 @@ module.exports = {
         collector.on('end', async (collected, reason) => {
             activeGames.delete(channelId);
 
-            let endTitle = '⌛ HẾT GIỜ! TRÒ CHƠI KẾT THÚC';
-            let endDescription = `Thời gian đã trôi qua mà không ai đoán được từ này.\n\n🔑 Đáp án chính xác là: **${gameState.originalWord.toUpperCase()}**\n\n📊 Kỷ lục ván này: Chơi đến **Vòng ${gameState.round}**`;
+            let endTitle = '<a:VerifiedTwitter:1418649004912148511> HẾT GIỜ! TRÒ CHƠI KẾT THÚC';
+            let endDescription = `Thời gian đã trôi qua mà không ai đoán được từ này.\n\n🔑 Đáp án chính xác là: **${gameState.originalWord.toUpperCase()}**\n\n<a:VerifiedTwitter:1418649004912148511>  Kỷ lục ván này: Chơi đến **Vòng ${gameState.round}**`;
             let endColor = '#e74c3c';
 
             if (reason === 'force_stop') {
-                endTitle = '🛑 TRÒ CHƠI ĐÃ BỊ HỦY';
+                endTitle = '<a:VerifiedTwitter:1418649004912148511> TRÒ CHƠI ĐÃ BỊ HỦY';
                 endDescription = `Chủ phòng đã dừng trò chơi.\n🔑 Đáp án đúng của vòng ${gameState.round} là: **${gameState.originalWord.toUpperCase()}**`;
                 endColor = '#95a5a6';
             }
