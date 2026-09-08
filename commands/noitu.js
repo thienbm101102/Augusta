@@ -40,7 +40,7 @@ module.exports = {
         
         const embed = new EmbedBuilder()
             .setTitle('<a:VerifiedTwitter:1418649004912148511> ĐẤU TRƯỜNG NỐI TỪ TIẾNG VIỆT')
-            .setDescription(`Chủ phòng: <@${starterId}>\n\nTừ khởi đầu: 🟢 **${startWord.toUpperCase()}**\n\nNgười tiếp theo nối một từ 2 âm tiết bắt đầu bằng chữ:\n# 🎯 ${lastSyllable.toUpperCase()}\n\n*⚠️ Luật: Có nghĩa, không lặp lại, không tự nối của mình.*\n*💰 Thưởng: +100 <a:diamondgem:1418649012289933434>/từ đúng | 💎 Top 1 nhận 10000 <a:diamondgem:1418649012289933434>!*`)
+            .setDescription(`Chủ phòng: <@${starterId}>\n\nTừ khởi đầu: 🟢 **${startWord.toUpperCase()}**\n\nNgười tiếp theo nối một từ 2 âm tiết bắt đầu bằng chữ:\n# 🎯 ${lastSyllable.toUpperCase()}\n\n*⚠️ Luật: Có nghĩa, không lặp lại, không tự nối của mình.*\n*💰 Thưởng: +100 <a:diamondgem:1418649012289933434>/từ đúng - Top 1 nhận 10000 <a:diamondgem:1418649012289933434>!*`)
             .setColor('#2ecc71')
             .setThumbnail('https://i.ibb.co/WNXqbsGT/rtx-on-wuwa.gif')
             .setFooter({ text: `Từ điển: ${validWords.size > 0 ? '✅' : '❌'} | Hết hạn sau 120s` });
