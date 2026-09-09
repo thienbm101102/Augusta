@@ -17,7 +17,7 @@ const PACKAGES = [
     { id: "pack_2", diamonds: 100000, price: 50000, label: "Gói Phổ Biến", desc: "50,000 VNĐ = 100,000💎" },
     { id: "pack_3", diamonds: 200000, price: 100000, label: "Gói Tiết Kiệm", desc: "100,000 VNĐ = 200,000💎" },
     { id: "pack_4", diamonds: 500000, price: 250000, label: "Gói Đại Gia", desc: "250,000 VNĐ = 500,000💎" },
-    { id: "pack_5", diamonds: 1000000, price: 500000, label: "Gói Siêu VIP", desc: "500,000 VNĐ = 1,000,000💎" },
+    { id: "pack_5", diamonds: 1000000, price: 500000, label: "Gói VIP", desc: "500,000 VNĐ = 1,000,000💎" },
 ];
 
 module.exports = {
@@ -98,7 +98,7 @@ module.exports = {
                         .setDescription(`Hóa đơn riêng của <@${userId}>. Vui lòng sử dụng ứng dụng ngân hàng quét mã QR bên dưới.`)
                         .addFields(
                             { name: '📦 Gói dịch vụ', value: `**${selectedPackage.label}**`, inline: true },
-                            { name: '<a:diamondgem:1418649012289933434> Nhận được', value: `\`${selectedPackage.diamonds.toLocaleString()}\`<a:diamondgem:1418649012289933434>`, inline: true },
+                            { name: 'Số <a:diamondgem:1418649012289933434> nhận được', value: `\`${selectedPackage.diamonds.toLocaleString()}\`<a:diamondgem:1418649012289933434>`, inline: true },
                             { name: '💰 Số tiền thanh toán', value: `\`${selectedPackage.price.toLocaleString()}\` VNĐ`, inline: true },
                             { name: '────────────────────────', value: '\u200b', inline: false },
                             { name: '🏦 Ngân hàng thụ hưởng', value: `**${BANK_CONFIG.BANK_ID}**`, inline: true },
