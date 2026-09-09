@@ -186,28 +186,28 @@ const CARDS = {
             rarity: "Huyền Thoại",
             description: "Từ những chương kinh điển được tiết lộ có rất nhiều lời cảnh báo được chú ý.",
             stats: { attack: 40, hp: 40 },
-            imageUrl: "https://media.discordapp.net/attachments/1351633975046570106/1414513588273545276/Abyss_Lector_Fathomless_Flames_Dynamic_Skin.gif?ex=68bfd7ef&is=68be866f&hm=a0633de240896cae3e802be2a0e983840ba9cf34029ffbca682105c44aeca39a&=&width=260&height=438"
+            imageUrl: "https://static.wikia.nocookie.net/gensin-impact/images/0/05/Abyss_Lector_Fathomless_Flames_Dynamic_Skin.gif/revision/latest?cb=20230719000947"
         },
         {
             name: "Sứ Đồ Vực Sâu - Kích Lưu",
             rarity: "Huyền Thoại",
             description: "Đoạn tuyệt các thế giới, vạn vật sẽ bị hủy diệt.",
             stats: { attack: 40, hp: 40 },
-            imageUrl: "https://media.discordapp.net/attachments/1351633975046570106/1414327331685798058/Abyss_Herald_Wicked_Torrents_Dynamic_Skin.gif?ex=68bf2a78&is=68bdd8f8&hm=597a26765622df087c5916b7941c824a57d89b456d91d482133e1b09ba76c4c9&=&width=381&height=643"
+            imageUrl: "https://static.wikia.nocookie.net/gensin-impact/images/a/a0/Abyss_Herald_Wicked_Torrents_Dynamic_Skin.gif/revision/latest?cb=20241031130034"
         },
         {
             name: "Học Sĩ Vực Sâu - Tử Điện",
             rarity: "Huyền Thoại",
             description: "Ca tụng Vực Sâu, trí tuệ ăn mòn.",
             stats: { attack: 40, hp: 40 },
-            imageUrl: "https://media.discordapp.net/attachments/1351633975046570106/1414327332595961956/Abyss_Lector-_Violet_Lightning_Dynamic_Skin.gif?ex=68bf2a79&is=68bdd8f9&hm=f06d2351d745b45060f16607cd17dbafaf76b7593fc04daa1414f5b7a98e2947&=&width=380&height=644"
+            imageUrl: "https://static.wikia.nocookie.net/gensin-impact/images/0/02/Abyss_Lector-_Violet_Lightning_Dynamic_Skin.gif/revision/latest?cb=20241031134349"
         },
         {
             name: "Thôn Tinh Kình Ngư",
             rarity: "Huyền Thoại",
             description: "Trong những câu chuyện kỳ ảo nhất hay những lời dối trá điên cuồng nhất, ở những ngôi sao sâu thẳm trong vũ trụ có lẽ cũng đầy ắp sự sống như Teyvat, mà vũ trụ thì cũng giống như đại dương. Có thể vũ trụ vẫn luôn cố gắng xâm nhập vào Teyvat, có lẽ một thế lực cao hơn đã tạo ra biên giới để bảo vệ thế giới này.",
             stats: { attack: 40, hp: 40 },
-            imageUrl: "https://media.discordapp.net/attachments/1351633975046570106/1414327332922982430/All-Devouring_Narwhal_Dynamic_Skin.gif?ex=68bf2a79&is=68bdd8f9&hm=148662a2e2e14e5d009ea95cb05614a6cfb64ca37b7f03e345f51de387790140&=&width=381&height=643"
+            imageUrl: "https://static.wikia.nocookie.net/gensin-impact/images/2/27/All-Devouring_Narwhal_Dynamic_Skin.gif/revision/latest?cb=20241031130040"
         }
     ],
     'Thần Thoại': [
@@ -216,42 +216,42 @@ const CARDS = {
             rarity: "Thần Thoại",
             description: "Tiếng ca bất diệt, vũ điệu vô tận.",
             stats: { attack: 25, hp: 20 },
-            imageUrl: "https://media.discordapp.net/attachments/1351633975046570106/1414326559334203392/Furina_Dynamic_Skin.gif?ex=68bf29c0&is=68bdd840&hm=27c15f603c980c3767010a99a68d1a2c649f8df39e61db800b160fc4ad37fa26&=&width=413&height=695"
+            imageUrl: "https://static.wikia.nocookie.net/gensin-impact/images/a/a2/Furina_Dynamic_Skin.gif/revision/latest?cb=20240911130349"
         },
         {
             name: "Raiden Shogun",
             rarity: "Thần Thoại",
             description: "Tiếng sấm hủy diệt, ảo ảnh phù thế.",
             stats: { attack: 40, hp: 40 },
-            imageUrl: "https://media.discordapp.net/attachments/1351633975046570106/1414327352670027860/Raiden_Shogun_Dynamic_Skin.gif?ex=68bf2a7d&is=68bdd8fd&hm=7ae8140aa96fb836141ed3c8f30b9f86fd3b012f8ec24febbf93eadf04cb9e73&=&width=438&height=738"
+            imageUrl: "https://static.wikia.nocookie.net/gensin-impact/images/9/9d/Raiden_Shogun_Dynamic_Skin.gif/revision/latest?cb=20230719000953"
         },
         {
             name: "Nahida",
             rarity: "Thần Thoại",
             description: "Kết tinh bạch thảo, cung điện đổi mới.",
             stats: { attack: 40, hp: 40 },
-            imageUrl: "https://media.discordapp.net/attachments/1351633975046570106/1414509410767732736/Nahida_Dynamic_Skin.gif?ex=68bfd40b&is=68be828b&hm=2d344fd9c54e0cfa5940716039009ebe9ae32f3ff402830a277652ff3bc4aae2&=&width=438&height=738"
+            imageUrl: "https://static.wikia.nocookie.net/gensin-impact/images/d/d2/Nahida_Dynamic_Skin.gif/revision/latest?cb=20230719000834"
         },
         {
             name: "Zhongli",
             rarity: "Thần Thoại",
             description: "Ngọc ẩn trong đá, chiếu sáng muôn nơi; Lấp lánh như sao, không gì sánh kịp.",
             stats: { attack: 40, hp: 40 },
-            imageUrl: "https://media.discordapp.net/attachments/1351633975046570106/1414509535892344913/Zhongli_Dynamic_Skin.gif?ex=68bfd429&is=68be82a9&hm=7ed9f5a4c33d657ed40fa7fbf40ea0f789bb3cb361a7a3e2c6b1977f27f856ea&=&width=438&height=738"
+            imageUrl: "https://static.wikia.nocookie.net/gensin-impact/images/d/d7/Zhongli_Dynamic_Skin.gif/revision/latest?cb=20230719000851"
         },
         {
             name: "Venti",
             rarity: "Thần Thoại",
             description: "Bốn mùa luân chuyển, gió bốn phương sẽ không bao giờ dừng lại./n Đương nhiên rồi, công lao cũng không phải của nó, mà chủ yếu là của tôi./n Nếu không có nhà thơ lang thang, ai sẽ hát lên những điều này?",
             stats: { attack: 40, hp: 40 },
-            imageUrl: "https://media.discordapp.net/attachments/1351633975046570106/1414509667161210930/Venti_Dynamic_Skin.gif?ex=68bfd448&is=68be82c8&hm=18899610fa3ccd0df0b0b821bddc72e3f5bc79d02cbcb45f01d14c05ab1ebc05&=&width=438&height=738"
+            imageUrl: "https://static.wikia.nocookie.net/gensin-impact/images/9/9a/Venti_Dynamic_Skin.gif/revision/latest?cb=20230719001017"
         },
         {
             name: "Mavuika",
             rarity: "Thần Thoại",
             description: "Ngọn lửa sáng nhất, lộng lẫy nhất, rực rỡ nhất đã tái sinh.",
             stats: { attack: 40, hp: 40 },
-            imageUrl: "https://media.discordapp.net/attachments/1351633975046570106/1414512677128114258/latest_20.jpg?ex=68bfd716&is=68be8596&hm=bcfb22f9c19de4265d1851f6dc7e980d7f75f186e04651db731cacfdea4859da&=&format=webp&width=481&height=825"
+            imageUrl: "https://static.wikia.nocookie.net/gensin-impact/images/e/e5/Mavuika_Dynamic_Skin.gif/revision/latest?cb=20260408150250"
         },
     ]
 };
